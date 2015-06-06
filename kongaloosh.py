@@ -171,7 +171,11 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
         mentionData['hcardURL']  = hcard['url']
         mentionData['mf2data']   = mf2Data
 
+
         # Do something with the inbound mention
+        g.db.execute('insert into mentions (content_text, source_url, target_url, post_date) values (?, ?, ?, ?)',
+                 [mentionData['content'], mentionData['sourceURL'], mentionData['targetURL'], mentionData['postDate']])
+        g.db.commit()
 
     return result
 
