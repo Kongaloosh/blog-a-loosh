@@ -259,8 +259,10 @@ def handleWebmention():
         valid = validURL(target)
 
         app.logger.info('valid? %s' % valid)
+
         f = open('mention.txt')
         f.write(str(source) + str(target))
+
         if valid == requests.codes.ok:
             if mention(source, target, vouch):
                 return redirect(target)
