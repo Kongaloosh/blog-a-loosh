@@ -175,6 +175,23 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
     return result
 
+
+def validURL(targetURL):
+    """Validate the target URL exists.
+
+    In a real app you would need to do a database lookup or a HEAD request, here we just check the URL
+    """
+    if '/article' in targetURL:
+        result = 200
+    else:
+        result = 404
+    return result
+
+noteTemplate = """<span id="%(url)s"><p class="byline h-entry" role="note"> <a href="%(url)s">%(name)s</a> <time datetime="%(date)s">%(date)s</time></p></span>
+%(marker)s
+"""
+
+
 ##################REQUEST ARGS#####################
 
 @app.before_request
