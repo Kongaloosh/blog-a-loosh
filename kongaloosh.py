@@ -274,7 +274,7 @@ def handleMicroPub():
         print('totallypossibly working') >  f
         if access_token:
             access_token = access_token.replace('Bearer ', '')
-            if access_token[-5:] == 'Cp9_4xs':
+            if access_token[-5:] == 'd-1ISBE':
                 f = open('auth.txt')
                 print('totally_authed') >  f
                 data = {}
