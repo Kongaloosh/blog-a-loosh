@@ -270,9 +270,13 @@ def handleMicroPub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
+        f = open('post.txt')
+        print('totallypossibly working') >  f
         if access_token:
             access_token = access_token.replace('Bearer ', '')
             if access_token[-5:] == 'Cp9_4xs':
+                f = open('auth.txt')
+                print('totally_authed') >  f
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
