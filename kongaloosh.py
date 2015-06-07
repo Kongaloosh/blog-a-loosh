@@ -1,7 +1,7 @@
 # all the imports
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash
+     abort, render_template, flash, make_response
 from contextlib import closing
 import os
 import redis
@@ -145,18 +145,18 @@ def processMicropub(data):
         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
     '''
+    dict((k, v) for k, v in data.iteritems() if v)
 
-    for (a,b) in data.iteritems():
-        if not b : del data[a]
-        if createEntry(data):
-            return ('Micropub CREATE successful for 200')
-        else:
-            return ('Unable to process Micropub %s' % request.method, 400, [])
+    if createEntry(data):
+        return make_response("", 200)
+    else:
+        return ('Unable to process Micropub %s' % request.method, 400, [])
 
 
 def createEntry(data):
-    f = open('file.txt')
+    f = open('file.txt', 'w+')
     print(data) > f
+    return True
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
@@ -267,15 +267,17 @@ def logout():
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handleMicroPub():
+    print('HERE')
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
-        f = open('post.txt')
+        f = open('/post.txt', 'w+')
         print('totallypossibly working') >  f
+        access_token = 'asd'
         if access_token:
             access_token = access_token.replace('Bearer ', '')
             # if access_token[-5:] == 'd-1ISBE':
-            f = open('auth.txt')
+            f = open('auth.txt', 'w+')
             print('totally_authed') >  f
             data = {}
             for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
@@ -283,8 +285,8 @@ def handleMicroPub():
                     data[key] = request.form.get(key)
             return processMicropub(data)
 
-            # else:
-            #     return 'unauthorized', 401
+        else:
+            return 'unauthorized', 401
     elif request.method == 'GET':
         # add support for /micropub?q=syndicate-to
         return 'not implemented', 501
@@ -304,7 +306,7 @@ def handleWebmention():
 
         app.logger.info('valid? %s' % valid)
 
-        f = open('mention.txt')
+        f = open('mention.txt', 'w+')
         f.write(str(source) + str(target))
 
         if valid == requests.codes.ok:
