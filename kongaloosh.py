@@ -274,20 +274,20 @@ def handleMicroPub():
         print('totallypossibly working') >  f
         if access_token:
             access_token = access_token.replace('Bearer ', '')
-            if access_token[-5:] == 'd-1ISBE':
-                f = open('auth.txt')
-                print('totally_authed') >  f
-                data = {}
-                for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+            # if access_token[-5:] == 'd-1ISBE':
+            f = open('auth.txt')
+            print('totally_authed') >  f
+            data = {}
+            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
-                return processMicropub(data)
+            return processMicropub(data)
 
-            else:
-                return 'unauthorized', 401
-        elif request.method == 'GET':
-            # add support for /micropub?q=syndicate-to
-            return 'not implemented', 501
+            # else:
+            #     return 'unauthorized', 401
+    elif request.method == 'GET':
+        # add support for /micropub?q=syndicate-to
+        return 'not implemented', 501
 
 
 @app.route('/webmention', methods=['POST'])
