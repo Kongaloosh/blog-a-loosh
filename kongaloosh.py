@@ -9,7 +9,6 @@ import requests
 import ronkyuu
 import ninka
 import datetime
-
 from mf2py.parser import Parser
 from urlparse import urlparse, ParseResult
 
@@ -140,6 +139,23 @@ def processVouch(sourceURL, targetURL, vouchDomain):
                     with open(vouchFile, 'a+') as h:
                         h.write('\n%s' % vouchDomain)
 
+
+def processMicropub(data):
+    '''
+        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
+    '''
+
+    for (a,b) in data.iteritems():
+        if not b : del data[a]
+        if createEntry(data):
+            return ('Micropub CREATE successful for 200')
+        else:
+            return ('Unable to process Micropub %s' % request.method, 400, [])
+
+
+
+
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
     r      = requests.get(sourceURL, verify=False)
@@ -245,6 +261,28 @@ def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
     return redirect(url_for('show_entries'))
+
+
+@app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
+def handleMicroPub():
+    app.logger.info('handleMicroPub [%s]' % request.method)
+    if request.method == 'POST':
+        access_token = request.headers.get('Authorization')
+        if access_token:
+            access_token = access_token.replace('Bearer ', '')
+            if access_token[-5:] == 'Cp9_4xs':
+                data = {}
+                for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
+                    data[key] = request.form.get(key)
+                return processMicropub(data)
+
+            else:
+                return 'unauthorized', 401
+        elif request.method == 'GET':
+            # add support for /micropub?q=syndicate-to
+            return 'not implemented', 501
+
 
 @app.route('/webmention', methods=['POST'])
 def handleWebmention():
