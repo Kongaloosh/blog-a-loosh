@@ -154,7 +154,9 @@ def processMicropub(data):
             return ('Unable to process Micropub %s' % request.method, 400, [])
 
 
-
+def createEntry(data):
+    f = open('file.txt')
+    print(data) > f
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
