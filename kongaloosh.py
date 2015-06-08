@@ -27,81 +27,6 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 cfg = None
 
-################DEF-MICROFORMATS####################
-
-
-def adr(data):
-    pass
-
-def card(data):
-    pass
-
-def entry(data):
-    '''
-        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
-    '''
-    try: title = "<h1 class=\"p-name\">%{title}</h1> \n".data['name'];
-    except: raise "No name in an entry publication!"
-
-    try: summary = data['summary']
-    except: summary = ''
-
-    published = getPub()
-
-    file = open("{year}/{month}/{day}/entry".format(year=published['year'], month=published['month'],day=published['day']))
-
-    template = "" \
-               "<article class=\"h-entry\"> \n" \
-               "        <h1 class=\"p-name\">%{title}</h1> \n" \
-               "        <p> \n" \
-               "            <a class=\"p-author h-card\" href=\"http://kongaloosh.com\">Alex Kearney</a> \n" \
-               "            <time class=\"dt-published\" datetime=\"{date}\">{date}</time> \n" \
-               "        <p class=\"p-summary\">{summary}</p> \n" \
-               "        <div class=\"e-content\"> \n" \
-               "            <p>{content}</p> \n " \
-               "        </div> \n" \
-               "</article>".format(title=None, date=None, summary=None, content=None)
-
-def event(data):
-    pass
-
-def feed(data):
-    pass
-
-def geo(data):
-    template = ''
-
-def item(data):
-    pass
-
-def listing(data):
-    pass
-
-def product(data):
-    pass
-
-def recipe(data):
-    pass
-
-def resume(data):
-    pass
-
-def review(data):
-    pass
-
-def review_aggregate(data):
-    pass
-
-
-h = [{'h-adr':adr}, {'h-card':card}, {'h-entry':entry}, {'h-event':event},
-     {'h-feed':feed}, {'h-geo':geo}, {'h-item':item}, {'h-listing':listing},
-     {'h-product':product}, {'h-recipe':recipe}, {'h-resume':resume},
-     {'h-review':review}, {'h-review-aggregate':review_aggregate}]
-
-def getPub():
-    return [{'year':datetime.now().year}, {'month':datetime.now().month}, {'day':datetime.now().date()}]
-
 ##################DATABASE#########################
 
 def init_db():
@@ -317,8 +242,16 @@ def teardown_request(exception):
 
 @app.route('/')
 def show_entries():
-    cur = g.db.execute('select title, text, date_published from entries order by id desc')
-    entries = [dict(title=row[0], text=row[1],date_published=row[2]) for row in cur.fetchall()]
+
+    entries = []
+    for subdir, dir, files  in os.walk("data", topdown=True):
+        for file in files:
+            if file.endswith('.p'):
+                p = pickle.load(open(subdir+os.sep+file))
+                entries.append(p)
+
+        if len(entries) == 10: break
+
     return render_template('show_entries.html', entries=entries)
 
 @app.route('/add', methods=['POST'])
