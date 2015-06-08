@@ -23,6 +23,55 @@ PASSWORD = 'Munc4kin))'
 app = Flask(__name__)
 app.config.from_object(__name__)
 cfg = None
+
+################DEF-MICROFORMATS####################
+
+
+def adr():
+    pass
+
+def card():
+    pass
+
+def entry():
+    pass
+
+def event():
+    pass
+
+def feed():
+    pass
+
+def geo():
+    pass
+
+def item():
+    pass
+
+def listing():
+    pass
+
+def product():
+    pass
+
+def recipe():
+    pass
+
+def resume():
+    pass
+
+def review():
+    pass
+
+def review_aggregate():
+    pass
+
+
+h = [{'h-adr':adr}, {'h-card':card}, {'h-entry':entry}, {'h-event':event},
+     {'h-feed':feed}, {'h-geo':geo}, {'h-item':item}, {'h-listing':listing},
+     {'h-product':product}, {'h-recipe':recipe}, {'h-resume':resume},
+     {'h-review':review}, {'h-review-aggregate':review_aggregate}]
+
 ##################DATABASE#########################
 
 def init_db():
@@ -146,17 +195,21 @@ def processMicropub(data):
         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
     '''
     dict((k, v) for k, v in data.iteritems() if v)
-
     if createEntry(data):
+
         return make_response("", 200)
     else:
         return ('Unable to process Micropub %s' % request.method, 400, [])
 
 
 def createEntry(data):
-    f = open('file.txt', 'w+')
-    print(data) > f
+    '''
+        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
+    '''
+
     return True
+
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
@@ -199,9 +252,9 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
 
 def validURL(targetURL):
-    """Validate the target URL exists.
-
-    In a real app you would need to do a database lookup or a HEAD request, here we just check the URL
+    """
+        Validate the target URL exists.
+        In a real app you would need to do a database lookup or a HEAD request, here we just check the URL
     """
     if '/article' in targetURL:
         result = 200
@@ -271,20 +324,16 @@ def handleMicroPub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
-        f = open('/post.txt', 'w+')
-        print('totallypossibly working') >  f
-        access_token = 'asd'
         if access_token:
             access_token = access_token.replace('Bearer ', '')
-            # if access_token[-5:] == 'd-1ISBE':
-            f = open('auth.txt', 'w+')
-            print('totally_authed') >  f
-            data = {}
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+            if access_token[-5:] == 'd-1ISBE' or True:
+                data = {}
+                for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
-            return processMicropub(data)
-
+                return processMicropub(data)
+            else:
+                return 'unauthorized', 401
         else:
             return 'unauthorized', 401
     elif request.method == 'GET':
