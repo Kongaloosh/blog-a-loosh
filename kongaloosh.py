@@ -242,7 +242,6 @@ def teardown_request(exception):
 
 @app.route('/')
 def show_entries():
-
     entries = []
     for subdir, dir, files  in os.walk("data", topdown=True):
         for file in files:
@@ -293,7 +292,7 @@ def handleMicroPub():
         access_token = request.headers.get('Authorization')
         if access_token:
             access_token = access_token.replace('Bearer ', '')
-            if access_token[-5:] == 'd-1ISBE' or True:
+            if access_token[-5:] == 'd-1ISBE':
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
