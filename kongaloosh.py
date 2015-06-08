@@ -10,6 +10,9 @@ import ronkyuu
 import ninka
 import datetime
 from mf2py.parser import Parser
+from datetime import datetime
+import pickle
+
 from urlparse import urlparse, ParseResult
 
 # configuration
@@ -27,43 +30,67 @@ cfg = None
 ################DEF-MICROFORMATS####################
 
 
-def adr():
+def adr(data):
     pass
 
-def card():
+def card(data):
     pass
 
-def entry():
+def entry(data):
+    '''
+        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
+    '''
+    try: title = "<h1 class=\"p-name\">%{title}</h1> \n".data['name'];
+    except: raise "No name in an entry publication!"
+
+    try: summary = data['summary']
+    except: summary = ''
+
+    published = getPub()
+
+    file = open("{year}/{month}/{day}/entry".format(year=published['year'], month=published['month'],day=published['day']))
+
+    template = "" \
+               "<article class=\"h-entry\"> \n" \
+               "        <h1 class=\"p-name\">%{title}</h1> \n" \
+               "        <p> \n" \
+               "            <a class=\"p-author h-card\" href=\"http://kongaloosh.com\">Alex Kearney</a> \n" \
+               "            <time class=\"dt-published\" datetime=\"{date}\">{date}</time> \n" \
+               "        <p class=\"p-summary\">{summary}</p> \n" \
+               "        <div class=\"e-content\"> \n" \
+               "            <p>{content}</p> \n " \
+               "        </div> \n" \
+               "</article>".format(title=None, date=None, summary=None, content=None)
+
+def event(data):
     pass
 
-def event():
+def feed(data):
     pass
 
-def feed():
+def geo(data):
+    template = ''
+
+def item(data):
     pass
 
-def geo():
+def listing(data):
     pass
 
-def item():
+def product(data):
     pass
 
-def listing():
+def recipe(data):
     pass
 
-def product():
+def resume(data):
     pass
 
-def recipe():
+def review(data):
     pass
 
-def resume():
-    pass
-
-def review():
-    pass
-
-def review_aggregate():
+def review_aggregate(data):
     pass
 
 
@@ -71,6 +98,9 @@ h = [{'h-adr':adr}, {'h-card':card}, {'h-entry':entry}, {'h-event':event},
      {'h-feed':feed}, {'h-geo':geo}, {'h-item':item}, {'h-listing':listing},
      {'h-product':product}, {'h-recipe':recipe}, {'h-resume':resume},
      {'h-review':review}, {'h-review-aggregate':review_aggregate}]
+
+def getPub():
+    return [{'year':datetime.now().year}, {'month':datetime.now().month}, {'day':datetime.now().date()}]
 
 ##################DATABASE#########################
 
@@ -202,12 +232,16 @@ def processMicropub(data):
         return ('Unable to process Micropub %s' % request.method, 400, [])
 
 
-def createEntry(data):
-    '''
-        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
-    '''
-
+def createEntry(data, image=None):
+    time=datetime.now()
+    file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=data['h'])
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path))
+    pickle.dump(data, open(file_path+"/{title}.txt".format(title=data['name']),'wb'))
+    if image:
+        file = open(file_path+"/{title}-img.jpg".format(title=data['name']),'w')
+        file.write(image)
+        file.close()
     return True
 
 
