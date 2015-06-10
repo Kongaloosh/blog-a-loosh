@@ -181,6 +181,7 @@ def checkAccessToken(access_token):
 
 
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
+    pickle.dump(r, "status.p")
     return r['status'] == requests.codes.ok
 
 
@@ -327,13 +328,12 @@ def logout():
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handleMicroPub():
-    print('HERE')
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
         if access_token:
             access_token = access_token.replace('Bearer ', '')
-            if access_token[-5:] == 'd-1ISBE':
+            if checkAccessToken(access_token):
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
