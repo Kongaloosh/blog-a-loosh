@@ -3,8 +3,11 @@ import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, make_response
 from contextlib import closing
+import httplib
 import os
 import redis
+import ninka
+import urllib2
 import requests
 import ronkyuu
 import ninka
@@ -109,6 +112,7 @@ def extractHCard(mf2Data):
                     result['url'] = item['properties']['url']
     return result
 
+
 def processVouch(sourceURL, targetURL, vouchDomain):
     """Determine if a vouch domain is valid.
 
@@ -142,6 +146,43 @@ def processVouch(sourceURL, targetURL, vouchDomain):
                     result = True
                     with open(vouchFile, 'a+') as h:
                         h.write('\n%s' % vouchDomain)
+
+
+def checkAccessToken(access_token):
+    """Check if the given access token matches any in the data stored
+
+    code=gk7n4opsyuUxhvF4&
+    redirect_uri=https://example.com/auth&
+    client_id=https://example.com/
+    """
+
+    '''
+        access_token = 'a'
+        headers = {'code':access_token, 'redirect_uri':'kongaloosh.com/auth', 'client_id':'https://example.com/'}
+        request = requests.post(url="https://indieauth.com/auth/", headers=headers)
+        handler = urllib2.HTTPHandler()
+        opener = urllib2.build_opener(handler)
+        request = urllib2.Request(url="https://indieauth.com/auth/")
+
+        request.add_header("Content-Type",'application/json')
+        request.get_method = lambda: "GET"
+
+        try:
+            connection = opener.open(request)
+        except urllib2.HTTPError,e:
+            connection = e
+
+        access_token = ""
+        connection = httplib.HTTPSConnection("https://indieauth.com",80)
+        headers = {'code':access_token, 'redirect_uri':'kongaloosh.com/auth/', 'client_id':'https://example.com/'}
+        connection.request("POST","/auth/",headers)
+        response = connection.getresponse()
+    '''
+
+
+    r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
+    return r['status'] == requests.codes.ok
+
 
 
 def processMicropub(data):
