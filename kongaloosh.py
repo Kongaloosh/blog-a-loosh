@@ -1,9 +1,7 @@
-# all the imports
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, make_response
 from contextlib import closing
-import httplib
 import os
 import redis
 import ninka
@@ -15,7 +13,6 @@ import datetime
 from mf2py.parser import Parser
 from datetime import datetime
 import pickle
-
 from urlparse import urlparse, ParseResult
 
 # configuration
@@ -178,10 +175,7 @@ def checkAccessToken(access_token):
         connection.request("POST","/auth/",headers)
         response = connection.getresponse()
     '''
-
-
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
-    pickle.dump(r, "status.p")
     return r['status'] == requests.codes.ok
 
 
