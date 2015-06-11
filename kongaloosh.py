@@ -175,6 +175,9 @@ def checkAccessToken(access_token):
         connection.request("POST","/auth/",headers)
         response = connection.getresponse()
     '''
+    f1=open('testfile', 'w+')
+    f1.write('ninaaa')
+    f1.close()
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
     return r['status'] == requests.codes.ok
 
@@ -322,11 +325,17 @@ def logout():
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handleMicroPub():
+    f1=open('testfile', 'w+')
+    f1.write('endpoint recieving')
+    f1.close()
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
         if access_token:
             access_token = access_token.replace('Bearer ', '')
+            f1=open('testfile', 'w+')
+            f1.write('tokeeeeeen time {token}'.format(token=access_token))
+            f1.close()
             if checkAccessToken(access_token):
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
