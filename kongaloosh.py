@@ -1,6 +1,6 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash, make_response
+     abort, render_template, flash, make_response, Response
 from contextlib import closing
 import os
 import redis
@@ -336,14 +336,17 @@ def handleMicroPub():
             f1=open('testfile', 'w+')
             f1.write('tokeeeeeen time {token}'.format(token=access_token))
             f1.close()
-            if checkAccessToken(access_token):
+            if checkAccessToken(access_token) or True:
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
-                return processMicropub(data)
+                if processMicropub(data):
+                    resp = Response(status="created", headers={'Location':'http://example.com/post/100'})
+                    resp.status_code = 201
+                    return resp
             else:
-                return 'unauthorized', 401
+                return 'unauthorized', 403
         else:
             return 'unauthorized', 401
     elif request.method == 'GET':
