@@ -324,12 +324,16 @@ def logout():
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handleMicroPub():
+    f = open('myfile','w')
+    f.write('hi there\n')
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
+        f.write('{at}\n'.format(at=access_token))
         if access_token:
             access_token = access_token.replace('Bearer ', '')
             if checkAccessToken(access_token):
+                f.write('{d}\n'.format(request))
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
@@ -339,13 +343,17 @@ def handleMicroPub():
                 if processMicropub(data):
                     resp = Response(status="created", headers={'Location':'http://example.com/post/100'})
                     resp.status_code = 201
+                    f.close()
                     return resp
             else:
+                f.close()
                 return 'unauthorized', 403
         else:
+            f.close()
             return 'unauthorized', 401
     elif request.method == 'GET':
         # add support for /micropub?q=syndicate-to
+        f.close()
         return 'not implemented', 501
 
 
