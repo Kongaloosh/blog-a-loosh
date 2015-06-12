@@ -702,9 +702,9 @@ def show_entries():
                 entries.append(p)
         if len(entries) >= 10: break
 
-        # f = open('entries', 'wb')
-        # f.write(entries)
-        # f.close()
+        f = open('entries', 'wb')
+        f.write(str(entries))
+        f.close()
 
     return render_template('show_entries.html', entries=entries)
 
