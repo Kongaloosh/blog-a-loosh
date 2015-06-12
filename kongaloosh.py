@@ -1,6 +1,8 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, make_response
+from functools import wraps
+from flask import request, redirect, current_app
 from contextlib import closing
 import os
 import redis
@@ -657,6 +659,7 @@ noteTemplate = """<span id="%(url)s"><p class="byline h-entry" role="note"> <a h
 %(marker)s
 """
 
+##################DECORATORS#####################
 
 ##################REQUEST ARGS#####################
 
@@ -669,6 +672,21 @@ def teardown_request(exception):
     db = getattr(g, 'db', None)
     if db is not None:
         db.close()
+
+##################SSL#####################
+
+def ssl_required(fn):
+    @wraps(fn)
+    def decorated_view(*args, **kwargs):
+        if current_app.config.get("SSL"):
+            if request.is_secure:
+                return fn(*args, **kwargs)
+            else:
+                return redirect(request.url.replace("http://", "https://"))
+
+        return fn(*args, **kwargs)
+
+    return decorated_view
 
 ################## ROUTING ########################
 
@@ -717,6 +735,7 @@ def logout():
 
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
+@ssl_required
 def handleMicroPub():
     f1=open('testfile', 'w+')
     f1.write('endpoint recieving')
@@ -781,6 +800,7 @@ def handleWebmention():
                     return 'Webmention is invalid', 400
         else:
             return 'invalid post', 404
+
 
 
 if __name__ == "__main__":
