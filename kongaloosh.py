@@ -694,13 +694,18 @@ def ssl_required(fn):
 def show_entries():
     entries = []
     for subdir, dir, files  in os.walk("data", topdown=True):
+        print(dir)
         for file in files:
+            print(file)
             if file.endswith('.p'):
                 p = pickle.load(open(subdir+os.sep+file))
                 entries.append(p)
+        if len(entries) >= 10: break
 
-        if len(entries) == 10: break
-
+        f = open('entries', 'wb')
+        f.write(entries)
+        f.close()
+        
     return render_template('show_entries.html', entries=entries)
 
 @app.route('/add', methods=['POST'])
