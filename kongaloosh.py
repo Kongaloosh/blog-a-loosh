@@ -155,28 +155,6 @@ def checkAccessToken(access_token):
     client_id=https://example.com/
     """
 
-    '''
-        access_token = 'a'
-        headers = {'code':access_token, 'redirect_uri':'kongaloosh.com/auth', 'client_id':'https://example.com/'}
-        request = requests.post(url="https://indieauth.com/auth/", headers=headers)
-        handler = urllib2.HTTPHandler()
-        opener = urllib2.build_opener(handler)
-        request = urllib2.Request(url="https://indieauth.com/auth/")
-
-        request.add_header("Content-Type",'application/json')
-        request.get_method = lambda: "GET"
-
-        try:
-            connection = opener.open(request)
-        except urllib2.HTTPError,e:
-            connection = e
-
-        access_token = ""
-        connection = httplib.HTTPSConnection("https://indieauth.com",80)
-        headers = {'code':access_token, 'redirect_uri':'kongaloosh.com/auth/', 'client_id':'https://example.com/'}
-        connection.request("POST","/auth/",headers)
-        response = connection.getresponse()
-    '''
     f1=open('testfile', 'w+')
     f1.write('ninaaa')
     f1.close()
@@ -203,7 +181,15 @@ def createEntry(data, image=None):
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=data['h'])
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
-    pickle.dump(data, open(file_path+"/{title}.p".format(title=data['name']),'wb'))
+    if not os.path.isfile(file_path+"/{title}.p".format(title=data['name'])):
+        pickle.dump(data, open(file_path+"/{title}.p".format(title=data['name']),'wb'))
+    else:
+        i = 1
+        saved = False
+        while(saved):
+            if not os.path.isfile(file_path+"/{title}-{num}.p".format(title=data['name'], num=i)):
+                pickle.dump(data, open(file_path+"/{title}-{num}.p".format(title=data['name'], num=i)))
+                saved = True
     if image:
         file = open(file_path+"/{title}-img.jpg".format(title=data['name']),'w')
         file.write(image)
