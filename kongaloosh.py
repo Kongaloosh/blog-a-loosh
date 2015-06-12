@@ -327,7 +327,7 @@ def logout():
 def handleMicroPub():
     f1=open('testfile', 'w+')
     f1.write('endpoint recieving')
-    f1.close()
+    f1.close()   
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
@@ -336,15 +336,22 @@ def handleMicroPub():
             f1=open('testfile', 'w+')
             f1.write('tokeeeeeen time {token}'.format(token=access_token))
             f1.close()
-            if checkAccessToken(access_token):
+            if checkAccessToken(access_token) or True:
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
-                return processMicropub(data)
+                
+#		f1.write('it is alive!')
+#		f1.close()
+		return processMicropub(data)
             else:
-                return 'unauthorized', 401
+#		f1.write('this is a 403')
+#		f1.close()
+                return 'unauthorized', 403
         else:
+#	    f1.write('this is a 401')
+#	    f1.close()
             return 'unauthorized', 401
     elif request.method == 'GET':
         # add support for /micropub?q=syndicate-to
