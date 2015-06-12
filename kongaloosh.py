@@ -151,6 +151,8 @@ def checkAccessToken(access_token):
     code=gk7n4opsyuUxhvF4&
     redirect_uri=https://example.com/auth&
     client_id=https://example.com/
+
+    me=http%3A%2F%2Fkongaloosh.com%2F&scope=post&access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtZSI6Imh0dHA6XC9cL2tvbmdhbG9vc2guY29tXC8iLCJpc3N1ZWRfYnkiOiJodHRwczpcL1wvdG9rZW5zLmluZGllYXV0aC5jb21cL3Rva2VuIiwiY2xpZW50X2lkIjoiaHR0cHM6XC9cL293bnlvdXJncmFtLmNvbSIsImlzc3VlZF9hdCI6MTQzNDA0NDA5NSwic2NvcGUiOiJwb3N0Iiwibm9uY2UiOjY2OTUxMDc0Nn0.pBEzEoQM0iCNbJeK2DfkYKNynhfc0WovSXRb5T_MPeg
     """
 
     '''
@@ -175,9 +177,6 @@ def checkAccessToken(access_token):
         connection.request("POST","/auth/",headers)
         response = connection.getresponse()
     '''
-    f1=open('testfile', 'w+')
-    f1.write('ninaaa')
-    f1.close()
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
     return r['status'] == requests.codes.ok
 
@@ -186,7 +185,7 @@ def checkAccessToken(access_token):
 def processMicropub(data):
     '''
         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
+        'slug', 'location', 'in-reply-to', 're post-of', 'syndication', 'syndicate-to'
     '''
     dict((k, v) for k, v in data.iteritems() if v)
     if createEntry(data):
@@ -325,22 +324,18 @@ def logout():
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handleMicroPub():
-    f1=open('testfile', 'w+')
-    f1.write('endpoint recieving')
-    f1.close()
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
         if access_token:
             access_token = access_token.replace('Bearer ', '')
-            f1=open('testfile', 'w+')
-            f1.write('tokeeeeeen time {token}'.format(token=access_token))
-            f1.close()
-            if checkAccessToken(access_token) or True:
+            if checkAccessToken(access_token):
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
+
+                pickle.dump(request, open("text.txt",'wb'))
                 if processMicropub(data):
                     resp = Response(status="created", headers={'Location':'http://example.com/post/100'})
                     resp.status_code = 201
