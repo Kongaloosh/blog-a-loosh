@@ -1,6 +1,6 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash, make_response
+     abort, render_template, flash, make_response, Response
 from functools import wraps
 from flask import request, redirect, current_app
 from contextlib import closing
@@ -338,7 +338,7 @@ def handleMicroPub():
             f1=open('testfile', 'w+')
             f1.write('tokeeeeeen time {token}'.format(token=access_token))
             f1.close()
-            if checkAccessToken(access_token) or True:
+            if checkAccessToken(access_token):
                 data = {}
                 for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
@@ -347,7 +347,10 @@ def handleMicroPub():
                 f1=open('testfile', 'w+')
                 f1.write('endpoint recieving')
                 f1.close()
-                return processMicropub(data)
+                if processMicropub(data):
+                    resp = Response(status="created", headers={'Location':'http://example.com/post/100'})
+                    resp.status_code = 201
+                    return resp
             else:
                 f1=open('testfile', 'w+')
                 f1.write('this is a 403')
@@ -761,7 +764,12 @@ def handleMicroPub():
                 f1=open('testfile', 'w+')
                 f1.write('endpoint recieving' + str(request.form.get('h')))
                 f1.close()
-                return processMicropub(data)
+                if processMicropub(data):
+                    resp = Response(status="created", headers={'Location':'http://example.com/post/100'})
+                    resp.status_code = 201
+                    return resp
+                else:
+                    return 505
             else:
                 f1=open('testfile', 'w+')
                 f1.write('this is a 403')
