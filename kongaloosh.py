@@ -183,18 +183,24 @@ def createEntry(data, image=None):
         os.makedirs(os.path.dirname(file_path))
     if not os.path.isfile(file_path+"/{title}.p".format(title=data['name'])):
         pickle.dump(data, open(file_path+"/{title}.p".format(title=data['name']),'wb'))
+        if image:
+            file = open(file_path+"/{title}-img.jpg".format(title=data['name']),'w')
+            file.write(image)
+            file.close()
     else:
         i = 1
         saved = False
         while(saved):
             if not os.path.isfile(file_path+"/{title}-{num}.p".format(title=data['name'], num=i)):
                 pickle.dump(data, open(file_path+"/{title}-{num}.p".format(title=data['name'], num=i)))
+                if image:
+                    file = open(file_path+"{title}-{num}.p".format(title=data['name'], num=i),'w')
+                    file.write(image)
+                    file.close()
                 saved = True
-    if image:
-        file = open(file_path+"/{title}-img.jpg".format(title=data['name']),'w')
-        file.write(image)
-        file.close()
-    return True
+
+
+    return
 
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
