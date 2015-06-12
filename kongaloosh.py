@@ -203,7 +203,7 @@ def createEntry(data, image=None):
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=data['h'])
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
-    pickle.dump(data, open(file_path+"/{title}.txt".format(title=data['name']),'wb'))
+    pickle.dump(data, open(file_path+"/{title}.p".format(title=data['name']),'wb'))
     if image:
         file = open(file_path+"/{title}-img.jpg".format(title=data['name']),'w')
         file.write(image)
@@ -596,7 +596,7 @@ def createEntry(data, image=None):
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=data['h'])
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
-    pickle.dump(data, open(file_path+"/{title}.txt".format(title=data['name']),'wb'))
+    pickle.dump(data, open(file_path+"/{title}.p".format(title=data['name']),'wb'))
     if image:
         file = open(file_path+"/{title}-img.jpg".format(title=data['name']),'w')
         file.write(image)
@@ -735,7 +735,6 @@ def logout():
 
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
-@ssl_required
 def handleMicroPub():
     f1=open('testfile', 'w+')
     f1.write('endpoint recieving')
