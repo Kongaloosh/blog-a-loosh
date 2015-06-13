@@ -374,7 +374,7 @@ def createImage(image, category, content, location, published=datetime.now(), sy
     entry = templates['photo'].format(
         title=title, slug=slug, content=content,
         date_time=published , category=category, syndication=syndication,
-        location=location, image=image
+        location=location, photo=image
     )
     return (entry,title)
 
