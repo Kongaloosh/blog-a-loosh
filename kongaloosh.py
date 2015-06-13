@@ -450,44 +450,53 @@ def createEntry(data, image=None, video=None, audio=None):
 
     # like: no name or title, but like-of
 
-
-
     try: type = data['h']
     except: type = 'etc'
 
-    try: #is it an article
-        title = data['name']
-        type = 'article'
+    if not data['name'] == None: #is it an article
         # multiple paragraphs, title
+        (entry, title) = createArticle(
+            title=data['name'], content=data['content'],category=data['category']
+            ,published=data['published'],syndication=data['syndication'])
 
-    except: pass
-    if video: # is it a video
+
+    elif video: # is it a video
         # video: no name or title, but video
         type = 'video'
+
+
     elif audio: # is it audio
         type = 'audio'
-    elif image: # is it an image
-        type = 'image'
-        # image: no name or title, but image
 
-    try: # is it a response
+
+    elif image: # is it an image
+        # image: no name or title, but image
+        (entry,title) = createImage(
+            image=image,content=data['content'],category=data['category']
+            ,published=data['published'],syndication=data['syndication'])
+
+
+    elif not data['in-reply-to'] == None: # is it a response
         data['in-reply-to']
         type = 'comment'
         # reply: no name or title, but in-reply-to
-    except:pass
 
-    try: # is it a repost
+
+    elif not data['in-reply-to'] == None: # is it a repost
         data['repost of']
         type = 'repost'
         # u-repost-of
-    except: pass
 
-    try:# is it a checkin
+
+    elif not data['location'] == None:# is it a checkin
         data['location']
         type = 'checkin'
         # check-in: note with location
 
-    except: pass
+    else:
+        (entry,title) = createNote(
+            category=data['category'], content=data['content'],
+            published=['published'], syndication=data['syndication'] )
 
     #otherwise it's a plain note
 
@@ -500,7 +509,9 @@ def createEntry(data, image=None, video=None, audio=None):
 
     total_path =  file_path+"{title}".format(title=title)
     if not os.path.isfile(total_path+".p"):
-        pickle.dump(data, open(total_path+".p",'wb'))
+        file = open(total_path, 'wb')
+        file.write(entry)
+        file.close()
         if image:
             file = open(total_path+"-img.jpg",'w')
             file.write(image)
@@ -510,12 +521,14 @@ def createEntry(data, image=None, video=None, audio=None):
         i = 1
         while(True):
             if not os.path.isfile(total_path+"-{num}.p".format(num=i)):
-                pickle.dump(data, open(total_path+"-{num}.p".format(num=i), 'wb'))
+                file = open(total_path, 'wb')
+                file.write(entry+'-{num}'.format(num=i))
+                file.close()
                 if image:
-                    file = open(total_path+"-{num}-img.p".format(num=i),'w')
+                    file = open(total_path+"-{num}-img.jpg".format(num=i),'w')
                     file.write(image)
                     file.close()
-                return total_path+"-{num}.p".format(num=i)
+                return total_path+"-{num}".format(num=i)
             else: i += 1
 
 
@@ -663,7 +676,7 @@ def handleMicroPub():
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
 
-                data = dict((k, v) for k, v in data.iteritems() if v)
+                # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
                 try:
                     img = request.files.get('photo').read()
