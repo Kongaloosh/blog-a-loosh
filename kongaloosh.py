@@ -10,6 +10,7 @@ import ninka
 from mf2py.parser import Parser
 from datetime import datetime
 import pickle
+import slugify
 
 # configuration
 DATABASE = '/tmp/kongaloosh.db'
@@ -23,86 +24,40 @@ templates = {
         """
         p-name:
             title:{title}
-            slug:{title-slug}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
+        dt-published:{date_time}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc-name}
         u-syndication:
             {syndication}
-        u-in-reply-to:
-            {reply-to}
-        u-comment:
-            {comment}
         """
         ,
     'article':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
+            slug:{slug}
         p-summary:{summary}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
+        dt-published:{date_time}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc-name}
         u-syndication:
             {syndication}
-        u-comment:
-            {comment}
-        p-featured
-            {featured}
         """,
 
     'reply':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
+        dt-published:{date_time}
         dt-updated:{updated}
-        p-author:{author}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc-name}
         u-syndication:
             {syndication}
         u-in-reply-to:
             {reply-to}
-        u-comment:
-            {comment}
-        u-photo
-            {photo}
-        u-audio
-            {audio}
-        u-video
-            {video}
-        p-repost
-            {repost}
-        p-featured
-            {featured}
         """
 
         ,
@@ -111,126 +66,52 @@ templates = {
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-
+            slug:{title_slug}
         u-like-of
             {likes}
         """
         ,
 
-        'photo':
+    'photo':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
+        dt-published:{date_time}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
         p-location:
             time-zone:{timezone}
             lat:{lat}
             long:{long}
-            location-name:{loc-name}
+            location-name:{loc_name}
         u-syndication:
             {syndication}
-        u-in-reply-to:
-            {reply-to}
-        u-comment:
-            {comment}
-        u-like-of
-            {likes}
-        u-repost-of
-            {repost}
         u-photo
             {photo}
-        u-audio
-            {audio}
-        u-video
-            {video}
-        u-like
-            {like}
-        p-repost
-            {repost}
-        p-featured
-            {featured}
-        """,
-
-        'bookmark':
-        """
-        p-name:
-            title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
-        e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
-        p-category:{category}
-        u-url:{url}
-        u-uid:{id}
         """
         ,
 
-        'checkin':
+    'bookmark':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
+        dt-published:{date_time}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc-name}
-        u-syndication:
-            {syndication}
+        u-bookmark-of:{book_mark}
         """
-        ,
-        'repost':
-        """
-        p-name:
-            title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
-        e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
-        p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-        u-repost-of
-            {repost}
-        """,
+    ,
 
-        'rsvp':
+    'checkin':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
+        dt-published:{date_time}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
         p-location:
             time-zone:{timezone}
             lat:{lat}
@@ -238,153 +119,107 @@ templates = {
             location-name:{loc-name}
         u-syndication:
             {syndication}
-        u-in-reply-to:
-            {reply-to}
-        u-comment:
-            {comment}
-        u-like-of
-            {likes}
+        """
+    ,
+    'repost':
+        """
+        p-name:
+            title:{title}
+            slug:{slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date_time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
         u-repost-of
             {repost}
-        u-photo
-            {photo}
-        u-audio
-            {audio}
-        u-video
-            {video}
-        u-like
-            {like}
-        p-repost
-            {repost}
-        p-featured
-            {featured}
         """
         ,
-        'event':
+
+    'rsvp':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
+        dt-published:{date_time}
         p-category:{category}
-        u-url:{url}
-        u-uid:{id}
         p-location:
             time-zone:{timezone}
             lat:{lat}
             long:{long}
-            location-name:{loc-name}
+            location-name:{loc_name}
         u-syndication:
             {syndication}
         u-in-reply-to:
             {reply-to}
-        u-comment:
-            {comment}
-        u-like-of
-            {likes}
-        u-repost-of
-            {repost}
-        u-photo
-            {photo}
-        u-audio
-            {audio}
-        u-video
-            {video}
-        u-like
-            {like}
-        p-repost
-            {repost}
-        p-featured
-            {featured}
         """
-        ,
-        'video':
+    ,
+    'event':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
+            slug:{slug}
         p-summary:{summary}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
-        p-category:{category}
-        u-url:{url}
-        u-uid:{id}
+        dt-published:{date_time}
         p-location:
             time-zone:{timezone}
             lat:{lat}
             long:{long}
-            location-name:{loc-name}
+            location-name:{loc_name}
         u-syndication:
             {syndication}
-        u-in-reply-to:
-            {reply-to}
-        u-comment:
-            {comment}
-        u-like-of
-            {likes}
-        u-repost-of
-            {repost}
-        u-photo
-            {photo}
-        u-audio
-            {audio}
-        u-video
-            {video}
-        u-like
-            {like}
-        p-repost
-            {repost}
-        p-featured
-            {featured}
         """
-        ,
-        'audio':
+    ,
+    'video':
         """
         p-name:
             title:{title}
-            slug:{title-slug}
-        p-summary:{summary}
+            slug:{slug}
         e-content:{content}
-        dt-published:{date-time}
-        dt-updated:{updated}
-        p-author:{author}
+        dt-published:{date_time}
         p-category:{category}
         u-url:{url}
         u-uid:{id}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc-name}
         u-syndication:
             {syndication}
-        u-in-reply-to:
-            {reply-to}
-        u-comment:
-            {comment}
-        u-like-of
-            {likes}
-        u-repost-of
-            {repost}
-        u-photo
-            {photo}
-        u-audio
-            {audio}
         u-video
             {video}
-        u-like
-            {like}
-        p-repost
-            {repost}
-        p-featured
-            {featured}
         """
+    ,
+    'audio':
+    """
+    p-name:
+        title:{title}
+        slug:{slug}
+    p-summary:{summary}
+    e-content:{content}
+    dt-published:{date_time}
+    dt-updated:{updated}
+    p-author:{author}
+    p-category:{category}
+    u-url:{url}
+    u-uid:{id}
+    p-location:
+        time-zone:{timezone}
+        lat:{lat}
+        long:{long}
+        location-name:{loc_name}
+    u-syndication:
+        {syndication}
+    u-audio
+        {audio}
+    u-video
+        {video}
+    u-like
+        {like}
+    p-repost
+        {repost}
+    p-featured
+        {featured}
+    """
 
 }
 
@@ -394,6 +229,7 @@ templates = {
 app = Flask(__name__)
 app.config.from_object(__name__)
 cfg = None
+
 
 ##################DATABASE#########################
 
@@ -406,8 +242,8 @@ def init_db():
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
 
-##################WEB MENTION######################
 
+##################WEB MENTION######################
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
@@ -526,6 +362,45 @@ def checkAccessToken(access_token):
     f1.close()
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
     return r['status'] == requests.codes.ok
+
+def createVideo(data, video):
+
+
+
+def createImage(data, image):
+    pass
+
+
+def createAudio(data, audio):
+    pass
+
+
+def createNote(category, content, published=datetime.date(), syndication=None):
+    if content == None:
+        raise "no content in submission"
+
+    title = content.split('.')[0]
+    slug = slugify(title)
+
+    if category:
+        entry = templates['note'].format(title=title, slug=slug, datetime=datetime, category=category, syndication=syndication)
+    else: # todo: Keyword extraction.
+        pass
+
+def createArticle(title, content, published=datetime.date()):
+    pass
+
+
+def createCheckin(data):
+    pass
+
+
+def createReply(data):
+    pass
+
+
+def createRepost(data):
+    pass
 
 
 def createEntry(data, image=None, video=None, audio=None):
