@@ -81,10 +81,7 @@ templates = {
         dt-published:{date_time}
         p-category:{category}
         p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc_name}
+            {location}
         u-syndication:
             {syndication}
         u-photo
@@ -113,10 +110,7 @@ templates = {
         dt-published:{date_time}
         p-category:{category}
         p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc-name}
+            {location}
         u-syndication:
             {syndication}
         """
@@ -364,11 +358,24 @@ def checkAccessToken(access_token):
     return r['status'] == requests.codes.ok
 
 def createVideo(data, video):
-
-
-
-def createImage(data, image):
     pass
+
+
+def createImage(image, category, content, location, published=datetime.date(), syndication=None):
+    if content == None:
+        raise "no content in submission"
+
+    title = content.split('.')[0]
+    slug = slugify(title)
+
+    if category == None:
+        # todo: Keyword extraction.
+        pass
+    entry = templates['photo'].format(
+        title=title, slug=slug, content=content,
+        datetime=datetime, category=category, syndication=syndication,
+        location=location, image=image
+    )
 
 
 def createAudio(data, audio):
@@ -407,8 +414,21 @@ def createArticle(title, content, category, published=datetime.date(), syndicati
         date_time=published,category=category, syndication=syndication
     )
 
-def createCheckin(data):
-    pass
+def createCheckin(category, content, location, published=datetime.date(), syndication=None):
+    if content == None or location == None:
+        raise "no content in submission"
+
+    title = content.split('.')[0]
+    slug = slugify(title)
+
+    if category == None:
+        # todo: Keyword extraction.
+        pass
+    entry = templates['checkin'].format(
+        title=title, slug=slug, content=content,
+        datetime=datetime, category=category, syndication=syndication,
+        location=location
+    )
 
 
 def createReply(data):
