@@ -20,200 +20,208 @@ USERNAME = 'Anubis'
 PASSWORD = 'Munc4kin))'
 
 templates = {
-    'note':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        u-syndication:
-            {syndication}
-        """
-        ,
-    'article':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        p-summary:{summary}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        u-syndication:
-            {syndication}
-        """,
 
-    'reply':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        dt-updated:{updated}
-        p-category:{category}
-        u-syndication:
-            {syndication}
-        u-in-reply-to:
-            {reply-to}
-        """
+'note':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+u-syndication:
+    {syndication}
+"""
 
         ,
 
-    'like':
-        """
-        p-name:
-            title:{title}
-            slug:{title_slug}
-        u-like-of
-            {likes}
-        """
+'article':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+p-summary:{summary}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+u-syndication:
+    {syndication}
+"""
+
+    ,
+
+'reply':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+dt-updated:{updated}
+p-category:{category}
+u-syndication:
+    {syndication}
+u-in-reply-to:
+    {reply-to}
+"""
+
+    ,
+
+'like':
+"""
+p-name:
+    title:{title}
+    slug:{title_slug}
+u-like-of
+    {likes}
+"""
         ,
 
-    'photo':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        p-location:
-            {location}
-        u-syndication:
-            {syndication}
-        u-photo
-            {photo}
-        """
+'photo':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+p-location:
+    {location}
+u-syndication:
+    {syndication}
+u-photo
+    {photo}
+"""
         ,
 
-    'bookmark':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        u-bookmark-of:{book_mark}
-        """
+'bookmark':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+u-bookmark-of:{book_mark}
+"""
     ,
 
-    'checkin':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        p-location:
-            {location}
-        u-syndication:
-            {syndication}
-        """
+'checkin':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+p-location:
+    {location}
+u-syndication:
+    {syndication}
+"""
     ,
-    'repost':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        p-summary:{summary}
-        e-content:{content}
-        dt-published:{date_time}
-        dt-updated:{updated}
-        p-author:{author}
-        p-category:{category}
-        u-repost-of
-            {repost}
-        """
+'repost':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+p-summary:{summary}
+e-content:{content}
+dt-published:{date_time}
+dt-updated:{updated}
+p-author:{author}
+p-category:{category}
+u-repost-of
+    {repost}
+"""
         ,
 
-    'rsvp':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc_name}
-        u-syndication:
-            {syndication}
-        u-in-reply-to:
-            {reply-to}
-        """
+'rsvp':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+p-location:
+    time-zone:{timezone}
+    lat:{lat}
+    long:{long}
+    location-name:{loc_name}
+u-syndication:
+    {syndication}
+u-in-reply-to:
+    {reply-to}
+"""
     ,
-    'event':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        p-summary:{summary}
-        e-content:{content}
-        dt-published:{date_time}
-        p-location:
-            time-zone:{timezone}
-            lat:{lat}
-            long:{long}
-            location-name:{loc_name}
-        u-syndication:
-            {syndication}
-        """
+
+'event':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+p-summary:{summary}
+e-content:{content}
+dt-published:{date_time}
+p-location:
+    time-zone:{timezone}
+    lat:{lat}
+    long:{long}
+    location-name:{loc_name}
+u-syndication:
+    {syndication}
+"""
     ,
-    'video':
-        """
-        p-name:
-            title:{title}
-            slug:{slug}
-        e-content:{content}
-        dt-published:{date_time}
-        p-category:{category}
-        u-url:{url}
-        u-uid:{id}
-        u-syndication:
-            {syndication}
-        u-video
-            {video}
-        """
+
+'video':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+e-content:{content}
+dt-published:{date_time}
+p-category:{category}
+u-url:{url}
+u-uid:{id}
+u-syndication:
+    {syndication}
+u-video
+    {video}
+"""
     ,
-    'audio':
-    """
-    p-name:
-        title:{title}
-        slug:{slug}
-    p-summary:{summary}
-    e-content:{content}
-    dt-published:{date_time}
-    dt-updated:{updated}
-    p-author:{author}
-    p-category:{category}
-    u-url:{url}
-    u-uid:{id}
-    p-location:
-        time-zone:{timezone}
-        lat:{lat}
-        long:{long}
-        location-name:{loc_name}
-    u-syndication:
-        {syndication}
-    u-audio
-        {audio}
-    u-video
-        {video}
-    u-like
-        {like}
-    p-repost
-        {repost}
-    p-featured
-        {featured}
-    """
+
+'audio':
+"""
+p-name:
+    title:{title}
+    slug:{slug}
+p-summary:{summary}
+e-content:{content}
+dt-published:{date_time}
+dt-updated:{updated}
+p-author:{author}
+p-category:{category}
+u-url:{url}
+u-uid:{id}
+p-location:
+    time-zone:{timezone}
+    lat:{lat}
+    long:{long}
+    location-name:{loc_name}
+u-syndication:
+    {syndication}
+u-audio
+    {audio}
+u-video
+    {video}
+u-like
+    {like}
+p-repost
+    {repost}
+p-featured
+    {featured}
+"""
 
 }
 
@@ -689,11 +697,11 @@ def handleMicroPub():
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                # try:
-                img = request.files.get('photo').read()
-                data['img'] = img
-                location = createEntry(data, img)
-                # except: location = createEntry(data)
+                try:
+                    img = request.files.get('photo').read()
+                    data['img'] = img
+                    location = createEntry(data, img)
+                except: location = createEntry(data)
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
