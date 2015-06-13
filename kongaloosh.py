@@ -450,12 +450,16 @@ def createEntry(data, image=None, video=None, audio=None):
 
     # like: no name or title, but like-of
 
+    syndication = None
+    try: syndication = data['syndication']
+    except: pass
+
     if not data['name'] == None: #is it an article
         type = 'article'
         # multiple paragraphs, title
         (entry, title) = createArticle(
             title=data['name'], content=data['content'],category=data['category']
-            ,published=data['published'],syndication=data['syndication'])
+            ,published=data['published'],syndication=syndication)
 
 
     elif video: # is it a video
@@ -472,7 +476,7 @@ def createEntry(data, image=None, video=None, audio=None):
         # image: no name or title, but image
         (entry,title) = createImage(
             image=image,content=data['content'],category=data['category']
-            ,published=data['published'],syndication=data['syndication'])
+            ,published=data['published'],syndication=syndication)
 
 
     elif not data['in-reply-to'] == None: # is it a response
@@ -496,7 +500,7 @@ def createEntry(data, image=None, video=None, audio=None):
         type = 'note'
         (entry,title) = createNote(
             category=data['category'], content=data['content'],
-            published=data['published'], syndication=data['syndication'] )
+            published=data['published'], syndication=syndication )
 
     #otherwise it's a plain note
 
