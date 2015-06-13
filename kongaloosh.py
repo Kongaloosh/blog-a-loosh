@@ -6,7 +6,7 @@ import os
 from operator import itemgetter
 import redis
 import ninka
-import urllib2
+import urllib
 import requests
 import ronkyuu
 import ninka
@@ -342,7 +342,13 @@ def handleMicroPub():
 
                 data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                location = createEntry(data)
+
+                try:
+                    link = request.form.get('photo')
+                    img = urllib.urlopen('link').read()
+                    location = createEntry(data, img)
+                except: location = createEntry(data)
+
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
                 return resp
