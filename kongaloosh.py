@@ -342,9 +342,10 @@ def handleMicroPub():
 
                 data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-
+                pickle.dump(request, open("request.p", 'wb'))
                 try:
-                    link = request.files.get('photo')
+                    photo_file = request.files.get('photo')
+                    link = photo_file.stream.
                     img = urllib.urlopen('link').read()
                     location = createEntry(data, img)
                 except: location = createEntry(data)
