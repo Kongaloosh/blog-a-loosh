@@ -449,7 +449,7 @@ def createEntry(data, image=None, video=None, audio=None):
     # rsvp: reply with p-rsvp status
 
     # like: no name or title, but like-of
-
+    print(data['content'])
     syndication = None
     try: syndication = data['syndication']
     except: pass
@@ -680,7 +680,7 @@ def handleMicroPub():
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
 
-                # data = dict((k, v) for k, v in data.iteritems() if v)
+                data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
                 try:
                     img = request.files.get('photo').read()
