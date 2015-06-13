@@ -345,7 +345,7 @@ def handleMicroPub():
                 pickle.dump(request, open("request.p", 'wb'))
                 try:
                     photo_file = request.files.get('photo')
-                    link = photo_file.stream.
+                    link = photo_file.stream.read()
                     img = urllib.urlopen('link').read()
                     location = createEntry(data, img)
                 except: location = createEntry(data)
