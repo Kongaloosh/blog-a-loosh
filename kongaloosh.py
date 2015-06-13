@@ -687,6 +687,7 @@ def handleMicroPub():
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
+                pickle.dump(data, open('pickledat.p', 'wb'))
                 try:
                     img = request.files.get('photo').read()
                     data['img'] = img
