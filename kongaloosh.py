@@ -482,8 +482,8 @@ def createEntry(data, image=None, video=None, audio=None):
         type = 'image'
         # image: no name or title, but image
         (entry,title) = createImage(
-            image=image,content=data['content'],category=data['category']
-            ,published=data['published'],syndication=syndication)
+            image=image,content=data['content'],category=data['category'],
+            location=data['location'],published=data['published'],syndication=syndication)
 
 
     elif not data['in-reply-to'] == None: # is it a response
@@ -689,14 +689,11 @@ def handleMicroPub():
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                # try:
-                img = request.files.get('photo').read()
-                data['img'] = img
-                location = createEntry(data, img)
-                f = open('file.jpg', 'w')
-                f.write(img)
-                f.close()
-                # except: location = createEntry(data)
+                try:
+                    img = request.files.get('photo').read()
+                    data['img'] = img
+                    location = createEntry(data, img)
+                except: location = createEntry(data)
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
