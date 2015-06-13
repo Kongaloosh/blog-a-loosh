@@ -373,7 +373,7 @@ def createImage(image, category, content, location, published=datetime.now(), sy
         pass
     entry = templates['photo'].format(
         title=title, slug=slug, content=content,
-        datetime=datetime, category=category, syndication=syndication,
+        date_time=published , category=category, syndication=syndication,
         location=location, image=image
     )
 
@@ -395,7 +395,7 @@ def createNote(category, content, published=datetime.now(), syndication=None):
         pass
     entry = templates['note'].format(
         title=title, slug=slug, content=content,
-        published=published, category=category, syndication=syndication
+        date_time=published, category=category, syndication=syndication
     )
 
 
@@ -426,7 +426,7 @@ def createCheckin(category, content, location, published=datetime.now(), syndica
         pass
     entry = templates['checkin'].format(
         title=title, slug=slug, content=content,
-        datetime=datetime, category=category, syndication=syndication,
+        date_time=datetime, category=category, syndication=syndication,
         location=location
     )
 
@@ -496,7 +496,7 @@ def createEntry(data, image=None, video=None, audio=None):
         type = 'note'
         (entry,title) = createNote(
             category=data['category'], content=data['content'],
-            published=['published'], syndication=data['syndication'] )
+            published=data['published'], syndication=data['syndication'] )
 
     #otherwise it's a plain note
 
