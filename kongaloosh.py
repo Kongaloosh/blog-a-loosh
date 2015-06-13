@@ -217,8 +217,7 @@ def createEntry(data, image=None):
         return file_path+"{title}-{num}.p".format(title=title)
     else:
         i = 1
-        saved = False
-        while(not saved):
+        while(True):
             if not os.path.isfile(file_path+"{title}-{num}.p".format(title=title, num=i)):
                 pickle.dump(data, open(file_path+"{title}-{num}.p".format(title=title, num=i), 'wb'))
                 if image:
@@ -226,6 +225,7 @@ def createEntry(data, image=None):
                     file.write(image)
                     file.close()
                 return file_path+"{title}-{num}.p".format(title=title, num=i)
+            else: i += 1
 
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
