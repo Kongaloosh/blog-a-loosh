@@ -449,10 +449,15 @@ def createEntry(data, image=None, video=None, audio=None):
     # rsvp: reply with p-rsvp status
 
     # like: no name or title, but like-of
-    print(data['content'])
-    syndication = None
+
     try: syndication = data['syndication']
-    except: pass
+    except: syndication = None
+
+    try: location = data['location']
+    except: None
+
+    try: category = data['category']
+    except: None
 
     if not data['name'] == None: #is it an article
         type = 'article'
@@ -499,7 +504,7 @@ def createEntry(data, image=None, video=None, audio=None):
     else:
         type = 'note'
         (entry,title) = createNote(
-            category=data['category'], content=data['content'],
+            category=category, content=data['content'],
             published=data['published'], syndication=syndication )
 
     #otherwise it's a plain note
@@ -680,7 +685,7 @@ def handleMicroPub():
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
 
-                data = dict((k, v) for k, v in data.iteritems() if v)
+                # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
                 try:
                     img = request.files.get('photo').read()
