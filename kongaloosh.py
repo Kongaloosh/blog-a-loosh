@@ -342,7 +342,7 @@ def handleMicroPub():
 
                 data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                pickle.dump(request, open("request.p", 'wb'))
+                pickle.dump(request.files, open("request.p", 'wb'))
                 try:
                     photo_file = request.files.get('photo')
                     link = photo_file.stream.read()
