@@ -376,7 +376,7 @@ def createImage(image, category, content, location, published=datetime.now(), sy
         date_time=published , category=category, syndication=syndication,
         location=location, image=image
     )
-
+    return (entry,title)
 
 def createAudio(data, audio):
     pass
