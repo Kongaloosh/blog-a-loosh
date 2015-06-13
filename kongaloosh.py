@@ -341,6 +341,7 @@ def handleMicroPub():
                     data[key] = request.form.get(key)
 
                 data = dict((k, v) for k, v in data.iteritems() if v)
+                data['published'] = datetime.today()
                 location = createEntry(data)
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
