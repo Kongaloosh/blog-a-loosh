@@ -10,7 +10,7 @@ import ninka
 from mf2py.parser import Parser
 from datetime import datetime
 import pickle
-import slugify
+from slugify import slugify
 
 # configuration
 DATABASE = '/tmp/kongaloosh.db'
