@@ -342,14 +342,15 @@ def handleMicroPub():
 
                 data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                pickle.dump(request, open("request.p", 'wb'))
-                try:
-                    photo_file = request.files.get('photo')
-                    link = photo_file.stream.read()
-                    img = urllib.urlopen('link').read()
-                    location = createEntry(data, img)
-                except: location = createEntry(data)
-
+                # pickle.dump(request, open("request.p", 'wb'))
+                # try:
+                #     photo_file = request.files.get('photo')
+                #     link = photo_file.stream.read()
+                #     img = urllib.urlopen('link').read()
+                #     location = createEntry(data, img)
+                # except: location = createEntry(data)
+                
+                location = createEntry(data)
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
                 return resp
