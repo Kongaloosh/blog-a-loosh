@@ -395,7 +395,7 @@ def createNote(category, content, published=datetime.now(), syndication=None):
         pass
     entry = templates['note'].format(
         title=title, slug=slug, content=content,
-        datetime=published, category=category, syndication=syndication
+        published=published, category=category, syndication=syndication
     )
 
 
