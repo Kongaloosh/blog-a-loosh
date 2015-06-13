@@ -482,8 +482,8 @@ def createEntry(data, image=None, video=None, audio=None):
         type = 'image'
         # image: no name or title, but image
         (entry,title) = createImage(
-            image=image,content=data['content'],category=data['category'],
-            location=data['location'],published=data['published'],syndication=syndication)
+            image=image, category=category, content=data['content'],
+            location=location, published=data['published'], syndication=syndication)
 
 
     elif not data['in-reply-to'] == None: # is it a response
