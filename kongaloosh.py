@@ -3,6 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, make_response, Response
 from contextlib import closing
 import os
+from operator import itemgetter
 import redis
 import ninka
 import urllib2
@@ -291,10 +292,7 @@ def show_entries():
                 p = pickle.load(open(subdir+os.sep+file))
                 entries.append(p)
         if len(entries) >= 10: break
-
-        f = open('entries', 'wb')
-        f.write(str(entries))
-        f.close()
+        entries = sorted(entries, key=itemgetter('published'), reverse=True)
 
     return render_template('show_entries.html', entries=entries)
 
