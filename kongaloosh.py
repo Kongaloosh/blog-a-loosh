@@ -361,7 +361,7 @@ def createVideo(data, video):
     pass
 
 
-def createImage(image, category, content, location, published=datetime.date(), syndication=None):
+def createImage(image, category, content, location, published=datetime.now(), syndication=None):
     if content == None:
         raise "no content in submission"
 
@@ -382,7 +382,7 @@ def createAudio(data, audio):
     pass
 
 
-def createNote(category, content, published=datetime.date(), syndication=None):
+def createNote(category, content, published=datetime.now(), syndication=None):
 
     if content == None:
         raise "no content in submission"
@@ -399,7 +399,7 @@ def createNote(category, content, published=datetime.date(), syndication=None):
     )
 
 
-def createArticle(title, content, category, published=datetime.date(), syndication=None):
+def createArticle(title, content, category, published=datetime.now(), syndication=None):
 
     if content == None or content == None:
         raise "Incomplete submission"
@@ -414,7 +414,7 @@ def createArticle(title, content, category, published=datetime.date(), syndicati
         date_time=published,category=category, syndication=syndication
     )
 
-def createCheckin(category, content, location, published=datetime.date(), syndication=None):
+def createCheckin(category, content, location, published=datetime.now(), syndication=None):
     if content == None or location == None:
         raise "no content in submission"
 
@@ -450,10 +450,8 @@ def createEntry(data, image=None, video=None, audio=None):
 
     # like: no name or title, but like-of
 
-    try: type = data['h']
-    except: type = 'etc'
-
     if not data['name'] == None: #is it an article
+        type = 'article'
         # multiple paragraphs, title
         (entry, title) = createArticle(
             title=data['name'], content=data['content'],category=data['category']
@@ -470,6 +468,7 @@ def createEntry(data, image=None, video=None, audio=None):
 
 
     elif image: # is it an image
+        type = 'image'
         # image: no name or title, but image
         (entry,title) = createImage(
             image=image,content=data['content'],category=data['category']
@@ -494,6 +493,7 @@ def createEntry(data, image=None, video=None, audio=None):
         # check-in: note with location
 
     else:
+        type = 'note'
         (entry,title) = createNote(
             category=data['category'], content=data['content'],
             published=['published'], syndication=data['syndication'] )
