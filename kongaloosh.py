@@ -153,28 +153,6 @@ def checkAccessToken(access_token):
     client_id=https://example.com/
     """
 
-    '''
-        access_token = 'a'
-        headers = {'code':access_token, 'redirect_uri':'kongaloosh.com/auth', 'client_id':'https://example.com/'}
-        request = requests.post(url="https://indieauth.com/auth/", headers=headers)
-        handler = urllib2.HTTPHandler()
-        opener = urllib2.build_opener(handler)
-        request = urllib2.Request(url="https://indieauth.com/auth/")
-
-        request.add_header("Content-Type",'application/json')
-        request.get_method = lambda: "GET"
-
-        try:
-            connection = opener.open(request)
-        except urllib2.HTTPError,e:
-            connection = e
-
-        access_token = ""
-        connection = httplib.HTTPSConnection("https://indieauth.com",80)
-        headers = {'code':access_token, 'redirect_uri':'kongaloosh.com/auth/', 'client_id':'https://example.com/'}
-        connection.request("POST","/auth/",headers)
-        response = connection.getresponse()
-    '''
     f1=open('testfile', 'w+')
     f1.write('ninaaa')
     f1.close()
@@ -208,23 +186,25 @@ def createEntry(data, image=None):
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=type)
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
-    if not os.path.isfile(file_path+"{title}.p".format(title=title)):
-        pickle.dump(data, open(file_path+"{title}.p".format(title=title),'wb'))
+
+    total_path = file_path + file_path+"{title}.p".format(title=title)
+    if not os.path.isfile(total_path):
+        pickle.dump(data, open(total_path,'wb'))
         if image:
-            file = open(file_path+"{title}-img.jpg".format(title=title),'w')
+            file = open(total_path+"-img.jpg",'w')
             file.write(image)
             file.close()
-        return file_path+"{title}-{num}.p".format(title=title)
+        return total_path
     else:
         i = 1
         while(True):
-            if not os.path.isfile(file_path+"{title}-{num}.p".format(title=title, num=i)):
-                pickle.dump(data, open(file_path+"{title}-{num}.p".format(title=title, num=i), 'wb'))
+            if not os.path.isfile(total_path+"-{num}.p".format(num=i)):
+                pickle.dump(data, open(total_path+"-{num}.p".format(num=i), 'wb'))
                 if image:
-                    file = open(file_path+"{title}-{num}.p".format(title=title, num=i),'w')
+                    file = open(total_path+"-{num}-img.p".format(num=i),'w')
                     file.write(image)
                     file.close()
-                return file_path+"{title}-{num}.p".format(title=title, num=i)
+                return total_path+"-{num}.p".format(num=i)
             else: i += 1
 
 
@@ -304,9 +284,8 @@ def teardown_request(exception):
 def show_entries():
     entries = []
     for subdir, dir, files  in os.walk("data", topdown=True):
-        print(dir)
+        dir.sort(reverse=True)
         for file in files:
-            print(file)
             if file.endswith('.p'):
                 p = pickle.load(open(subdir+os.sep+file))
                 entries.append(p)
