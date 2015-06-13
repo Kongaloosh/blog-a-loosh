@@ -397,7 +397,7 @@ def createNote(category, content, published=datetime.now(), syndication=None):
         title=title, slug=slug, content=content,
         date_time=published, category=category, syndication=syndication
     )
-
+    return (entry,title)
 
 def createArticle(title, content, category, published=datetime.now(), syndication=None):
 
@@ -413,6 +413,7 @@ def createArticle(title, content, category, published=datetime.now(), syndicatio
         title=title, slug=slug, content=content,
         date_time=published,category=category, syndication=syndication
     )
+    return (entry,title)
 
 def createCheckin(category, content, location, published=datetime.now(), syndication=None):
     if content == None or location == None:
@@ -429,6 +430,7 @@ def createCheckin(category, content, location, published=datetime.now(), syndica
         date_time=datetime, category=category, syndication=syndication,
         location=location
     )
+    return (entry,title)
 
 
 def createReply(data):
