@@ -376,20 +376,36 @@ def createAudio(data, audio):
 
 
 def createNote(category, content, published=datetime.date(), syndication=None):
+
     if content == None:
         raise "no content in submission"
 
     title = content.split('.')[0]
     slug = slugify(title)
 
-    if category:
-        entry = templates['note'].format(title=title, slug=slug, datetime=datetime, category=category, syndication=syndication)
-    else: # todo: Keyword extraction.
+    if category == None:
+        # todo: Keyword extraction.
         pass
+    entry = templates['note'].format(
+        title=title, slug=slug, content=content,
+        datetime=datetime, category=category, syndication=syndication
+    )
 
-def createArticle(title, content, published=datetime.date()):
-    pass
 
+def createArticle(title, content, category, published=datetime.date(), syndication=None):
+
+    if content == None or content == None:
+        raise "Incomplete submission"
+
+    slug = slugify(title)
+
+    if category == None:
+        # todo: Keyword extraction.
+        pass
+    entry = templates['article'].format(
+        title=title, slug=slug, content=content,
+        date_time=published,category=category, syndication=syndication
+    )
 
 def createCheckin(data):
     pass
