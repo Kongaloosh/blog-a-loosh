@@ -189,9 +189,9 @@ def createEntry(data, image=None):
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
 
-    total_path =  file_path+"{title}.p".format(title=title)
-    if not os.path.isfile(total_path):
-        pickle.dump(data, open(total_path,'wb'))
+    total_path =  file_path+"{title}".format(title=title)
+    if not os.path.isfile(total_path+".p"):
+        pickle.dump(data, open(total_path+".p",'wb'))
         if image:
             file = open(total_path+"-img.jpg",'w')
             file.write(image)
@@ -342,15 +342,14 @@ def handleMicroPub():
 
                 data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                # pickle.dump(request, open("request.p", 'wb'))
-                # try:
-                #     photo_file = request.files.get('photo')
-                #     link = photo_file.stream.read()
-                #     img = urllib.urlopen('link').read()
-                #     location = createEntry(data, img)
-                # except: location = createEntry(data)
-                
-                location = createEntry(data)
+                pickle.dump(request, open("request.p", 'wb'))
+                try:
+                    photo_file = request.files.get('photo')
+                    link = photo_file.stream.read()
+                    img = urllib.urlopen('link').read()
+                    location = createEntry(data, img)
+                except: location = createEntry(data)
+
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
                 return resp
