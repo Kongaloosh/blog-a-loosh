@@ -184,10 +184,11 @@ def createEntry(data, image=None):
 
     time=datetime.now()
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=type)
+
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
 
-    total_path = file_path + file_path+"{title}.p".format(title=title)
+    total_path =  file_path+"{title}.p".format(title=title)
     if not os.path.isfile(total_path):
         pickle.dump(data, open(total_path,'wb'))
         if image:
