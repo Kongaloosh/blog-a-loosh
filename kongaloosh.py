@@ -344,7 +344,7 @@ def handleMicroPub():
                 data['published'] = datetime.today()
 
                 try:
-                    link = request.form.get('photo')
+                    link = request.files.get('photo')
                     img = urllib.urlopen('link').read()
                     location = createEntry(data, img)
                 except: location = createEntry(data)
