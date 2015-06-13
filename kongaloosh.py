@@ -4,17 +4,12 @@ from flask import Flask, request, session, g, redirect, url_for, \
 from contextlib import closing
 import os
 from operator import itemgetter
-import redis
-import ninka
-import urllib
 import requests
 import ronkyuu
 import ninka
-import datetime
 from mf2py.parser import Parser
 from datetime import datetime
 import pickle
-from urlparse import urlparse, ParseResult
 
 # configuration
 DATABASE = '/tmp/kongaloosh.db'
@@ -22,6 +17,378 @@ DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'Anubis'
 PASSWORD = 'Munc4kin))'
+
+templates = {
+    'note':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        """
+        ,
+    'article':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-comment:
+            {comment}
+        p-featured
+            {featured}
+        """,
+
+    'reply':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        u-photo
+            {photo}
+        u-audio
+            {audio}
+        u-video
+            {video}
+        p-repost
+            {repost}
+        p-featured
+            {featured}
+        """
+
+        ,
+
+    'like':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+
+        u-like-of
+            {likes}
+        """
+        ,
+
+        'photo':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        u-like-of
+            {likes}
+        u-repost-of
+            {repost}
+        u-photo
+            {photo}
+        u-audio
+            {audio}
+        u-video
+            {video}
+        u-like
+            {like}
+        p-repost
+            {repost}
+        p-featured
+            {featured}
+        """,
+
+        'bookmark':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        """
+        ,
+
+        'checkin':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        """
+        ,
+        'repost':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        u-repost-of
+            {repost}
+        """,
+
+        'rsvp':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        u-like-of
+            {likes}
+        u-repost-of
+            {repost}
+        u-photo
+            {photo}
+        u-audio
+            {audio}
+        u-video
+            {video}
+        u-like
+            {like}
+        p-repost
+            {repost}
+        p-featured
+            {featured}
+        """
+        ,
+        'event':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        u-like-of
+            {likes}
+        u-repost-of
+            {repost}
+        u-photo
+            {photo}
+        u-audio
+            {audio}
+        u-video
+            {video}
+        u-like
+            {like}
+        p-repost
+            {repost}
+        p-featured
+            {featured}
+        """
+        ,
+        'video':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        u-like-of
+            {likes}
+        u-repost-of
+            {repost}
+        u-photo
+            {photo}
+        u-audio
+            {audio}
+        u-video
+            {video}
+        u-like
+            {like}
+        p-repost
+            {repost}
+        p-featured
+            {featured}
+        """
+        ,
+        'audio':
+        """
+        p-name:
+            title:{title}
+            slug:{title-slug}
+        p-summary:{summary}
+        e-content:{content}
+        dt-published:{date-time}
+        dt-updated:{updated}
+        p-author:{author}
+        p-category:{category}
+        u-url:{url}
+        u-uid:{id}
+        p-location:
+            time-zone:{timezone}
+            lat:{lat}
+            long:{long}
+            location-name:{loc-name}
+        u-syndication:
+            {syndication}
+        u-in-reply-to:
+            {reply-to}
+        u-comment:
+            {comment}
+        u-like-of
+            {likes}
+        u-repost-of
+            {repost}
+        u-photo
+            {photo}
+        u-audio
+            {audio}
+        u-video
+            {video}
+        u-like
+            {like}
+        p-repost
+            {repost}
+        p-featured
+            {featured}
+        """
+
+}
+
+
 
 # create our little application :)
 app = Flask(__name__)
@@ -161,27 +528,58 @@ def checkAccessToken(access_token):
     return r['status'] == requests.codes.ok
 
 
-
-def processMicropub(data):
+def createEntry(data, image=None, video=None, audio=None):
     '''
-        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
+         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
     '''
-    dict((k, v) for k, v in data.iteritems() if v)
-    if createEntry(data):
+    # event: 2deep4me
 
-        return make_response("", 200)
-    else:
-        return ('Unable to process Micropub %s' % request.method, 400, [])
+    # rsvp: reply with p-rsvp status
+
+    # like: no name or title, but like-of
 
 
-def createEntry(data, image=None):
 
     try: type = data['h']
     except: type = 'etc'
 
-    try: title = data['name']
-    except: title = 'note'
+    try: #is it an article
+        title = data['name']
+        type = 'article'
+        # multiple paragraphs, title
+
+    except: pass
+    if video: # is it a video
+        # video: no name or title, but video
+        type = 'video'
+    elif audio: # is it audio
+        type = 'audio'
+    elif image: # is it an image
+        type = 'image'
+        # image: no name or title, but image
+
+    try: # is it a response
+        data['in-reply-to']
+        type = 'comment'
+        # reply: no name or title, but in-reply-to
+    except:pass
+
+    try: # is it a repost
+        data['repost of']
+        type = 'repost'
+        # u-repost-of
+    except: pass
+
+    try:# is it a checkin
+        data['location']
+        type = 'checkin'
+        # check-in: note with location
+
+    except: pass
+
+    #otherwise it's a plain note
+
 
     time=datetime.now()
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=type)
@@ -296,6 +694,17 @@ def show_entries():
 
     return render_template('show_entries.html', entries=entries)
 
+
+@app.route('/<year>/<month>/<day>/<type>/<name>')
+def profile(year, month, day, type, name):
+    # try:
+    entry = "data/{year}/{month}/{day}/{type}/{name}".format(year=year, month=month, day=day, type=type, name=name)
+    pickle.load(open(entry+".p", "wb"))
+    return render_template('show_entries.html', entries=entry)
+    # except:
+    #     return 404
+
+
 @app.route('/add', methods=['POST'])
 def add_entry():
     if not session.get('logged_in'):
@@ -305,6 +714,7 @@ def add_entry():
     g.db.commit()
     flash('New entry was successfully posted')
     return redirect(url_for('show_entries'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -319,6 +729,7 @@ def login():
             flash('You were logged in')
             return redirect(url_for('show_entries'))
     return render_template('login.html', error=error)
+
 
 @app.route('/logout')
 def logout():
@@ -336,7 +747,8 @@ def handleMicroPub():
             access_token = access_token.replace('Bearer ', '')
             if checkAccessToken(access_token) or True:
                 data = {}
-                for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                for key in (
+                        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
                     data[key] = request.form.get(key)
 
