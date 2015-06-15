@@ -383,7 +383,8 @@ def createImage(image, category, content, location, published=datetime.now(), sy
     entry = templates['photo'].format(
         title=title, slug=slug, content=content,
         date_time=published , category=category, syndication=syndication,
-        location=location, photo=image
+        location=location, photo=+"data/{year}/{month}/{day}/image/{title}/{title}".format(
+            year=published.year, month=published.month, day=published.year, title=slug)
     )
     return (entry,slug)
 
@@ -550,7 +551,7 @@ def createEntry(data, image=None, video=None, audio=None):
                 if image:
                     if not os.path.exists(file_path+title+"-{num}".format(num=i)):
                         os.mkdir(file_path+title+"-{num}".format(num=i))
-                    file = open(total_path+"-{num}/"+title+".jpg".format(num=i),'w')
+                    file = open(total_path+"-{num}".format(num=i) + "/"+title+".jpg".format(num=i),'w')
                     file.write(image)
                     file.close()
                 return total_path+"-{num}".format(num=i)
@@ -703,11 +704,11 @@ def handleMicroPub():
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                # try:
-                img = request.files.get('photo').read()
-                data['img'] = img
-                location = createEntry(data, img)
-                # except: location = createEntry(data)
+                try:
+                    img = request.files.get('photo').read()
+                    data['img'] = img
+                    location = createEntry(data, img)
+                except: location = createEntry(data)
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
                 resp.status_code = 201
