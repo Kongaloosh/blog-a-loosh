@@ -544,7 +544,7 @@ def createEntry(data, image=None, video=None, audio=None):
         i = 1
         while(True):
             if not os.path.isfile(total_path+"-{num}.md".format(num=i)):
-                file= open(total_path+'-{num}'.format(num=i), 'wb')
+                file= open(total_path+'-{num}.md'.format(num=i), 'wb')
                 file.write(entry)
                 file.close()
                 if image:
