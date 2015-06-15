@@ -460,6 +460,7 @@ def createEntry(data, image=None, video=None, audio=None):
     # rsvp: reply with p-rsvp status
 
     # like: no name or title, but like-of
+    title = ''
 
     try: syndication = data['syndication']
     except: syndication = None
@@ -523,7 +524,7 @@ def createEntry(data, image=None, video=None, audio=None):
 
     time=datetime.now()
     file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=type)
-
+    pickle.dump(open(title, 'gawd', 'wb'))
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
     total_path =  file_path+"{title}".format(title=title)
