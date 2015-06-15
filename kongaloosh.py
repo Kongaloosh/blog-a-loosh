@@ -533,9 +533,7 @@ def createEntry(data, image=None, video=None, audio=None):
         file.write(entry)
         file.close()
         if image:
-            if not os.path.exists(file_path+title):
-                os.mkdir(file_path+title)
-            file = open(total_path+title+"/"+title+".jpg",'w')
+            file = open(total_path+title+".jpg",'w')
             file.write(image)
             file.close()
         return total_path
@@ -548,9 +546,7 @@ def createEntry(data, image=None, video=None, audio=None):
                 file.write(entry)
                 file.close()
                 if image:
-                    if not os.path.exists(file_path+title+"-{num}".format(num=i)):
-                        os.mkdir(file_path+title+"-{num}".format(num=i))
-                    file = open(file_path+title+"-{num}".format(num=i)+ "/"+title+"-{num}.jpg".format(num=i),'wb')
+                    file = open(total_path+"-{num}.jpg".format(num=i),'wb')
                     file.write(image)
                     file.close()
                 return total_path+"-{num}".format(num=i)
