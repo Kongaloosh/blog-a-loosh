@@ -550,7 +550,7 @@ def createEntry(data, image=None, video=None, audio=None):
                 if image:
                     if not os.path.exists(file_path+title+"-{num}".format(num=i)):
                         os.mkdir(file_path+title+"-{num}".format(num=i))
-                    file = open(file_path+title+"-{num}".format(num=i)+ "/"+title+"-{num}.jpg".format(num=i),'w')
+                    file = open(file_path+title+"-{num}".format(num=i)+ "/"+title+"-{num}.jpg".format(num=i),'wb')
                     file.write(image)
                     file.close()
                 return total_path+"-{num}".format(num=i)
