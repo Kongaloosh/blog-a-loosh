@@ -370,6 +370,7 @@ def createVideo(data, video):
 
 
 def createImage(image, category, content, location, published=datetime.now(), syndication=None):
+
     if content == None:
         raise "no content in submission"
 
@@ -384,7 +385,7 @@ def createImage(image, category, content, location, published=datetime.now(), sy
         date_time=published , category=category, syndication=syndication,
         location=location, photo=image
     )
-    return (entry,title)
+    return (entry,slug)
 
 def createAudio(data, audio):
     pass
