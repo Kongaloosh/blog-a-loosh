@@ -405,7 +405,7 @@ def createNote(category, content, published=datetime.now(), syndication=None):
         title=title, slug=slug, content=content,
         date_time=published, category=category, syndication=syndication
     )
-    return (entry,title)
+    return (entry,slug)
 
 def createArticle(title, content, category, published=datetime.now(), syndication=None):
 
@@ -421,7 +421,7 @@ def createArticle(title, content, category, published=datetime.now(), syndicatio
         title=title, slug=slug, content=content,
         date_time=published,category=category, syndication=syndication
     )
-    return (entry,title)
+    return (entry,slug)
 
 def createCheckin(category, content, location, published=datetime.now(), syndication=None):
     if content == None or location == None:
@@ -438,7 +438,7 @@ def createCheckin(category, content, location, published=datetime.now(), syndica
         date_time=datetime, category=category, syndication=syndication,
         location=location
     )
-    return (entry,title)
+    return (entry,slug)
 
 
 def createReply(data):
@@ -525,26 +525,30 @@ def createEntry(data, image=None, video=None, audio=None):
 
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
-
     total_path =  file_path+"{title}".format(title=title)
-    if not os.path.isfile(total_path+".p"):
-        file = open(total_path, 'wb')
+    if not os.path.isfile(total_path+'.md'):
+        file = open(total_path+".md", 'wb')
         file.write(entry)
         file.close()
         if image:
-            file = open(total_path+"-img.jpg",'w')
+            if not os.path.exists(file_path+title):
+                os.mkdir(file_path+title)
+            file = open(total_path+title+"/"+title+".jpg",'w')
             file.write(image)
             file.close()
         return total_path
+
     else:
         i = 1
         while(True):
-            if not os.path.isfile(total_path+"-{num}.p".format(num=i)):
-                file = open(total_path, 'wb')
-                file.write(entry+'-{num}'.format(num=i))
+            if not os.path.isfile(total_path+"-{num}.md".format(num=i)):
+                file= open(total_path+'-{num}'.format(num=i), 'wb')
+                file.write(entry)
                 file.close()
                 if image:
-                    file = open(total_path+"-{num}-img.jpg".format(num=i),'w')
+                    if not os.path.exists(file_path+title+"-{num}".format(num=i)):
+                        os.mkdir(file_path+title+"-{num}".format(num=i))
+                    file = open(total_path+"-{num}/"+title+".jpg".format(num=i),'w')
                     file.write(image)
                     file.close()
                 return total_path+"-{num}".format(num=i)
