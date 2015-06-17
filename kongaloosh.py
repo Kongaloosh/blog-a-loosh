@@ -596,6 +596,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 def file_parser(f):
     f = open(f, 'r')
     str = f.read()
+    pickle.dump(str, open("lump", 'r'))
     e = {}
     try: e['title'] = re.search('(?<=title:)(.)*', str).group()
     except: pass
