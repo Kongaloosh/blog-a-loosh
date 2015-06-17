@@ -18,7 +18,6 @@ DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'Anubis'
 PASSWORD = 'Munc4kin))'
-
 templates = {
 
 'note':
@@ -230,6 +229,7 @@ p-featured
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
+app.config['STATIC_FOLDER'] = 'data'
 cfg = None
 
 
