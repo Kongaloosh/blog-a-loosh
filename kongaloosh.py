@@ -595,6 +595,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
 def file_parser(filename):
     f = open(filename, 'r')
+    str = f.read()
     e = {}
     try: e['title'] = re.search('(?<=title:)(.)*', str).group()
     except: pass
@@ -672,8 +673,7 @@ def show_entries():
                 except:pass
                 entries.append(e)
         if len(entries) >= 10: break
-        entries = sorted(entries, key=itemgetter('dt-published'), reverse=True)
-
+    entries = sorted(entries, key=itemgetter('dt-published'), reverse=True)
     return render_template('show_entries.html', entries=entries)
 
 
