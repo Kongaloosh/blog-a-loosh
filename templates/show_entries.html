@@ -20,11 +20,11 @@
       <article class="hentry h-entry">
           <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
           <h2 class="p-name">{{ entry.title }}</h2>
-          <p class="p-summary e-content">{{ entry.p-content|safe }}</p>
+          <p class="p-summary e-content">{{ entry.p-content}}</p>
           <p class="dt-published">
-              {{entry.published.day | safe}}/{{entry.published.month | safe}}/{{entry.published.year | safe}}
+              {{entry.published.day}}/{{entry.published.month}}/{{entry.published.year}}
 
-              {{entry.published.hour | safe}}:{{entry.published.minute | safe}}
+              {{entry.published.hour}}:{{entry.published.minute}}
           </p>
       </article>
   {% else %}
