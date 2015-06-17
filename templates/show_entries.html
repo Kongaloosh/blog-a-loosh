@@ -23,6 +23,7 @@
           <p>{{entry.summary}}</p>
           <p>{{entry.content}}</p>
           <img src="{{ url_for('static', filename = '{{entry.photo}}') }}">
+          {{entry.photo}}
           <div class="entry-footer">
               <time>{{entry.published}}</time>
               <p>{{entry.location_name}}:{{entry.lat}},{{entry.long}}</p>
