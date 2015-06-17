@@ -674,7 +674,8 @@ def show_entries():
                 entries.append(e)
         if len(entries) >= 10: break
     entries = sorted(entries, key=itemgetter('dt-published'), reverse=True)
-    return render_template('show_entries.html', entries=entries)
+    e = {'title':'boogaloo'}
+    return render_template('show_entries.html', entries=e)
 
 
 @app.route('/<year>/<month>/<day>/<type>/<name>')
