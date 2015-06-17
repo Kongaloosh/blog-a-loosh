@@ -229,7 +229,7 @@ p-featured
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
-app.config['STATIC_FOLDER'] = 'data'
+app.config['STATIC_FOLDER'] = ''
 cfg = None
 
 

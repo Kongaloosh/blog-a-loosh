@@ -22,7 +22,7 @@
           <h2 class="p-name"><a href="{{entry.url}}">{{ entry.title }}</a></h2>
           <p>{{entry.summary}}</p>
           <p>{{entry.content}}</p>
-          <img src="{{ url_for('static', filename = '{{entry.photo}}') }}">
+          <img src="{{ url_for('static', filename = 'entry.name') }}">
           {{entry.photo}}
           <div class="entry-footer">
               <time>{{entry.published}}</time>
