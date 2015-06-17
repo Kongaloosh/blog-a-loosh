@@ -595,7 +595,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
 def file_parser(f):
     f = open(f, 'r')
-    str = f.readall()
+    str = f.read()
     e = {}
     try: e['title'] = re.search('(?<=title:)(.)*', str).group()
     except: pass
