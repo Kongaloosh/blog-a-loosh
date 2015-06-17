@@ -673,7 +673,7 @@ def show_entries():
                 except:pass
                 entries.append(e)
         if len(entries) >= 10: break
-        entries = sorted(entries, key=itemgetter('published'), reverse=True)
+        entries = sorted(entries, key=itemgetter('dt-published'), reverse=True)
 
     return render_template('show_entries.html', entries=entries)
 
