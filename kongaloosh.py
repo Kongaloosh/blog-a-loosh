@@ -533,7 +533,7 @@ def createEntry(data, image=None, video=None, audio=None):
         file.write(entry)
         file.close()
         if image:
-            file = open(total_path+title+".jpg",'w')
+            file = open(total_path+".jpg",'w')
             file.write(image)
             file.close()
         return total_path
