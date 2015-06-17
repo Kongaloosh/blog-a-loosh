@@ -667,8 +667,7 @@ def show_entries():
         dir.sort(reverse=True)
         for file in files:
             if file.endswith('.md'):
-                f = open(subdir+os.sep+file)
-                e = file_parser(f)
+                e = file_parser(f=subdir+os.sep+file)
                 try:
                     e['photo'] = subdir + '/' + file.split('.')[0]+".jpg" # get the actual file
                 except:pass
