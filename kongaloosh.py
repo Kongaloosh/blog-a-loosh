@@ -11,7 +11,7 @@ from mf2py.parser import Parser
 from datetime import datetime
 import pickle
 from slugify import slugify
-
+import re
 # configuration
 DATABASE = '/tmp/kongaloosh.db'
 DEBUG = True
@@ -593,6 +593,41 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
     return result
 
 
+def file_parser(self, f):
+    f = open(f, 'r')
+    str = f.readall()
+    e = {}
+    try: e['title'] = re.search('(?<=title:)(.)*', str).group()
+    except: pass
+    try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
+    except: pass
+    try: e['p-summary'] = re.search('(?<=p-summary:)(.)*', str).group()
+    except: pass
+    try: e['e-content'] = re.search('(?<=e-content:)(.)*', str).group()
+    except: pass
+    try: e['dt-published'] = re.search('(?<=dt-published:)(.)*', str).group()
+    except: pass
+    try: e['p-author'] = re.search('(?<=p-author:)(.)*', str).group()
+    except: pass
+    try: e['p-category'] = re.search('(?<=p-category:)(.)*', str).group()
+    except: pass
+    try: e['u-url'] = re.search('(?<=u-url:)(.)*', str).group()
+    except: pass
+    try: e['u-uid'] = re.search('(?<=u-uid:)(.)*', str).group()
+    except: pass
+    try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
+    except: pass
+    try: e['lat'] = re.search('(?<=lat:)(.)*', str).group()
+    except: pass
+    try: e['long'] = re.search('(?<=long:)(.)*', str).group()
+    except: pass
+    try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
+    except: pass
+    try: e['location-name'] = re.search('(?<=location-name:)(.)*', str).group()
+    except: pass
+
+    return e
+
 def validURL(targetURL):
     """
         Validate the target URL exists.
@@ -631,9 +666,13 @@ def show_entries():
     for subdir, dir, files  in os.walk("data", topdown=True):
         dir.sort(reverse=True)
         for file in files:
-            if file.endswith('.p'):
-                p = pickle.load(open(subdir+os.sep+file))
-                entries.append(p)
+            if file.endswith('.md'):
+                f = open(subdir+os.sep+file)
+                e = file_parser(f)
+                try:
+                    e['photo'] = subdir + '/' + file.split('.')[0]+".jpg" # get the actual file
+                except:pass
+                entries.append(e)
         if len(entries) >= 10: break
         entries = sorted(entries, key=itemgetter('published'), reverse=True)
 

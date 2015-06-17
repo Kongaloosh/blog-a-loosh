@@ -19,8 +19,8 @@
     <li>
       <article class="hentry h-entry">
           <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-          <h2 class="p-name">{{ entry.name }}</h2>
-          <p class="p-summary e-content">{{ entry.content|safe }}</p>
+          <h2 class="p-name">{{ entry.title }}</h2>
+          <p class="p-summary e-content">{{ entry.p-content|safe }}</p>
           <p class="dt-published">
               {{entry.published.day | safe}}/{{entry.published.month | safe}}/{{entry.published.year | safe}}
 
