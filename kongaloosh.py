@@ -1,6 +1,6 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash, make_response, Response
+     abort, render_template, flash, make_response, Response, send_file
 from contextlib import closing
 import os
 from operator import itemgetter
@@ -229,7 +229,7 @@ p-featured
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
-app.config['STATIC_FOLDER'] = ''
+app.config['STATIC_FOLDER'] = os.getcwd()
 cfg = None
 
 
@@ -678,7 +678,13 @@ def show_entries():
     return render_template('show_entries.html', entries=entries)
 
 
-@app.route('/<year>/<month>/<day>/<type>/<name>')
+@app.route('/data/<year>/<month>/<day>/image/<name>')
+def image_fetcher(year, month, day, name):
+    entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
+    img = open(entry)
+    return send_file(img)
+
+@app.route('/entry/<year>/<month>/<day>/<type>/<name>')
 def profile(year, month, day, type, name):
     # try:
     entry = "data/{year}/{month}/{day}/{type}/{name}".format(year=year, month=month, day=day, type=type, name=name)

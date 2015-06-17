@@ -22,11 +22,14 @@
           <h2 class="p-name"><a href="{{entry.url}}">{{ entry.title }}</a></h2>
           <p>{{entry.summary}}</p>
           <p>{{entry.content}}</p>
-          <img src="{{ url_for('static', filename = 'entry.name') }}">
-          {{entry.photo}}
+          <img src="kongaloosh.com/{{entry.photo}}"
+                  width="500px" height="500px">
           <div class="entry-footer">
               <time>{{entry.published}}</time>
-              <p>{{entry.location_name}}:{{entry.lat}},{{entry.long}}</p>
+              <!-- we use an if to prevent commas and such from showing if undefined -->
+              {% if entry.location_name is defined %}
+                <p>{{entry.location_name}}:{{entry.lat}},{{entry.long}}</p>
+              {% endif %}
           </div>
       </article>
   {% else %}
