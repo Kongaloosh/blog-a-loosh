@@ -674,8 +674,8 @@ def show_entries():
                 entries.append(e)
         if len(entries) >= 10: break
     entries = sorted(entries, key=itemgetter('dt-published'), reverse=True)
-    e = {'title':'boogaloo'}
-    return render_template('show_entries.html', entries=e)
+    pickle.dump(entries, open('entries', 'wb'))
+    return render_template('show_entries.html', entries=entries)
 
 
 @app.route('/<year>/<month>/<day>/<type>/<name>')
