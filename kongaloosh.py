@@ -601,19 +601,19 @@ def file_parser(filename):
     except: pass
     try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
     except: pass
-    try: e['p-summary'] = re.search('(?<=p-summary:)(.)*', str).group()
+    try: e['summary'] = re.search('(?<=p-summary:)(.)*', str).group()
     except: pass
-    try: e['e-content'] = re.search('(?<=e-content:)(.)*', str).group()
+    try: e['content'] = re.search('(?<=e-content:)(.)*', str).group()
     except: pass
-    try: e['dt-published'] = re.search('(?<=dt-published:)(.)*', str).group()
+    try: e['published'] = re.search('(?<=dt-published:)(.)*', str).group()
     except: pass
-    try: e['p-author'] = re.search('(?<=p-author:)(.)*', str).group()
+    try: e['author'] = re.search('(?<=p-author:)(.)*', str).group()
     except: pass
-    try: e['p-category'] = re.search('(?<=p-category:)(.)*', str).group()
+    try: e['category'] = re.search('(?<=p-category:)(.)*', str).group()
     except: pass
-    try: e['u-url'] = re.search('(?<=u-url:)(.)*', str).group()
+    try: e['url'] = re.search('(?<=u-url:)(.)*', str).group()
     except: pass
-    try: e['u-uid'] = re.search('(?<=u-uid:)(.)*', str).group()
+    try: e['uid'] = re.search('(?<=u-uid:)(.)*', str).group()
     except: pass
     try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
     except: pass
@@ -623,7 +623,7 @@ def file_parser(filename):
     except: pass
     try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
     except: pass
-    try: e['location-name'] = re.search('(?<=location-name:)(.)*', str).group()
+    try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
     except: pass
 
     return e
