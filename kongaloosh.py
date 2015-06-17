@@ -330,7 +330,7 @@ def processVouch(sourceURL, targetURL, vouchDomain):
     vouchFile = os.path.join(cfg['basepath'], 'vouch_domains.txt')
     with open(vouchFile, 'r') as h:
         vouchDomains = []
-        for domain in h.readlines():
+        for domain in h.read():
             vouchDomains.append(domain.strip().lower())
 
     if vouchDomain.lower() in vouchDomains:
