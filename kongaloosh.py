@@ -593,7 +593,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
     return result
 
 
-def file_parser(self, f):
+def file_parser(f):
     f = open(f, 'r')
     str = f.readall()
     e = {}
