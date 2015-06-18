@@ -687,12 +687,15 @@ def image_fetcher(year, month, day, name):
 
 @app.route('/entry/<year>/<month>/<day>/<type>/<name>')
 def profile(year, month, day, type, name):
-    # try:
-    file_name = "data/{year}/{month}/{day}/{type}/{name}.md".format(year=year, month=month, day=day, type=type, name=name)
-    entry = file_parser(file_name)
-    return render_template('show_entries.html', entries=[entry])
-    # except:
-    #     return 404
+    try:
+        file_name = "data/{year}/{month}/{day}/{type}/{name}".format(year=year, month=month, day=day, type=type, name=name)
+        entry = file_parser(file_name+".md")
+        if os.path.exists(file_name+".jpg"):
+            entry['photo'] = file_name+".jpg" # get the actual file
+
+        return render_template('show_entries.html', entries=[entry])
+    except:
+        return render_template('page_not_found.html'), 404
 
 
 @app.route('/add', methods=['POST'])
