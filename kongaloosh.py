@@ -681,7 +681,7 @@ def show_entries():
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
 def image_fetcher(year, month, day, name):
-    entry = 'data/{year}/{month}/{day}/image/{name}.jpg'.format(year=year, month=month, day=day, name=name)
+    entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     img = open(entry)
     return send_file(img)
 
