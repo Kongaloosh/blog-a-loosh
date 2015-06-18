@@ -762,6 +762,10 @@ def handleMicroPub():
             return 'unauthorized', 401
     elif request.method == 'GET':
         # add support for /micropub?q=syndicate-to
+        if request.args.get('syndicate-to'):
+            syndicate_to = ['https://www.facebook.com/alex.k.kearney','https://twitter.com/AlexKKearney', 'https://instagram.com/kongaloosh/']
+            resp = Response(response=syndicate_to)
+
         return 'not implemented', 501
 
 
