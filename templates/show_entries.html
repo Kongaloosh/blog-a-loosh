@@ -19,17 +19,29 @@
     <li>
       <article class="hentry h-entry {{entry.category}}">
           <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-          <h2 class="p-name"><a href="{{entry.url}}">{{ entry.title }}</a></h2>
+          <h2 class="p-name"><a href="/{{entry.url}}">{{ entry.title }}</a></h2>
+
+          {% if entry.photo is defined %}
+            <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
+          {% endif %}
+
           <p>{{entry.summary}}</p>
+
           <p>{{entry.content}}</p>
-          <img src="/{{entry.photo}}"
-                  width="500px" height="500px">
+
           <div class="entry-footer">
+
+              {% if entry.category is defined %}
+                <p class="p-category">{{entry.category}}</p>
+              {% endif %}
+
               <time>{{entry.published}}</time>
+
               <!-- we use an if to prevent commas and such from showing if undefined -->
               {% if entry.location_name is defined %}
-                <p>{{entry.location_name}}:{{entry.lat}},{{entry.long}}</p>
+                <p class="p-location">{{entry.location_name}}:{{entry.lat}},{{entry.long}}</p>
               {% endif %}
+
           </div>
       </article>
   {% else %}

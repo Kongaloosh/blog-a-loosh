@@ -30,6 +30,7 @@ dt-published:{date_time}
 p-category:{category}
 u-syndication:
     {syndication}
+u-url:
 """
 
         ,
@@ -668,9 +669,9 @@ def show_entries():
         for file in files:
             if file.endswith('.md'):
                 e = file_parser(filename=subdir+os.sep+file)
-                try:
+                if os.path.exists(subdir + '/' + file.split('.')[0]+".jpg"):
                     e['photo'] = subdir + '/' + file.split('.')[0]+".jpg" # get the actual file
-                except:pass
+                e['url'] = 'entry/'+subdir.split('data/')[1]+os.sep+file.split('.')[0]
                 entries.append(e)
         if len(entries) >= 10: break
     entries = sorted(entries, key=itemgetter('published'), reverse=True)
@@ -680,16 +681,16 @@ def show_entries():
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
 def image_fetcher(year, month, day, name):
-    entry = '/data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
+    entry = 'data/{year}/{month}/{day}/image/{name}.jpg'.format(year=year, month=month, day=day, name=name)
     img = open(entry)
     return send_file(img)
 
 @app.route('/entry/<year>/<month>/<day>/<type>/<name>')
 def profile(year, month, day, type, name):
     # try:
-    entry = "data/{year}/{month}/{day}/{type}/{name}".format(year=year, month=month, day=day, type=type, name=name)
-    pickle.load(open(entry+".p", "wb"))
-    return render_template('show_entries.html', entries=entry)
+    file_name = "data/{year}/{month}/{day}/{type}/{name}.md".format(year=year, month=month, day=day, type=type, name=name)
+    entry = file_parser(file_name)
+    return render_template('show_entries.html', entries=[entry])
     # except:
     #     return 404
 
@@ -743,13 +744,13 @@ def handleMicroPub():
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
                 data['published'] = datetime.today()
-                # try:
-                img = request.files.get('photo').read()
-                data['img'] = img
-                location = createEntry(data, img)
-                # except: location = createEntry(data)
+                try:
+                    img = request.files.get('photo').read()
+                    data['img'] = img
+                    location = createEntry(data, img)
+                except: location = createEntry(data)
 
-                resp = Response(status="created", headers={'Location':'http://kongaloosh.com'+location})
+                resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
             else:
