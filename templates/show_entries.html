@@ -19,7 +19,11 @@
     <li>
       <article class="hentry h-entry {{entry.category}}">
           <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-          <h2 class="p-name"><a href="/{{entry.url}}">{{ entry.title }}</a></h2>
+          {% if entry.type == 'article' %}
+            <h2 class="p-name"><a href="/{{entry.url}}">{{ entry.title }}</a></h2>
+          {% else %}
+            <a href="/{{entry.url}}"><i class="fa fa-link"></i></a>
+          {% endif %}
 
           {% if entry.photo is defined %}
             <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
