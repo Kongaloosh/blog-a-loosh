@@ -768,15 +768,18 @@ def handleMicroPub():
     elif request.method == 'GET':
         # add support for /micropub?q=syndicate-to
         qs = request.query_string
+        print(qs+"asdfjsaokdjfalskdjflaskjdflskjdalfkjd")
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
                 'facebook.com/','twitter.com/',
                 'instagram.com/', 'linkedin.com/']
-            r = ['syndicate-to[]='+s+'&' for s in syndicate_to]
+            r = ''
+            while len(syndicate_to)>1:
+                r += 'syndicate-to[]=' + syndicate_to.pop() + '&'
+            r += 'syndicate-to[]=' + syndicate_to.pop()
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
-        # return 'not implemented', 501
-        return 501
+        return 'not implemented', 501
 
 @app.route('/webmention', methods=['POST'])
 def handleWebmention():
