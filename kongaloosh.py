@@ -11,6 +11,7 @@ from mf2py.parser import Parser
 from datetime import datetime
 import pickle
 from slugify import slugify
+import tweeter
 import re
 # configuration
 DATABASE = '/tmp/kongaloosh.db'
@@ -739,13 +740,10 @@ def handleMicroPub():
         if access_token:
             access_token = access_token.replace('Bearer ', '')
             if checkAccessToken(access_token) or True:
-
-                pickle.dump(request.form.get('syndicate-to'), open('request' ,'wb'))
-
                 data = {}
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'):
+                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
@@ -755,8 +753,8 @@ def handleMicroPub():
                     data['img'] = img
                     location = createEntry(data, img)
                 except: location = createEntry(data)
-
-                pickle.dump(data['syndicate-to'], open('syndicate_to', 'w'))
+                if('twitter.com' in data['syndicate-to[]']):
+                    tweeter.main(data['context'])
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
