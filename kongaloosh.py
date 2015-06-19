@@ -770,11 +770,10 @@ def handleMicroPub():
         qs = request.query_string
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
-                'https://www.facebook.com/','https://twitter.com/',
-                'https://instagram.com/', 'https://linkedin.com/']
-            # r = ['syndicate-to[]='+s+'&' for s in syndicate_to]
-            resp = Response(content_type='application/x-www-form-urlencoded')
-            resp.form['syndicate-to'] = syndicate_to
+                'facebook.com/','twitter.com/',
+                'instagram.com/', 'linkedin.com/']
+            r = ['syndicate-to[]='+s+'&' for s in syndicate_to]
+            resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
         # return 'not implemented', 501
         return 501
