@@ -739,6 +739,9 @@ def handleMicroPub():
         if access_token:
             access_token = access_token.replace('Bearer ', '')
             if checkAccessToken(access_token) or True:
+
+                pickle.dump(request.form.get('syndicate-to'), open('request' ,'wb'))
+
                 data = {}
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
@@ -766,9 +769,10 @@ def handleMicroPub():
         # add support for /micropub?q=syndicate-to
         qs = request.query_string
         if request.args.get('q') == 'syndicate-to':
-            syndicate_to = ['https://www.facebook.com/alex.k.kearney','https://twitter.com/AlexKKearney', 'https://instagram.com/kongaloosh/', 'ca.linkedin.com/in/alexandrakearney']
+            syndicate_to = [
+                'https://www.facebook.com/','https://twitter.com/',
+                'https://instagram.com/', 'https://linkedin.com/']
             r = ['syndicate-to[]='+s+'&' for s in syndicate_to]
-            'syndicate-to[]=https://twitter.com/aaronpk&syndicate-to[]=https://twitter.com/pkbot&syndicate-to[]=https://facebook.com/aaronpk'
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
         # return 'not implemented', 501
