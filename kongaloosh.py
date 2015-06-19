@@ -753,6 +753,8 @@ def handleMicroPub():
                     location = createEntry(data, img)
                 except: location = createEntry(data)
 
+                pickle.dump(data['syndicate-to'], open('syndicate_to', 'w'))
+
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
