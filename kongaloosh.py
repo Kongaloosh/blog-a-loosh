@@ -332,15 +332,15 @@ def file_parser(filename):
     except: pass
     try: e['content'] = re.search('(?<=e-content:)(.)*', str).group()
     except: pass
-    try: e['published'] = re.search('(?<=dt-published:)(.)*', str).group()
+    try: e['published'] = re.search('(?<=published:)(.)*', str).group()
     except: pass
-    try: e['author'] = re.search('(?<=p-author:)(.)*', str).group()
+    try: e['author'] = re.search('(?<=author:)(.)*', str).group()
     except: pass
-    try: e['category'] = re.search('(?<=p-category:)(.)*', str).group()
+    try: e['category'] = re.search('(?<=category:)(.)*', str).group()
     except: pass
-    try: e['url'] = re.search('(?<=u-url:)(.)*', str).group()
+    try: e['url'] = re.search('(?<=url:)(.)*', str).group()
     except: pass
-    try: e['uid'] = re.search('(?<=u-uid:)(.)*', str).group()
+    try: e['uid'] = re.search('(?<=uid:)(.)*', str).group()
     except: pass
     try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
     except: pass
