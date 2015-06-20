@@ -327,9 +327,9 @@ def file_parser(filename):
     except: pass
     try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
     except: pass
-    try: e['summary'] = re.search('(?<=p-summary:)(.)*', str).group()
+    try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
     except: pass
-    try: e['content'] = re.search('(?<=e-content:)(.)*', str).group()
+    try: e['content'] = re.search('(?<=content:)(.)*', str).group()
     except: pass
     try: e['published'] = re.search('(?<=published:)(.)*', str).group()
     except: pass
