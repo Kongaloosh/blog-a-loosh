@@ -265,7 +265,7 @@ def createEntry(data, image=None, video=None, audio=None):
             file_writer.close()
 
         g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
-                 [slug, data['published']], total_path)
+                 [slug, data['published'], total_path])
         g.db.commit()
 
         if data['category']:
