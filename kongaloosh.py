@@ -392,7 +392,7 @@ def createEntry(data, image=None, video=None, audio=None):
 
     entry += "p-name:\n"\
             "title:{title}\n"\
-            "slug:{slug}".format()
+            "slug:{slug}".format(title=title, slug=slug)
 
     entry += "summary:"+data['summary'] + "\n"
     entry += "content:"+data['content'] + "\n"
