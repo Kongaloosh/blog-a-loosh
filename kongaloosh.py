@@ -367,91 +367,6 @@ def checkAccessToken(access_token):
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
     return r['status'] == requests.codes.ok
 
-def createVideo(data, video):
-    pass
-
-
-def createImage(image, category, content, location, published=datetime.now(), syndication=None):
-
-    if content == None:
-        raise "no content in submission"
-
-    title = content.split('.')[0]
-    slug = slugify(title)
-
-    if category == None:
-        # todo: Keyword extraction.
-        pass
-    entry = templates['photo'].format(
-        title=title, slug=slug, content=content,
-        date_time=published , category=category, syndication=syndication,
-        location=location, photo=image
-    )
-    return (entry,slug)
-
-def createAudio(data, audio):
-    pass
-
-
-def createNote(category, content, published=datetime.now(), syndication=None):
-
-    if content == None:
-        raise "no content in submission"
-
-    title = content.split('.')[0]
-    slug = slugify(title)
-
-    if category == None:
-        # todo: Keyword extraction.
-        pass
-    entry = templates['note'].format(
-        title=title, slug=slug, content=content,
-        date_time=published, category=category, syndication=syndication
-    )
-    return (entry,slug)
-
-def createArticle(title, content, category, published=datetime.now(), syndication=None):
-
-    if content == None or content == None:
-        raise "Incomplete submission"
-
-    slug = slugify(title)
-
-    if category == None:
-        # todo: Keyword extraction.
-        pass
-    entry = templates['article'].format(
-        title=title, slug=slug, content=content,
-        date_time=published,category=category, syndication=syndication
-    )
-    return (entry,slug)
-
-def createCheckin(category, content, location, published=datetime.now(), syndication=None):
-    if content == None or location == None:
-        raise "no content in submission"
-
-    title = content.split('.')[0]
-    slug = slugify(title)
-
-    if category == None:
-        # todo: Keyword extraction.
-        pass
-    entry = templates['checkin'].format(
-        title=title, slug=slug, content=content,
-        date_time=datetime, category=category, syndication=syndication,
-        location=location
-    )
-    return (entry,slug)
-
-
-def createReply(data):
-    pass
-
-
-def createRepost(data):
-    pass
-
-
 def createEntry(data, image=None, video=None, audio=None):
     '''
          'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
@@ -462,97 +377,72 @@ def createEntry(data, image=None, video=None, audio=None):
     # rsvp: reply with p-rsvp status
 
     # like: no name or title, but like-of
-    title = ''
 
-    try: syndication = data['syndication']
-    except: syndication = None
-
-    try: location = data['location']
-    except: None
-
-    try: category = data['category']
-    except: None
-
-    if not data['name'] == None: #is it an article
+    entry = ''
+    if not data['name'] == None:    #is it an article
         type = 'article'
-        # multiple paragraphs, title
-        (entry, title) = createArticle(
-            title=data['name'], content=data['content'],category=data['category']
-            ,published=data['published'],syndication=syndication)
-
-
-    elif video: # is it a video
-        # video: no name or title, but video
-        type = 'video'
-
-
-    elif audio: # is it audio
-        type = 'audio'
-
-
-    elif image: # is it an image
-        type = 'image'
-        # image: no name or title, but image
-        (entry,title) = createImage(
-            image=image, category=category, content=data['content'],
-            location=location, published=data['published'], syndication=syndication)
-
-
-    elif not data['in-reply-to'] == None: # is it a response
-        data['in-reply-to']
-        type = 'comment'
-        # reply: no name or title, but in-reply-to
-
-
-    elif not data['in-reply-to'] == None: # is it a repost
-        data['repost of']
-        type = 'repost'
-        # u-repost-of
-
-
-    elif not data['location'] == None:# is it a checkin
-        data['location']
-        type = 'checkin'
-        # check-in: note with location
-
+        title =data['name']
+        slug=title
     else:
         type = 'note'
-        (entry,title) = createNote(
-            category=category, content=data['content'],
-            published=data['published'], syndication=syndication )
+        slug = data['content'].split('.')[0]
+        title = 'None'
 
-    #otherwise it's a plain note
+    slug = slugify(slug)
 
+    entry += "p-name:\n"\
+            "title:{title}\n"\
+            "slug:{slug}".format()
 
-    time=datetime.now()
-    file_path = "data/{year}/{month}/{day}/{type}/".format(year=time.year, month=time.month, day=time.day, type=type)
-    # pickle.dump(open(title, 'gawd', 'wb'))
+    entry += "summary:"+data['summary'] + "\n"
+    entry += "content:"+data['content'] + "\n"
+    entry += "published:"+data['published'] + "\n"
+    entry += "category" + data['category'] + "\n"
+    entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
+            year = data['published'].year,
+            month = data['published'].month,
+            day = data['published'].day,
+            slug = slug) + "\n"
+    entry += "u-uid" + '/{year}/{month}/{day}/{slug}'.format(
+            year = data['published'].year,
+            month = data['published'].month,
+            day = data['published'].day,
+            slug = slug) + "\n"
+    entry += "p-location:" + data['location'] + "\n"
+    entry += "in-reply-to:" + data['in-reply-to'] + "\n"
+    entry += "repost-of:" + data['repost-of'] + "\n"
+    entry += "syndication:" + data['syndication'] + "\n"
+
+    time = data['published']
+
+    file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
+
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
-    total_path =  file_path+"{title}".format(title=title)
+    total_path =  file_path+"{slug}".format(slug=slug)
+
     if not os.path.isfile(total_path+'.md'):
-        file = open(total_path+".md", 'wb')
-        file.write(entry)
-        file.close()
+        file_writer = open(total_path+".md", 'wb')
+        file_writer.write(entry)
+        file_writer.close()
         if image:
-            file = open(total_path+".jpg",'w')
-            file.write(image)
-            file.close()
+            file_writer = open(total_path+".jpg",'w')
+            file_writer.write(image)
+            file_writer.close()
+
+        if video:
+            file_writer = open(total_path+".mp4",'w')
+            file_writer.write(image)
+            file_writer.close()
+
+        if audio:
+            file_writer = open(total_path+".mp3",'w')
+            file_writer.write(image)
+            file_writer.close()
+
         return total_path
 
-    else:
-        i = 1
-        while(True):
-            if not os.path.isfile(total_path+"-{num}.md".format(num=i)):
-                file= open(total_path+'-{num}.md'.format(num=i), 'wb')
-                file.write(entry)
-                file.close()
-                if image:
-                    file = open(total_path+"-{num}.jpg".format(num=i),'wb')
-                    file.write(image)
-                    file.close()
-                return total_path+"-{num}".format(num=i)
-            else: i += 1
+    else: return None
 
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
@@ -737,9 +627,9 @@ def handleMicroPub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
-        if access_token:
+        if access_token or True: #todo: MAKE SURE THIS IS CLEAR
             access_token = access_token.replace('Bearer ', '')
-            if checkAccessToken(access_token) or True:
+            if checkAccessToken(access_token) or True: #todo: MAKE SURE THIS IS CLEAR
                 data = {}
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
@@ -751,10 +641,25 @@ def handleMicroPub():
                 try:
                     img = request.files.get('photo').read()
                     data['img'] = img
-                    location = createEntry(data, img)
-                except: location = createEntry(data)
+                except: pass
+
+                try:
+                    audio = request.files.get('audio').read()
+                    data['audio'] = audio
+                except: pass
+
+                try:
+                    video = request.files.get('video').read()
+                    data['video'] = video
+                except: pass
+
+                syndication = ''
                 if('twitter.com' in data['syndicate-to[]']):
-                    tweeter.main(data['context'])
+                    try: syndication += tweeter.main(data['context'], data['photo'])
+                    except: syndication += tweeter.main(data['context'])
+
+                data['syndication'] = syndication
+                location = createEntry(data)
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
@@ -764,9 +669,7 @@ def handleMicroPub():
         else:
             return 'unauthorized', 401
     elif request.method == 'GET':
-        # add support for /micropub?q=syndicate-to
         qs = request.query_string
-        print(qs+"asdfjsaokdjfalskdjflaskjdflskjdalfkjd")
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
                 'facebook.com/','twitter.com/',

@@ -6,7 +6,7 @@ def get_api(cfg):
   auth.set_access_token(cfg['access_token'], cfg['access_token_secret'])
   return tweepy.API(auth)
 
-def main(tweet):
+def main(tweet, photo=None):
   # Fill in the values noted in previous step here
   cfg = {
     "consumer_key"        : "DVjfycLdIZzr0gzC442VfEmjd",
@@ -18,6 +18,7 @@ def main(tweet):
   api = get_api(cfg)
   # tweet = "Hello, world! I'm playing with an API"
   status = api.update_status(status=tweet)
+  return ('http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=status.id))
   # Yes, tweet is called 'status' rather confusing
 
 if __name__ == "__main__":
