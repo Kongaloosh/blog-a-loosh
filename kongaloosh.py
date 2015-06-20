@@ -20,178 +20,6 @@ SECRET_KEY = 'development key'
 USERNAME = 'Anubis'
 PASSWORD = 'Munc4kin))'
 templates = {
-
-'note':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-u-syndication:
-    {syndication}
-u-url:
-"""
-
-        ,
-
-'article':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-p-summary:{summary}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-u-syndication:
-    {syndication}
-"""
-
-    ,
-
-'reply':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-dt-updated:{updated}
-p-category:{category}
-u-syndication:
-    {syndication}
-u-in-reply-to:
-    {reply-to}
-"""
-
-    ,
-
-'like':
-"""
-p-name:
-    title:{title}
-    slug:{title_slug}
-u-like-of
-    {likes}
-"""
-        ,
-
-'photo':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-p-location:
-    {location}
-u-syndication:
-    {syndication}
-u-photo
-    {photo}
-"""
-        ,
-
-'bookmark':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-u-bookmark-of:{book_mark}
-"""
-    ,
-
-'checkin':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-p-location:
-    {location}
-u-syndication:
-    {syndication}
-"""
-    ,
-'repost':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-p-summary:{summary}
-e-content:{content}
-dt-published:{date_time}
-dt-updated:{updated}
-p-author:{author}
-p-category:{category}
-u-repost-of
-    {repost}
-"""
-        ,
-
-'rsvp':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-p-location:
-    time-zone:{timezone}
-    lat:{lat}
-    long:{long}
-    location-name:{loc_name}
-u-syndication:
-    {syndication}
-u-in-reply-to:
-    {reply-to}
-"""
-    ,
-
-'event':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-p-summary:{summary}
-e-content:{content}
-dt-published:{date_time}
-p-location:
-    time-zone:{timezone}
-    lat:{lat}
-    long:{long}
-    location-name:{loc_name}
-u-syndication:
-    {syndication}
-"""
-    ,
-
-'video':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-e-content:{content}
-dt-published:{date_time}
-p-category:{category}
-u-url:{url}
-u-uid:{id}
-u-syndication:
-    {syndication}
-u-video
-    {video}
-"""
-    ,
-
 'audio':
 """
 p-name:
@@ -392,12 +220,12 @@ def createEntry(data, image=None, video=None, audio=None):
 
     entry += "p-name:\n"\
             "title:{title}\n"\
-            "slug:{slug}".format(title=title, slug=slug)
+            "slug:{slug}\n".format(title=title, slug=slug)
 
     entry += "summary:"+ str(data['summary']) + "\n"
     entry += "content:"+ str(data['content']) + "\n"
     entry += "published:"+ str(data['published']) + "\n"
-    entry += "category" + str(data['category']) + "\n"
+    entry += "category:" + str(data['category']) + "\n"
     entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
             year = str(data['published'].year),
             month = str(data['published'].month),
@@ -408,7 +236,7 @@ def createEntry(data, image=None, video=None, audio=None):
             month = str(data['published'].month),
             day = str(data['published'].day),
             slug = str(slug)) + "\n"
-    entry += "p-location:" + str(data['location'])+ "\n"
+    entry += "location:" + str(data['location'])+ "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
@@ -440,8 +268,15 @@ def createEntry(data, image=None, video=None, audio=None):
             file_writer.write(image)
             file_writer.close()
 
-        return total_path
+        g.db.execute('insert into entries (slug, published) values (?, ?)',
+                 [slug, data['published']])
+        g.db.commit()
+        for c in data['catagories']:
+            g.db.execute('insert into catagories (slug, published, catagory) values (?, ?, ?)',
+                 [slug, data['published'], c])
+            g.db.commit()
 
+        return total_path
     else: return None
 
 
