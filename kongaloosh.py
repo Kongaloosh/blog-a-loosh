@@ -394,24 +394,24 @@ def createEntry(data, image=None, video=None, audio=None):
             "title:{title}\n"\
             "slug:{slug}".format(title=title, slug=slug)
 
-    entry += "summary:"+data['summary'] + "\n"
-    entry += "content:"+data['content'] + "\n"
-    entry += "published:"+data['published'] + "\n"
-    entry += "category" + data['category'] + "\n"
+    entry += "summary:"+ str(data['summary']) + "\n"
+    entry += "content:"+ str(data['content']) + "\n"
+    entry += "published:"+ str(data['published']) + "\n"
+    entry += "category" + str(data['category']) + "\n"
     entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-            year = data['published'].year,
-            month = data['published'].month,
-            day = data['published'].day,
-            slug = slug) + "\n"
+            year = str(data['published'].year),
+            month = str(data['published'].month),
+            day = str(data['published'].day),
+            slug = str(slug)) + "\n"
     entry += "u-uid" + '/{year}/{month}/{day}/{slug}'.format(
-            year = data['published'].year,
-            month = data['published'].month,
-            day = data['published'].day,
-            slug = slug) + "\n"
-    entry += "p-location:" + data['location'] + "\n"
-    entry += "in-reply-to:" + data['in-reply-to'] + "\n"
-    entry += "repost-of:" + data['repost-of'] + "\n"
-    entry += "syndication:" + data['syndication'] + "\n"
+            year = str(data['published'].year),
+            month = str(data['published'].month),
+            day = str(data['published'].day),
+            slug = str(slug)) + "\n"
+    entry += "p-location:" + str(data['location'])+ "\n"
+    entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
+    entry += "repost-of:" + str(data['repost-of']) + "\n"
+    entry += "syndication:" + str(data['syndication']) + "\n"
 
     time = data['published']
 
