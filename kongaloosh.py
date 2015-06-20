@@ -633,7 +633,7 @@ def handleMicroPub():
                 data = {}
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
+                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
@@ -655,8 +655,9 @@ def handleMicroPub():
 
                 syndication = ''
                 if('twitter.com' in data['syndicate-to[]']):
-                    try: syndication += tweeter.main(data['context'], data['photo'])
-                    except: syndication += tweeter.main(data['context'])
+                    pass
+                try: syndication += tweeter.main(data['content'], data['photo'])
+                except: syndication += tweeter.main(data['content'])
 
                 data['syndication'] = syndication
                 location = createEntry(data)
