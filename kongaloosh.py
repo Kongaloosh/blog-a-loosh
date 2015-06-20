@@ -200,11 +200,6 @@ def createEntry(data, image=None, video=None, audio=None):
          'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
     '''
-    # event: 2deep4me
-
-    # rsvp: reply with p-rsvp status
-
-    # like: no name or title, but like-of
 
     entry = ''
     if not data['name'] == None:    #is it an article
@@ -247,6 +242,7 @@ def createEntry(data, image=None, video=None, audio=None):
 
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
+
     total_path =  file_path+"{slug}".format(slug=slug)
 
     if not os.path.isfile(total_path+'.md'):
@@ -268,13 +264,16 @@ def createEntry(data, image=None, video=None, audio=None):
             file_writer.write(image)
             file_writer.close()
 
-        g.db.execute('insert into entries (slug, published) values (?, ?)',
-                 [slug, data['published']])
+        g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
+                 [slug, data['published']], total_path)
         g.db.commit()
-        for c in data['catagories']:
-            g.db.execute('insert into catagories (slug, published, catagory) values (?, ?, ?)',
-                 [slug, data['published'], c])
-            g.db.commit()
+
+        if data['category']:
+            print("HERE WE ARE\n\n\n\n\n\n\n")
+            for c in data['category'].split(','):
+                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                     [slug, data['published'], c])
+                g.db.commit()
 
         return total_path
     else: return None
@@ -472,7 +471,9 @@ def handleMicroPub():
                     data[key] = request.form.get(key)
 
                 # data = dict((k, v) for k, v in data.iteritems() if v)
-                data['published'] = datetime.today()
+                if not data['published']:
+                    data['published'] = datetime.today()
+
                 try:
                     img = request.files.get('photo').read()
                     data['img'] = img
@@ -489,12 +490,17 @@ def handleMicroPub():
                 except: pass
 
                 syndication = ''
-                if('twitter.com' in data['syndicate-to[]']):
-                    pass
-                try: syndication += tweeter.main(data['content'], data['photo'])
-                except: syndication += tweeter.main(data['content'])
+                try:
+                    if('twitter.com' in data['syndicate-to[]']):
+                        pass
+                    try: syndication += tweeter.main(data['content'], data['photo'])
+                    except: syndication += tweeter.main(data['content'])
+                except: pass
 
                 data['syndication'] = syndication
+
+                pickle.dump(data, open('date','wb'))
+
                 location = createEntry(data)
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
