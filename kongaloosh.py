@@ -331,7 +331,7 @@ def file_parser(filename):
     except: pass
     try: e['author'] = re.search('(?<=author:)(.)*', str).group()
     except: pass
-    try: e['category'] = re.search('(?<=category:)(.)*', str).group()
+    try: e['category'] = re.search('(?<=category:)(.)*', str).group().split(',')
     except: pass
     try: e['url'] = re.search('(?<=url:)(.)*', str).group()
     except: pass
@@ -406,10 +406,10 @@ def image_fetcher(year, month, day, name):
     img = open(entry)
     return send_file(img)
 
-@app.route('/e/<year>/<month>/<day>/<type>/<name>')
-def profile(year, month, day, type, name):
+@app.route('/e/<year>/<month>/<day>/<name>')
+def profile(year, month, day, name):
     try:
-        file_name = "data/{year}/{month}/{day}/{type}/{name}".format(year=year, month=month, day=day, type=type, name=name)
+        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
         entry = file_parser(file_name+".md")
         if os.path.exists(file_name+".jpg"):
             entry['photo'] = file_name+".jpg" # get the actual file
@@ -423,20 +423,18 @@ def profile(year, month, day, type, name):
 
 @app.route('/t/<category>')
 def tag_search(category):
-    try:
-        entries = []
-        cur = g.db.execute(
-            "SELECT entries.location FROM categories" \
-            +" INNER JOIN entries ON"
-            +" entries.slug = categories.slug AND "
-            +" entries.published = categories.published"
-            +" WHERE categories.category = {category}".format(category=category))
-        data = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
-        for i in data:
-            loc = i['location']
-            entries.append(file_parser(loc+".md"))
-        return render_template('show+entries.html', entries=entries)
-    except: return ('page_not_found.html')
+    # try:
+    entries = []
+    cur = g.db.execute(
+        "SELECT entries.location FROM categories" \
+        +" INNER JOIN entries ON"
+        +" entries.slug = categories.slug AND "
+        +" entries.published = categories.published"
+        +" WHERE categories.category='jazz'".format(category=category))
+    for (row,) in cur.fetchall():
+        entries.append(file_parser(row+".md"))
+    return render_template('show_entries.html', entries=entries)
+    # except: return ('page_not_found.html')
 
 @app.route('/add', methods=['POST'])
 def add_entry():
