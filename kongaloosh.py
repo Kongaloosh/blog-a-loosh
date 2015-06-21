@@ -13,6 +13,7 @@ import pickle
 from slugify import slugify
 import tweeter
 import re
+from dateutil.parser import parse
 # configuration
 DATABASE = '/tmp/kongaloosh.db'
 DEBUG = True
@@ -422,6 +423,14 @@ def profile(year, month, day, type, name):
     except:
         return render_template('page_not_found.html'), 404
 
+@app.route('/t/<category>')
+def tag_search(category):
+    data = g.db.execute(""
+                        "SELECT * FROM categories"
+                        " INNER JOIN entries "
+                        "ON categories.slug = entries.slug"
+                        "AND categories.publisehd = e")
+
 
 @app.route('/add', methods=['POST'])
 def add_entry():
@@ -473,6 +482,8 @@ def handleMicroPub():
                 # data = dict((k, v) for k, v in data.iteritems() if v)
                 if not data['published']:
                     data['published'] = datetime.today()
+                else:
+                    data['published'] = parse(data['published'])
 
                 try:
                     img = request.files.get('photo').read()
