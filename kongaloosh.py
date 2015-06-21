@@ -197,11 +197,6 @@ def checkAccessToken(access_token):
     return r['status'] == requests.codes.ok
 
 def createEntry(data, image=None, video=None, audio=None):
-    '''
-         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to'
-    '''
-
     entry = ''
     if not data['name'] == None:    #is it an article
         type = 'article'
@@ -411,26 +406,35 @@ def image_fetcher(year, month, day, name):
     img = open(entry)
     return send_file(img)
 
-@app.route('/entry/<year>/<month>/<day>/<type>/<name>')
+@app.route('/e/<year>/<month>/<day>/<type>/<name>')
 def profile(year, month, day, type, name):
     try:
         file_name = "data/{year}/{month}/{day}/{type}/{name}".format(year=year, month=month, day=day, type=type, name=name)
         entry = file_parser(file_name+".md")
         if os.path.exists(file_name+".jpg"):
             entry['photo'] = file_name+".jpg" # get the actual file
-
+        if os.path.exists(file_name+".mp4"):
+            entry['video'] = file_name+".mp4" # get the actual file
+        if os.path.exists(file_name+".mp3"):
+            entry['audio'] = file_name+".mp3" # get the actual file
         return render_template('show_entries.html', entries=[entry])
     except:
         return render_template('page_not_found.html'), 404
 
 @app.route('/t/<category>')
 def tag_search(category):
-    data = g.db.execute(""
-                        "SELECT * FROM categories"
-                        " INNER JOIN entries "
-                        "ON categories.slug = entries.slug"
-                        "AND categories.publisehd = e")
-
+    try:
+        cur = g.db.execute(
+            "SELECT entries.location FROM categories" \
+            +" INNER JOIN entries ON"
+            +" entries.slug = categories.slug AND "
+            +" entries.published = categories.published"
+            +" WHERE categories.category = {category}".format(category=category))
+        data = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
+        for i in data:
+            print i
+        
+    except: return ('page_not_found.html')
 
 @app.route('/add', methods=['POST'])
 def add_entry():
@@ -521,6 +525,7 @@ def handleMicroPub():
                 return 'unauthorized', 403
         else:
             return 'unauthorized', 401
+
     elif request.method == 'GET':
         qs = request.query_string
         if request.args.get('q') == 'syndicate-to':
