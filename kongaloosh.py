@@ -392,7 +392,6 @@ def show_entries():
                 e = file_parser(filename=subdir+os.sep+file)
                 if os.path.exists(subdir + '/' + file.split('.')[0]+".jpg"):
                     e['photo'] = subdir + '/' + file.split('.')[0]+".jpg" # get the actual file
-                e['url'] = 'entry/'+subdir.split('data/')[1]+os.sep+file.split('.')[0]
                 entries.append(e)
         if len(entries) >= 10: break
     entries = sorted(entries, key=itemgetter('published'), reverse=True)
