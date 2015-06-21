@@ -16,22 +16,24 @@
   {% endif %}
   <ul class=entries>
   {% for entry in entries %}
-    <li>
-      <article class="hentry h-entry {{entry.category}}">
-          <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-          {% if entry.type == 'article' %}
-            <h2 class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></h2>
-          {% else %}
-            <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
-          {% endif %}
+      <!-- START ENTRIES -->
+      <li>
+          <article class="hentry h-entry {{entry.category}}">
+              <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+              {% if entry.title != 'None' %}
+              <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
+              {% endif %}
+              <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
 
-          {% if entry.photo is defined %}
-            <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
-          {% endif %}
+              {% if entry.photo is defined %}
+              <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
+              {% endif %}
 
-          <p>{{entry.summary}}</p>
+              {% if entry.summary != 'None' %}
+              <p class="p-summary">{{entry.summary}}</p>
+              {% endif %}
 
-          <p>{{entry.content}}</p>
+              <p class="e-content">{{entry.content}}</p>
 
           <div class="entry-footer">
 
@@ -44,8 +46,8 @@
               <time>{{entry.published}}</time>
 
               <!-- we use an if to prevent commas and such from showing if undefined -->
-              {% if entry.location_name is defined %}
-                <p class="p-location">{{entry.location_name}}:{{entry.lat}},{{entry.long}}</p>
+              {% if entry.location is defined %}
+                <p class="p-location">{{entry.location}}</p>
               {% endif %}
 
           </div>
