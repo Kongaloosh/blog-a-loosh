@@ -424,6 +424,7 @@ def profile(year, month, day, type, name):
 @app.route('/t/<category>')
 def tag_search(category):
     try:
+        entries = []
         cur = g.db.execute(
             "SELECT entries.location FROM categories" \
             +" INNER JOIN entries ON"
@@ -432,8 +433,9 @@ def tag_search(category):
             +" WHERE categories.category = {category}".format(category=category))
         data = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
         for i in data:
-            print i
-        
+            loc = i['location']
+            entries.append(file_parser(loc+".md"))
+        return render_template('show+entries.html', entries=entries)
     except: return ('page_not_found.html')
 
 @app.route('/add', methods=['POST'])
