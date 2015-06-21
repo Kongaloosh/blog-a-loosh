@@ -1,59 +1,65 @@
 {% extends "layout.html" %}
 {% block body %}
-    {% if session.logged_in %}
-        <form action="{{ url_for('add_entry') }}" method=post class=add-entry>
-            <dl>
-                <dt>Title:
-                <dd><input type=text size=30 name=title>
-                <dt>Text:
-                <dd><textarea name=text rows=5 cols=40></textarea>
-                <dd><input type="radio" name="entry_type" value="note" checked>Note <br>
-                <dd><input type="radio" name="entry_type" value="article">Article<br>
-                <dd><input type="radio" name="entry_type" value="photo">Photo<br>
-                <dd><input type=submit value=Share>
-            </dl>
-    </form>
-  {% endif %}
-  <ul class=entries>
-  {% for entry in entries %}
-      <!-- START ENTRIES -->
-      <li>
-          <article class="hentry h-entry {{entry.category}}">
-              <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-              {% if entry.title != 'None' %}
-              <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
-              {% endif %}
-              <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+{% if session.logged_in %}
+<form action="{{ url_for('add_entry') }}" method=post class=add-entry>
+    <dl>
+        <dt>Title:
+        <dd><input type=text size=30 name=title>
+        <dt>Text:
+        <dd><textarea name=text rows=5 cols=40></textarea>
+        <dd><input type="radio" name="entry_type" value="note" checked>Note <br>
+        <dd><input type="radio" name="entry_type" value="article">Article<br>
+        <dd><input type="radio" name="entry_type" value="photo">Photo<br>
+        <dd><input type=submit value=Share>
+    </dl>
+</form>
+{% endif %}
+<ul class=entries>
+    {% for entry in entries %}
+    <!-- START ENTRIES -->
+    <li>
+        <article class="hentry h-entry entry">
+            <div class="entry" style="
 
-              {% if entry.photo is defined %}
-              <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
-              {% endif %}
+                margin-top: 10px;
+                border-bottom: 2px solid #ccc;">
+                <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+                {% if entry.title != 'None' %}
+                <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
+                {% endif %}
+                <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
 
-              {% if entry.summary != 'None' %}
-              <p class="p-summary">{{entry.summary}}</p>
-              {% endif %}
+                {% if entry.photo is defined %}
+                <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
+                {% endif %}
 
-              <p class="e-content">{{entry.content}}</p>
+                {% if entry.summary != 'None' %}
+                <p class="p-summary">{{entry.summary}}</p>
+                {% endif %}
 
-          <div class="entry-footer">
+                <p class="e-content">{{entry.content}}</p>
 
-              {% if entry.category is defined %}
-                {% for c in entry.category %}
+                <div class="entry-footer">
+
+                    {% if entry.category is defined %}
+                    {% for c in entry.category %}
                     <a href="/t/{{c}}">{{c}}</a>
-                {% endfor %}
-              {% endif %}
+                    {% endfor %}
+                    {% endif %}
 
-              <time>{{entry.published}}</time>
+                    <time>{{entry.published}}</time>
 
-              <!-- we use an if to prevent commas and such from showing if undefined -->
-              {% if entry.location is defined %}
-                <p class="p-location">{{entry.location}}</p>
-              {% endif %}
+                    <!-- we use an if to prevent commas and such from showing if undefined -->
+                    {% if entry.location is defined %}
+                    <p class="p-location">{{entry.location}}</p>
+                    {% endif %}
 
-          </div>
-      </article>
-  {% else %}
+                </div>
+            </div>
+
+        </article>
+        {% else %}
     <li><em>Unbelievable.  No entries here so far</egitm>
-  {% endfor %}
-  </ul>
+        {% endfor %}
+</ul>
 {% endblock %}
