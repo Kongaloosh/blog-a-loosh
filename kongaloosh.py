@@ -436,7 +436,7 @@ def tag_search(category):
         +" INNER JOIN entries ON"
         +" entries.slug = categories.slug AND "
         +" entries.published = categories.published"
-        +" WHERE categories.category='jazz'".format(category=category))
+        +" WHERE categories.category='{category}'".format(category=category))
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
     return render_template('show_entries.html', entries=entries)
