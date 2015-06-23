@@ -1,35 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-    <form>
+{% extends "layout.html" %}
+{% block body %}
+{% if session.logged_in %}
+    <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
         Title:<br>
-        <input type="text" name="title">
+        <input type="text" name="name">
         <br>
         Reply-to:<br>
         <input type="text" name="reply-to">
         <br>
         Tags:<br>
-        <input type="text" name="tags">
+        <input type="text" name="category">
         <br>
-        <textarea cols="50" rows="5">
-            Note
-        </textarea>
+        Summary:<br>
+        <input type="text" name="summary">
         <br>
-        <textarea cols="50" rows="5">
-            tw
-        </textarea>
+        <textarea cols="50" rows="5" name="content" form_id="input">note</textarea>
         <br>
-        <input type="radio" name="tumblr" value="tumblr">tumblr
+        <textarea cols="50" rows="5" name="social_content" form_id="">tweet preview</textarea>
         <br>
-        <input type="radio" name="instagram" value="instagram">instagram
+        <input type="checkbox" name="tumblr" value="tumblr">tumblr
         <br>
-        <input type="radio" name="twitter" value="twitter">twitter
+        <input type="checkbox" name="instagram" value="instagram">instagram
         <br>
-        Photo:<br>gi
+        <input type="checkbox" name="twitter" value="twitter">twitter
+        <br>
+        <br>
+        Photo:<br>
         <input type="file" name="photo" accept="image/*">
         <br>
         Video:<br>
@@ -38,7 +34,29 @@
         Audio:<br>
         <input type="file" name="audio" accept="image/*">
         <br>
+        Geo:<br>
+        <textarea type="text" name="location" id="geo_coord" cols="50"></textarea>
+        <br>
         <input type="submit" value="Submit">
     </form>
-</body>
-</html>
+    <button onclick="getLocation()">Add Location</button>
+    <script>
+        var x = document.getElementById("geo_coord");
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                x.innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        function showPosition(position) {
+            x.innerHTML = "geo:" + position.coords.latitude +
+            "," + position.coords.longitude;
+        }
+    </script>
+{% else %}
+
+<p>You need to be logged in, buck-eye</p>
+{% endif %}
+{% endblock %}

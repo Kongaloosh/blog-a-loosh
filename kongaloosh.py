@@ -20,42 +20,6 @@ DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'Anubis'
 PASSWORD = 'Munc4kin))'
-templates = {
-'audio':
-"""
-p-name:
-    title:{title}
-    slug:{slug}
-p-summary:{summary}
-e-content:{content}
-dt-published:{date_time}
-dt-updated:{updated}
-p-author:{author}
-p-category:{category}
-u-url:{url}
-u-uid:{id}
-p-location:
-    time-zone:{timezone}
-    lat:{lat}
-    long:{long}
-    location-name:{loc_name}
-u-syndication:
-    {syndication}
-u-audio
-    {audio}
-u-video
-    {video}
-u-like
-    {like}
-p-repost
-    {repost}
-p-featured
-    {featured}
-"""
-
-}
-
-
 
 # create our little application :)
 app = Flask(__name__)
@@ -63,9 +27,7 @@ app.config.from_object(__name__)
 app.config['STATIC_FOLDER'] = os.getcwd()
 cfg = None
 
-
-##################DATABASE#########################
-
+""" DATABASE """
 def init_db():
     with closing(connect_db()) as db:
         with app.open_resource('schema.sql', mode='r') as f:
@@ -75,9 +37,7 @@ def init_db():
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
 
-
-##################WEB MENTION######################
-
+""" WEBMENTION """
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
     r      = requests.get(sourceURL, verify=False)
@@ -182,6 +142,7 @@ def processVouch(sourceURL, targetURL, vouchDomain):
                         h.write('\n%s' % vouchDomain)
 
 
+""" AUTHENTICATION"""
 def checkAccessToken(access_token):
     """Check if the given access token matches any in the data stored
 
@@ -196,6 +157,7 @@ def checkAccessToken(access_token):
     r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
     return r['status'] == requests.codes.ok
 
+""" MICROPUB """
 def createEntry(data, image=None, video=None, audio=None):
     entry = ''
     if not data['name'] == None:    #is it an article
@@ -277,7 +239,7 @@ def createEntry(data, image=None, video=None, audio=None):
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
-    r      = requests.get(sourceURL, verify=False)
+    r = requests.get(sourceURL, verify=False)
     if r.status_code == requests.codes.ok:
         mentionData = { 'sourceURL':   sourceURL,
                         'targetURL':   targetURL,
@@ -350,6 +312,7 @@ def file_parser(filename):
 
     return e
 
+
 def validURL(targetURL):
     """
         Validate the target URL exists.
@@ -361,14 +324,11 @@ def validURL(targetURL):
         result = 404
     return result
 
-noteTemplate = """<span id="%(url)s"><p class="byline h-entry" role="note"> <a href="%(url)s">%(name)s</a> <time datetime="%(date)s">%(date)s</time></p></span>
-%(marker)s
-"""
+""" SYNDICATION """
+def tweet(data):
+    pass
 
-##################DECORATORS#####################
-
-##################REQUEST ARGS#####################
-
+""" DECORATORS """
 @app.before_request
 def before_request():
     g.db = connect_db()
@@ -380,8 +340,7 @@ def teardown_request(exception):
         db.close()
 
 
-################## ROUTING ########################
-
+""" ROUTING """
 @app.route('/')
 def show_entries():
     entries = []
@@ -399,11 +358,42 @@ def show_entries():
     return render_template('show_entries.html', entries=entries)
 
 
+@app.route('/add', methods=['GET', 'POST'])
+def add():
+    if request.method == 'GET':
+        return render_template('add.html')
+    elif request.method == 'POST':
+        data = {}
+        for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                    data[key] = None
+
+        for title in request.form:
+            print(title)
+            print(request.form[title])
+            data[title] = request.form[title]
+
+        for title in request.files:
+            data[title] = request.files[title]
+
+        data['published'] = datetime.now()
+
+        if request.form.get('twitter'):
+            data['syndication'] = tweeter.main(tweet=data['social_content'], photo=data['photo']) + ","
+        if request.form.get('instagram'):
+            pass #todo: add posse to instagram
+        if request.form.get('tumblr'):
+            pass #todo: add posse to tumblr
+        createEntry(data)
+        return redirect('/')
+
+
 @app.route('/data/<year>/<month>/<day>/image/<name>')
 def image_fetcher(year, month, day, name):
     entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     img = open(entry)
     return send_file(img)
+
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
@@ -420,6 +410,7 @@ def profile(year, month, day, name):
     except:
         return render_template('page_not_found.html'), 404
 
+
 @app.route('/t/<category>')
 def tag_search(category):
     # try:
@@ -435,16 +426,6 @@ def tag_search(category):
     return render_template('show_entries.html', entries=entries)
     # except: return ('page_not_found.html')
 
-@app.route('/add', methods=['POST'])
-def add_entry():
-    if not session.get('logged_in'):
-        abort(401)
-    g.db.execute('insert into entries (title, text, date_published) values (?, ?, ?)',
-                 [request.form['title'], request.form['text'], datetime.datetime.now()])
-    g.db.commit()
-    flash('New entry was successfully posted')
-    return redirect(url_for('show_entries'))
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -456,8 +437,7 @@ def login():
             error = 'Invalid password'
         else:
             session['logged_in'] = True
-            flash('You were logged in')
-            return redirect(url_for('show_entries'))
+            return redirect('/')
     return render_template('login.html', error=error)
 
 
@@ -507,9 +487,12 @@ def handleMicroPub():
                 try:
                     if('twitter.com' in data['syndicate-to[]']):
                         pass
-                    try: syndication += tweeter.main(data['content'], data['photo'])
-                    except: syndication += tweeter.main(data['content'])
-                except: pass
+                    try:
+                        syndication += tweeter.main(data['content'], data['photo'])
+                    except:
+                        syndication += tweeter.main(data['content'])
+                except:
+                    pass
 
                 data['syndication'] = syndication
 
@@ -538,6 +521,7 @@ def handleMicroPub():
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
         return 'not implemented', 501
+
 
 @app.route('/webmention', methods=['POST'])
 def handleWebmention():
