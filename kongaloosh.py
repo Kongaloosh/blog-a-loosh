@@ -443,6 +443,52 @@ def tag_search(category):
     # except: return ('page_not_found.html')
 
 
+@app.route('/e/<year>/')
+def time_search_year(year):
+    entries = []
+
+    cur = g.db.execute(
+        """SELECT entries.location FROM entries
+        WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
+        """.format(year=int(year)))
+
+    for (row,) in cur.fetchall():
+        entries.append(file_parser(row+".md"))
+    return render_template('show_entries.html', entries=entries)
+
+
+@app.route('/e/<year>/<month>/')
+def time_search_month(year, month):
+    entries = []
+
+    cur = g.db.execute(
+        """SELECT entries.location FROM entries
+        WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
+        AND CAST(strftime('%m',entries.published)AS INT) = {month}
+        """.format(year=int(year), month=int(month)))
+
+
+    for (row,) in cur.fetchall():
+        entries.append(file_parser(row+".md"))
+    return render_template('show_entries.html', entries=entries)
+
+
+@app.route('/e/<year>/<month>/<day>/')
+def time_search(year, month, day):
+    entries = []
+
+    cur = g.db.execute(
+        """SELECT entries.location FROM entries
+        WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
+        AND CAST(strftime('%m',entries.published)AS INT) = {month}
+        AND CAST(strftime('%d',entries.published)AS INT) = {day}
+        """.format(year=int(year), month=int(month), day=int(day)))
+
+    for (row,) in cur.fetchall():
+        entries.append(file_parser(row+".md"))
+    return render_template('show_entries.html', entries=entries)
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
