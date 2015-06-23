@@ -227,7 +227,6 @@ def createEntry(data, image=None, video=None, audio=None):
         g.db.commit()
 
         if data['category']:
-            print("HERE WE ARE\n\n\n\n\n\n\n")
             for c in data['category'].split(','):
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                      [slug, data['published'], c])
@@ -369,8 +368,6 @@ def add():
                     data[key] = None
 
         for title in request.form:
-            print(title)
-            print(request.form[title])
             data[title] = request.form[title]
 
         for title in request.files:
@@ -453,9 +450,9 @@ def handleMicroPub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
-        if access_token or True: #todo: MAKE SURE THIS IS CLEAR
+        if access_token: #todo: MAKE SURE THIS IS CLEAR
             access_token = access_token.replace('Bearer ', '')
-            if checkAccessToken(access_token) or True: #todo: MAKE SURE THIS IS CLEAR
+            if checkAccessToken(access_token): #todo: MAKE SURE THIS IS CLEAR
                 data = {}
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
