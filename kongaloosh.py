@@ -164,7 +164,7 @@ def createEntry(data, image=None, video=None, audio=None):
         title = data['name']
         slug = title
     else:
-        slug = data['content'].split('.')[0]
+        slug = (data['content'].split('.')[0])[:10]
         title = None
 
     slug = slugify(slug)
@@ -385,7 +385,7 @@ def add():
         data['published'] = datetime.now()
 
         if request.form.get('twitter'):
-            data['syndication'] = tweeter.main(tweet=data['social_content'], photo) + ","
+            data['syndication'] = tweeter.main(data, photo=photo) + ","
         if request.form.get('instagram'):
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
