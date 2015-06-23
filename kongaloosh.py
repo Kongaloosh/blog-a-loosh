@@ -371,7 +371,7 @@ def add():
             data[title] = request.form[title]
 
         for title in request.files:
-            data[title] = request.files[title].read()
+            data[title] = request.files[title]
 
         for key in data:
             if data[key] == "":
@@ -385,7 +385,7 @@ def add():
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
             pass #todo: add posse to tumblr
-        location = createEntry(data, image=data['photo'])
+        location = createEntry(data, image=data['photo'].read())
         return redirect(location)
 
 
@@ -480,7 +480,7 @@ def handleMicroPub():
                     data['published'] = parse(data['published'])
 
                 try:
-                    img = request.files.get('photo').read()
+                    img = request.files.get('photo')
                     data['photo'] = img
                 except: pass
 
@@ -504,12 +504,9 @@ def handleMicroPub():
                         syndication += tweeter.main(data['content'])
                 except:
                     pass
-
                 data['syndication'] = syndication
 
-                pickle.dump(data, open('date','wb'))
-
-                location = createEntry(data, img=data['img'])
+                location = createEntry(data, img=data['photo'])
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
