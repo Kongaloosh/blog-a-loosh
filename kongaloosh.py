@@ -161,13 +161,11 @@ def checkAccessToken(access_token):
 def createEntry(data, image=None, video=None, audio=None):
     entry = ''
     if not data['name'] == None:    #is it an article
-        type = 'article'
-        title =data['name']
-        slug=title
+        title = data['name']
+        slug = title
     else:
-        type = 'note'
         slug = data['content'].split('.')[0]
-        title = 'None'
+        title = None
 
     slug = slugify(slug)
 
@@ -180,45 +178,43 @@ def createEntry(data, image=None, video=None, audio=None):
     entry += "published:"+ str(data['published']) + "\n"
     entry += "category:" + str(data['category']) + "\n"
     entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug)) + "\n"
+        year = str(data['published'].year),
+        month = str(data['published'].month),
+        day = str(data['published'].day),
+        slug = str(slug)) + "\n"
     entry += "u-uid" + '/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug)) + "\n"
+        year = str(data['published'].year),
+        month = str(data['published'].month),
+        day = str(data['published'].day),
+        slug = str(slug)) + "\n"
     entry += "location:" + str(data['location'])+ "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
 
     time = data['published']
-
     file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
-
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path))
 
-    total_path =  file_path+"{slug}".format(slug=slug)
+    total_path = file_path+"{slug}".format(slug=slug)
 
     if not os.path.isfile(total_path+'.md'):
         file_writer = open(total_path+".md", 'wb')
         file_writer.write(entry)
         file_writer.close()
         if image:
-            file_writer = open(total_path+".jpg",'w')
+            file_writer = open(total_path+".jpg", 'wb')
             file_writer.write(image)
             file_writer.close()
 
         if video:
-            file_writer = open(total_path+".mp4",'w')
+            file_writer = open(total_path+".mp4", 'wb')
             file_writer.write(image)
             file_writer.close()
 
         if audio:
-            file_writer = open(total_path+".mp3",'w')
+            file_writer = open(total_path+".mp3", 'wb')
             file_writer.write(image)
             file_writer.close()
 
@@ -232,8 +228,12 @@ def createEntry(data, image=None, video=None, audio=None):
                      [slug, data['published'], c])
                 g.db.commit()
 
-        return total_path
-    else: return None
+        return '/e/{year}/{month}/{day}/{slug}'.format(
+            year = str(data['published'].year),
+            month = str(data['published'].month),
+            day = str(data['published'].day),
+            slug = str(slug))
+    else: return "this has already been made"
 
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
@@ -371,7 +371,11 @@ def add():
             data[title] = request.form[title]
 
         for title in request.files:
-            data[title] = request.files[title]
+            data[title] = request.files[title].read()
+
+        for key in data:
+            if data[key] == "":
+                data[key] = None
 
         data['published'] = datetime.now()
 
@@ -381,13 +385,23 @@ def add():
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
             pass #todo: add posse to tumblr
-        createEntry(data)
-        return redirect('/')
+        location = createEntry(data, image=data['photo'])
+        return redirect(location)
 
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
-def image_fetcher(year, month, day, name):
+def image_fetcher_depricated(year, month, day, name):
+    print("HERE\n\n\n\n")
     entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
+    print(entry)
+    img = open(entry)
+    print(img)
+    return send_file(img)
+
+
+@app.route('/data/<year>/<month>/<day>/<name>')
+def image_fetcher(year, month, day, name):
+    entry = 'data/{year}/{month}/{day}/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     img = open(entry)
     return send_file(img)
 
@@ -467,7 +481,7 @@ def handleMicroPub():
 
                 try:
                     img = request.files.get('photo').read()
-                    data['img'] = img
+                    data['photo'] = img
                 except: pass
 
                 try:
@@ -495,7 +509,7 @@ def handleMicroPub():
 
                 pickle.dump(data, open('date','wb'))
 
-                location = createEntry(data)
+                location = createEntry(data, img=data['img'])
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
