@@ -371,7 +371,12 @@ def add():
             data[title] = request.form[title]
 
         for title in request.files:
-            data[title] = request.files[title]
+            data[title] = request.files[title].read()
+
+        try:
+            photo = request.files['photo']
+        except:
+            photo = None
 
         for key in data:
             if data[key] == "":
@@ -380,12 +385,12 @@ def add():
         data['published'] = datetime.now()
 
         if request.form.get('twitter'):
-            data['syndication'] = tweeter.main(tweet=data['social_content'], photo=data['photo']) + ","
+            data['syndication'] = tweeter.main(tweet=data['social_content'], photo) + ","
         if request.form.get('instagram'):
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
             pass #todo: add posse to tumblr
-        location = createEntry(data, image=data['photo'].read())
+        location = createEntry(data, image=data['photo'])
         return redirect(location)
 
 
