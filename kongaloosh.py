@@ -309,6 +309,8 @@ def file_parser(filename):
     try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
     except: pass
 
+    if os.path.exists(filename.split('.md')[0]+".jpg"):
+        e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
     return e
 
 
@@ -338,7 +340,6 @@ def teardown_request(exception):
     if db is not None:
         db.close()
 
-
 """ ROUTING """
 @app.route('/')
 def show_entries():
@@ -348,8 +349,6 @@ def show_entries():
         for file in files:
             if file.endswith('.md'):
                 e = file_parser(filename=subdir+os.sep+file)
-                if os.path.exists(subdir + '/' + file.split('.')[0]+".jpg"):
-                    e['photo'] = subdir + '/' + file.split('.')[0]+".jpg" # get the actual file
                 entries.append(e)
         if len(entries) >= 10: break
     entries = sorted(entries, key=itemgetter('published'), reverse=True)
@@ -439,6 +438,7 @@ def tag_search(category):
         +" WHERE categories.category='{category}'".format(category=category))
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
+
     return render_template('show_entries.html', entries=entries)
     # except: return ('page_not_found.html')
 
@@ -450,6 +450,7 @@ def time_search_year(year):
     cur = g.db.execute(
         """SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
+        ORDER BY entries.published
         """.format(year=int(year)))
 
     for (row,) in cur.fetchall():
@@ -465,8 +466,7 @@ def time_search_month(year, month):
         """SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
         AND CAST(strftime('%m',entries.published)AS INT) = {month}
-        """.format(year=int(year), month=int(month)))
-
+        ORDER BY entries.published""".format(year=int(year), month=int(month)))
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
@@ -482,6 +482,7 @@ def time_search(year, month, day):
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
         AND CAST(strftime('%m',entries.published)AS INT) = {month}
         AND CAST(strftime('%d',entries.published)AS INT) = {day}
+        ORDER BY entries.published
         """.format(year=int(year), month=int(month), day=int(day)))
 
     for (row,) in cur.fetchall():

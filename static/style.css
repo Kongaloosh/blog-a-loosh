@@ -21,7 +21,7 @@ h2{
 }
 
 .page{
-	margin: 2em auto; 
+	margin: 2em auto;
 	width: 35em;
 	border: 5px solid #ccc;
 	padding: 0.8em;
@@ -34,7 +34,7 @@ h2{
 }
 
 .entries li{ 
-	margin: 0.8em 1.2em; 
+	margin: 0.5em 1.3em  ;
 }
 
 .entries li h2 {

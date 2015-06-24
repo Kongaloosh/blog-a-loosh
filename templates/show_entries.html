@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='show_entry.css') }}">
 {% if session.logged_in %}
 <form action="/add" method=post class=add-entry>
     <dl>
@@ -8,53 +9,50 @@
         <dt>Text:
         <dd><textarea name=text rows=5 cols=40></textarea>
         <dd><input type="checkbox" name="twitter" value="twitter" checked>Tweet it. <br>
-        <dd><input type=submit value=Share>
+        <dd><input type=submit value=Share> <input type="button" onclick="/">
     </dl>
 </form>
 {% endif %}
 <ul class=entries>
     {% for entry in entries %}
     <!-- START ENTRIES -->
-    <li>
+    <li class="entry-list-item">
         <article class="hentry h-entry entry">
-            <div class="entry" style="
-
-                margin-top: 10px;
-                border-bottom: 2px solid #ccc;">
-                <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-                {% if entry.title != 'None' %}
-                <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
-                {% endif %}
-                <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
-
-                {% if entry.photo is defined %}
-                <img class="u-photo" src="/{{entry.photo}}"width="500px" height="500px">
-                {% endif %}
-
-                {% if entry.summary != 'None' %}
-                <p class="p-summary">{{entry.summary}}</p>
-                {% endif %}
-
+            <div class="entry clearfix">
+                <div class="entry-heading clearfix">
+                    <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+                    {% if entry.title != 'None' %}
+                    <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
+                    {% endif %}
+                    <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+                </div>
+                <div class="media clearfix">
+                    {% if entry.photo is defined %}
+                    <img class="u-photo" src="/{{entry.photo}}"width="50%" height="50%">
+                    {% endif %}
+                </div>
+                <div class="text clearfix">
+                    {% if entry.summary != 'None' %}
+                    <p class="p-summary">{{entry.summary}}</p>
+                    {% endif %}
                 <p class="e-content">{{entry.content}}</p>
+                </div>
+                <div class="entry-footer clearfix">
 
-                <div class="entry-footer">
-
-                    {% if entry.category is defined %}
-                    {% for c in entry.category %}
-                    <a href="/t/{{c}}">{{c}}</a>
-                    {% endfor %}
+                    {% if entry.category is defined and entry.category != None %}
+                        {% for c in entry.category %}
+                        <a class="category" href="/t/{{c}}">{{c}}</a>
+                        {% endfor %}
                     {% endif %}
 
-                    <time>{{entry.published}}</time>
+                    <time class="dt-published">{{entry.published}}</time>
 
                     <!-- we use an if to prevent commas and such from showing if undefined -->
                     {% if entry.location is defined %}
                     <p class="p-location">{{entry.location}}</p>
                     {% endif %}
-
                 </div>
             </div>
-
         </article>
         {% else %}
     <li><em>Unbelievable.  No entries here so far</egitm>

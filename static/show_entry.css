@@ -1,0 +1,52 @@
+/*------------*/
+/* EVERYTHING */
+/*------------*/
+
+/* apply a natural box layout model to all elements, but allowing components to change */
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.clearfix:after { /* clearfix */
+  content: "";
+  display: table;
+  clear: both;
+}
+
+div.media{
+    width: 100%;
+    align-content: center;
+}
+
+img{
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+time.dt-published{
+    float: right;
+}
+
+a.category{
+    float: left;
+}
+
+.p-author{
+    float: left;
+}
+
+.entry-heading .u-url{
+    float: right;
+}
+
+.entry-list-item{
+    border-bottom: 2px solid #ccc;
+}
+
+.entry-footer{
+    margin-bottom: 20px;
+}
