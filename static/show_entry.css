@@ -27,12 +27,15 @@ img{
     display: block;
 }
 
-time.dt-published{
-    float: right;
+div.categories{
+    float: left;
+    width: 60%
 }
 
-a.category{
-    float: left;
+div.date-stamp{
+    float:right;
+    text-align: right;
+    width: 30%;
 }
 
 .p-author{
@@ -49,4 +52,5 @@ a.category{
 
 .entry-footer{
     margin-bottom: 20px;
+    width: 100%;
 }

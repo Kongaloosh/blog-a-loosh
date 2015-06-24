@@ -38,18 +38,18 @@
                 <p class="e-content">{{entry.content}}</p>
                 </div>
                 <div class="entry-footer clearfix">
-
+                    <div class="categories">
                     {% if entry.category is defined and entry.category != None %}
                         {% for c in entry.category %}
                         <a class="category" href="/t/{{c}}">{{c}}</a>
                         {% endfor %}
                     {% endif %}
-
-                    <time class="dt-published">{{entry.published}}</time>
-
-                    <!-- we use an if to prevent commas and such from showing if undefined -->
+                    </div>
+                    <div class="date-stamp">
+                        <time class="dt-published">{{entry.published}}</time>
+                    </div>
                     {% if entry.location is defined %}
-                    <p class="p-location">{{entry.location}}</p>
+                            <p class="p-location">{{entry.location}}</p>
                     {% endif %}
                 </div>
             </div>

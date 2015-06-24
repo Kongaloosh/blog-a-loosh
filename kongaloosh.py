@@ -288,7 +288,9 @@ def file_parser(filename):
     except: pass
     try: e['content'] = re.search('(?<=content:)(.)*', str).group()
     except: pass
-    try: e['published'] = re.search('(?<=published:)(.)*', str).group()
+    try:
+        date = parse(re.search('(?<=published:)(.)*', str).group())
+        e['published'] = date.date()
     except: pass
     try: e['author'] = re.search('(?<=author:)(.)*', str).group()
     except: pass
