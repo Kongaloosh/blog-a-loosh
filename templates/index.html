@@ -5,45 +5,46 @@
         <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
         <link rel="micropub" href="http://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
         <link rel="pingback" href="https://webmention.io/kongaloosh.com/xmlrpc" /><!-- webmention endpoint -->
-        <link rel="webmention" href="https://webmention.io/kongaloosh.com/xmlrpc" /><!-- webmention endpoint -->
+        <link rel="webmention" href="https://kongaloosh.com/webmention"/><!-- webmention endpoint -->
       <title>kongaloosh</title>
   </head>
+  <div class="top">
+          <div class="nav-bar">
+              <h1 class="title"><a href="/">Kongaloosh</a></h1>
+              <h2><a href="http://alexkearney.com">about</a></h2>
+          </div>
+
+          <div class="nav">
+              <section class="authorship">
+                  <div class="h-card">
+                      <a class="u-e-mail" href="mailto:kearney@ualberta.ca" rel="me"><i class="fa fa-envelope"></i></a>
+                      <a class="u-url" href="http://alexkearney.com/" rel="me"><i class="fa fa-laptop"></i></a>
+                      <a href="https://twitter.com/AlexKKearney" title="Twitter" rel="me"><i class="fa fa-twitter"></i></a>
+                      <a href="https://ca.linkedin.com/in/alexandrakearney" title="LinkedIn" rel="me"><i class="fa fa-linkedin"></i></a>
+                      <!--<a href="#" title="Instagram"><i class="fa fa-instagram"></i></a>-->
+                      <a href="https://github.com/Kongaloosh" title="Github" rel="me"><i class="fa fa-github-alt"></i></a>
+                      <!--<a href="#" title="Facebook"><i class="fa fa-facebook"></i></a>-->
+                      <a href="https://plus.google.com/+AlexandraKearney/" title="Google+" rel="me"><i class="fa fa-google-plus"></i></a>
+                      <a href="https://instagram.com/kongaloosh" title="instagram" rel="me"><i class="fa fa-instagram"></i></a>
+                      <a href="https://www.facebook.com/alex.k.kearney" title="facebook" rel="me"><i class="fa fa-facebook-square"></i></a>
+                      <a href="http://kongaloosh.tumblr.com/" title="tumblr" rel="me"><i class="fa fa-tumblr-square"></i></a>
+                  </div>
+
+                  <p><a href="mailto:hello@your-email.com">kearney@ualberta.ca</a></p>
+                  <p>
+                      <span class="p-locality">Edinburgh</span>, <span class="p-country-name">Scotland</span>
+                      or <br>
+                      <span class="p-locality">Edmonton</span>, <span class="p-country-name">Canada</span>
+                  </p>
+                  {% if session.logged_in %}
+                  <a href="/logout">logout</a>
+                  {% endif %}
+              </section>
+          </div>
+
+  </div>
+  {% block content %}
   <body>
-        <section class="authorship">
-   		    <A name="contact"></A>
-            <h1><a href="/">Kongaloosh</a> </h1>
-            <h2>hang tight, chief</h2>
-            <p> I'm experimenting; something may be broken. </p>
-            <!-- <h2 class="section-header">Let's chat.</h2> -->
-
-        <div class="h-card">
-	        <a class="u-e-mail" href="mailto:kearney@ualberta.ca" rel="me"><i class="fa fa-envelope"></i></a>
-	        <a class="u-url" href="http://alexkearney.com/" rel="me"><i class="fa fa-laptop"></i></a>
-	        <a href="https://twitter.com/AlexKKearney" title="Twitter" rel="me"><i class="fa fa-twitter"></i></a>
-	        <a href="https://ca.linkedin.com/in/alexandrakearney" title="LinkedIn" rel="me"><i class="fa fa-linkedin"></i></a>
-	                <!--<a href="#" title="Instagram"><i class="fa fa-instagram"></i></a>-->
-	        <a href="https://github.com/Kongaloosh" title="Github" rel="me"><i class="fa fa-github-alt"></i></a>
-	                <!--<a href="#" title="Facebook"><i class="fa fa-facebook"></i></a>-->
-	        <a href="https://plus.google.com/+AlexandraKearney/" title="Google+" rel="me"><i class="fa fa-google-plus"></i></a>
-            <a href="https://instagram.com/kongaloosh" title="instagram" rel="me"><i class="fa fa-instagram"></i></a>
-            <a href="https://www.facebook.com/alex.k.kearney" title="facebook" rel="me"><i class="fa fa-facebook-square"></i></a>
-            <a href="http://kongaloosh.tumblr.com/" title="tumblr" rel="me"><i class="fa fa-tumblr-square"></i></a>
-        </div>
-
-        <p><a href="mailto:hello@your-email.com">kearney@ualberta.ca</a></p>
-            <!--<p>416.123.4567</p>-->
-        <p>
-        	<span class="p-locality">Edinburgh</span>, <span class="p-country-name">Scotland</span>
-            or <br>
-          <span class="p-locality">Edmonton</span>, <span class="p-country-name">Canada</span>
-        </p>
-
-
-            {% if session.logged_in %}
-            <a href="/logout">logout</a>
-            {% endif %}
-        </section>
-    {% block content %}
-    {% endblock %}
+        {% endblock %}
   </body>
 </html>

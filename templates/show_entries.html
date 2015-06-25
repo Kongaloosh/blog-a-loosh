@@ -39,11 +39,11 @@
                 </div>
                 <div class="entry-footer clearfix">
                     <div class="categories">
-                    {% if entry.category is defined and entry.category != None %}
                         {% for c in entry.category %}
-                        <a class="category" href="/t/{{c}}">{{c}}</a>
+                            {% if c != None and c != 'None' %}
+                            <a class="category" href="/t/{{c}}">{{c}}</a>
+                            {% endif %}
                         {% endfor %}
-                    {% endif %}
                     </div>
                     <div class="date-stamp">
                         <time class="dt-published">{{entry.published}}</time>
