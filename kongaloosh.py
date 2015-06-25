@@ -589,10 +589,10 @@ def handleMicroPub():
 def handleWebmention():
     app.logger.info('handleWebmention [%s]' % request.method)
     if request.method == 'POST':
-        valid  = False
+        valid = False
         source = request.form.get('source')
         target = request.form.get('target')
-        vouch  = request.form.get('vouch')
+        vouch = request.form.get('vouch')
         app.logger.info('source: %s target: %s vouch %s' % (source, target, vouch))
 
         valid = validURL(target)
