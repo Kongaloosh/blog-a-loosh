@@ -13,7 +13,8 @@
     </dl>
 </form>
 {% endif %}
-<ul class=entries>
+    <div class="blog">
+        <ul class="entries">
     {% for entry in entries %}
     <!-- START ENTRIES -->
     <li class="entry-list-item">
@@ -58,4 +59,6 @@
     <li><em>Unbelievable.  No entries here so far</egitm>
         {% endfor %}
 </ul>
+
+    </div>
 {% endblock %}

@@ -13,7 +13,9 @@
               <h1 class="title"><a href="/">Kongaloosh</a></h1>
               <h2><a href="http://alexkearney.com">about</a></h2>
           </div>
-
+          <div class="spacer-nav">
+            &nbsp;
+          </div>
           <div class="nav">
               <section class="authorship">
                   <div class="h-card">
@@ -36,12 +38,15 @@
                       or <br>
                       <span class="p-locality">Edmonton</span>, <span class="p-country-name">Canada</span>
                   </p>
-                  {% if session.logged_in %}
-                  <a href="/logout">logout</a>
-                  {% endif %}
+                  
               </section>
           </div>
-
+          {% if session.logged_in %}
+                  <a href="/logout">logout</a>
+          {% endif %}
+  </div>
+  <div class="spacer">
+            &nbsp;
   </div>
   {% block content %}
   <body>

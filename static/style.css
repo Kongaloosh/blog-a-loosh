@@ -1,114 +1,79 @@
 body {
 	font-family: sans-serif;
 	/*background: #eee;*/
-    background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),url(img/background.jpg) no-repeat fixed 50%;
+    /*background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),url(img/background.jpg) no-repeat fixed 50%;*/
+    background: url(img/background.jpg) no-repeat fixed 50%;
 	background-size: cover; /*updates the image to be cover size and re-crops to match aspect ratio*/
 }
 
-.nav-bar{
+.top{
     width: 100%;
-    background: white;
-    height: 10%;
-    position: fixed;
+    min-height: 20%;
+    max-height: 80px;
+    position: absolute;
     top: 0;
     left: 0;
+    margin: 0 auto;
+    /*display: block;*/
+    margin-bottom: 10px;
+}
+
+.spacer-nav{
+    background: grey;
+    height: 75px;
+}
+
+.spacer{
+    height: 200px;
+}
+
+.nav-bar{
+    background-color: black;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    margin-bottom: 20%;
     z-index: 999;
+    height: 70px;
 }
 
 .nav-bar h1{
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-bottom: 10px;
     float: left;
+    margin-left: 10px;
+}
+
+.top a,
+.top p{
+    color: white;
+    text-decoration: none;
+    position: inherit;
+    margin-bottom: 10px;
 }
 
 .nav-bar h2{
-    margin-top: 10px;
-    margin-right: 10px;
-    margin-bottom: 10px;
     float: right;
-}
-
-.nav-bar a{
-    color: black;
-    text-decoration: none;
-}
+    margin-right: 10px;
+}   
 
 .nav{
-    margin-top:5%;
-    background: black;
-	width: 100%;
-	padding: 0.8em;
-}
-
-.nav a{
-    color: white;
-    text-decoration: none;
-}
-
-h1, h2 {
-	font-family: 'Georgia', serif;
- 	margin: 0;
-}
-
-h2{
-	font-size: 1.2em; 
-}
-
-.page{
-	margin: 2em auto;
-	width: 60%;
-	border: 5px solid #ccc;
-	padding: 0.8em;
-	background: white;
-}
-
-.entries{
-	list-style: none; 
-	margin: 0; padding: 0; 
-}
-
-.entries li{ 
-	margin: 0.5em 1.3em  ;
-}
-
-.entries li h2 {
-	margin-left: -1em; 
-}
-
-.add-entry {
-	font-size: 0.9em;
-	border-bottom: 1px solid #ccc;
-}
-
-.add-entry dl { 
-	font-weight: bold; 
-}
-
-.metanav { 
-	text-align: right;
-	font-size: 0.8em; 
-	padding: 0.3em;
-	margin-bottom: 1em; 
-	background: #fafafa; 
-}
-
-.flash { 
-	background: #cee5F5;
- 	padding: 0.5em;
-    border: 1px solid #aacbe2; 
-}
-
-.error { 
-	background: #f0d6d6; 
-	padding: 0.5em; 
-}
-
-.authorship {
-    background-size: cover;
+    background-color: grey;
     text-align: center;
+    padding-bottom: 10px;
+    /*padding-top: 20%;*/
+    position: static;
 }
 
-.authorship h1{
-    text-align: center;
+.nav p{
+    margin-bottom: 10px;
+}
+
+.entry-list-item{
+    background: white;
+    margin: 10px;
+    margin-left:20%;
+    margin-right: 20%;
+}
+
+.blog{
+    margin-top: 10%;
 }
