@@ -1,11 +1,29 @@
-{% extends "index.html" %}
-{% block content %}
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
-<div class=page>
-    {% for message in get_flashed_messages() %}
-        <div class=flash>{{ message }}</div>
-    {% endfor %}
-    {% block body %}
-    {% endblock %}
-</div>
-{% endblock %}
+<html>
+    <head>
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='normalize.css') }}">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+
+        <link rel="authorization_endpoint" href="https://indieauth.com/auth"> <!-- Auth point for Quill -->
+        <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
+        <link rel="micropub" href="http://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
+        <link rel="pingback" href="http://webmention.io/kongaloosh.com/xmlrpc"><!-- webmention endpoint -->
+        <link rel="webmention" href="http://kongaloosh.com/webmention"><!-- webmention endpoint -->
+        <meta name="viewport" content="initial-scale=1">
+        <title>kongaloosh</title>
+    </head>
+
+    <div class="nav-bar">
+        <h1 class="title"><a href="/">Kongaloosh</a></h1>
+        <h2><a href="http://alexkearney.com">about</a></h2>
+    </div>
+
+    <body>
+            {% for message in get_flashed_messages() %}
+                <div class=flash>{{ message }}</div>
+            {% endfor %}
+
+            {% block body %}
+            {% endblock %}
+    </body>
+</html>

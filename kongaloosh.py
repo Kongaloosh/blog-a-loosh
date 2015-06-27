@@ -343,6 +343,8 @@ def teardown_request(exception):
         db.close()
 
 """ ROUTING """
+
+
 @app.route('/')
 def show_entries():
     entries = []
@@ -355,7 +357,12 @@ def show_entries():
         if len(entries) >= 10: break
     entries = sorted(entries, key=itemgetter('published'), reverse=True)
     pickle.dump(entries, open('entries', 'wb'))
-    return render_template('show_entries.html', entries=entries)
+    return render_template('blog_entries.html', entries=entries)
+
+
+@app.route('/stream')
+def show_entries_stream():
+    pass
 
 
 @app.route('/add', methods=['GET', 'POST'])
