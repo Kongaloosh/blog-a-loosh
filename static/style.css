@@ -1,7 +1,9 @@
-body {
-	font-family: sans-serif;
-    background: url(img/alhambra.jpg) no-repeat fixed 50%;
-	background-size: cover; /*updates the image to be cover size and re-crops to match aspect ratio*/
+html { 
+  background: url(img/skyline.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
 }
 
 
@@ -23,7 +25,6 @@ body {
     left: 0;
     margin: 0 auto;
     margin-bottom: 10px;
-    z-index: 999;
 }
 
 
@@ -36,12 +37,13 @@ body {
 
 .nav-bar{
     min-width: 200px;
-    background-color: #003300;
+    background-color: black;
     position: fixed;
     width: 100%;
     margin-bottom: 20%;
+    z-index: 999;
     height: 70px;
-    box-shadow: 0 0 3pt 0.5pt block; 
+    box-shadow: 0 0 3pt 0.5pt #BA9C5E; 
 }
 
 
@@ -52,8 +54,8 @@ body {
 }
 
 
-.top a,
-.top p{
+.nav-bar a,
+.nav-bar p{
     color: white;
     text-decoration: none;
     position: inherit;
@@ -87,7 +89,7 @@ body {
 
 
 .entry-list-item{
-    background: #FEFCEE;
+    background: white;
     margin: 10px;
     margin-left:20%;
     margin-right: 20%;
@@ -100,5 +102,5 @@ body {
 
 
 .page{
-    background: black;
+    background: #E6E6E6;
 }

@@ -15,50 +15,50 @@
 {% endif %}
     <div class="blog">
         <ul class="entries">
-    {% for entry in entries %}
-    <!-- START ENTRIES -->
-    <li class="entry-list-item">
-        <article class="hentry h-entry entry">
-            <div class="entry clearfix">
-                <div class="entry-heading clearfix">
-                    <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-                    {% if entry.title != 'None' %}
-                    <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
-                    {% endif %}
-                    <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
-                </div>
-                <div class="media clearfix">
-                    {% if entry.photo is defined %}
-                    <img class="u-photo" src="/{{entry.photo}}"width="50%" height="50%">
-                    {% endif %}
-                </div>
-                <div class="text clearfix">
-                    {% if entry.summary != 'None' %}
-                    <p class="p-summary">{{entry.summary}}</p>
-                    {% endif %}
-                <p class="e-content">{{entry.content}}</p>
-                </div>
-                <div class="entry-footer clearfix">
-                    <div class="categories">
-                        {% for c in entry.category %}
-                            {% if c != None and c != 'None' %}
-                            <a class="category" href="/t/{{c}}">{{c}}</a>
+            {% for entry in entries %}
+            <!-- START ENTRIES -->
+            <li class="entry-list-item">
+                <article class="hentry h-entry entry">
+                    <div class="entry clearfix">
+                        <div class="entry-heading clearfix">
+                            <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+                            {% if entry.title != 'None' %}
+                            <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
                             {% endif %}
-                        {% endfor %}
+                            <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+                        </div>
+                        <div class="media clearfix">
+                            {% if entry.photo is defined %}
+                            <img class="u-photo" src="/{{entry.photo}}"width="50%" height="50%">
+                            {% endif %}
+                        </div>
+                        <div class="text clearfix">
+                            {% if entry.summary != 'None' %}
+                            <p class="p-summary">{{entry.summary}}</p>
+                            {% endif %}
+                        <p class="e-content">{{entry.content}}</p>
+                        </div>
+                        <div class="entry-footer clearfix">
+                            <div class="categories">
+                                {% for c in entry.category %}
+                                    {% if c != None and c != 'None' %}
+                                    <a class="category" href="/t/{{c}}">{{c}}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="date-stamp">
+                                <time class="dt-published">{{entry.published}}</time>
+                            </div>
+                            {% if entry.location is defined %}
+                                    <p class="p-location">{{entry.location}}</p>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="date-stamp">
-                        <time class="dt-published">{{entry.published}}</time>
-                    </div>
-                    {% if entry.location is defined %}
-                            <p class="p-location">{{entry.location}}</p>
-                    {% endif %}
-                </div>
-            </div>
-        </article>
-        {% else %}
-    <li><em>Unbelievable.  No entries here so far</egitm>
-        {% endfor %}
-</ul>
+                </article>
+                {% else %}
+            <li><em>Unbelievable.  No entries here so far</egitm>
+                {% endfor %}
+        </ul>
 
     </div>
 {% endblock %}
