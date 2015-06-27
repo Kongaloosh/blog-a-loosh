@@ -29,6 +29,8 @@ img{
     display: block;
     border: 20px solid #F3F3F3;
     border-radius: 3px;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 div.categories{
