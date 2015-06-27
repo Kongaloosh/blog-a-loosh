@@ -15,7 +15,7 @@ import tweeter
 import re
 from dateutil.parser import parse
 # configuration
-DATABASE = '/tmp/kongaloosh.db'
+DATABASE = 'kongaloosh.db'
 DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'Anubis'
