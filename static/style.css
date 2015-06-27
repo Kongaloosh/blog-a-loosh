@@ -1,46 +1,56 @@
 body {
 	font-family: sans-serif;
-	/*background: #eee;*/
-    /*background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),url(img/background.jpg) no-repeat fixed 50%;*/
-    background: url(img/background.jpg) no-repeat fixed 50%;
+    background: url(img/alhambra.jpg) no-repeat fixed 50%;
 	background-size: cover; /*updates the image to be cover size and re-crops to match aspect ratio*/
 }
 
+
+.spacer {
+    display: block;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    margin-bottom: 116px;
+    box-sizing: content-box;
+}
+
+
 .top{
     width: 100%;
-    min-height: 20%;
-    max-height: 80px;
+    min-width: 200px;
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 0;
     margin: 0 auto;
-    /*display: block;*/
     margin-bottom: 10px;
+    z-index: 999;
 }
+
 
 .spacer-nav{
-    background: grey;
-    height: 75px;
+    background: #8D4421;
+    height: 90px;
+
 }
 
-.spacer{
-    height: 200px;
-}
 
 .nav-bar{
-    background-color: black;
+    min-width: 200px;
+    background-color: #003300;
     position: fixed;
-    top: 0;
     width: 100%;
     margin-bottom: 20%;
-    z-index: 999;
     height: 70px;
+    box-shadow: 0 0 3pt 0.5pt block; 
 }
+
 
 .nav-bar h1{
     float: left;
     margin-left: 10px;
+    vertical-align: center;
 }
+
 
 .top a,
 .top p{
@@ -50,30 +60,45 @@ body {
     margin-bottom: 10px;
 }
 
+
 .nav-bar h2{
     float: right;
     margin-right: 10px;
+    vertical-align: center;
 }   
 
-.nav{
-    background-color: grey;
+ 
+.page-footer{
+    min-width: 200px;
+    background-color: #8D4421;
     text-align: center;
     padding-bottom: 10px;
-    /*padding-top: 20%;*/
+    padding-top:0;
+    top: 0;
+    left: 0;
+    height: 120px;
     position: static;
 }
 
-.nav p{
+
+.page-footer p{
     margin-bottom: 10px;
 }
 
+
 .entry-list-item{
-    background: white;
+    background: #FEFCEE;
     margin: 10px;
     margin-left:20%;
     margin-right: 20%;
 }
 
+
 .blog{
     margin-top: 10%;
+}
+
+
+.page{
+    background: black;
 }

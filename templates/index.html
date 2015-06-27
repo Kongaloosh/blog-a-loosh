@@ -1,11 +1,17 @@
 <html>
   <head>
   	    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='normalize.css') }}">
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+
         <link rel="authorization_endpoint" href="https://indieauth.com/auth"> <!-- Auth point for Quill -->
         <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
         <link rel="micropub" href="http://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
-        <link rel="pingback" href="https://webmention.io/kongaloosh.com/xmlrpc" /><!-- webmention endpoint -->
-        <link rel="webmention" href="https://kongaloosh.com/webmention"/><!-- webmention endpoint -->
+        <link rel="pingback" href="https://webmention.io/kongaloosh.com/xmlrpc"><!-- webmention endpoint -->
+        <link rel="webmention" href="https://kongaloosh.com/webmention"><!-- webmention endpoint -->
+        
+        <meta name="viewport" content="initial-scale=1">
+      
       <title>kongaloosh</title>
   </head>
   <div class="top">
@@ -13,10 +19,22 @@
               <h1 class="title"><a href="/">Kongaloosh</a></h1>
               <h2><a href="http://alexkearney.com">about</a></h2>
           </div>
-          <div class="spacer-nav">
+          {% if session.logged_in %}
+                  <a href="/logout">logout</a>
+          {% endif %}
+  </div>
+  
+  <div class="fullscreen"></div>  
+
+  <div class="spacer">
             &nbsp;
-          </div>
-          <div class="nav">
+  </div>
+  <body>
+  {% block content %}
+  {% endblock %}
+  </body>
+    <div class="bottom">
+        <div class="page-footer">
               <section class="authorship">
                   <div class="h-card">
                       <a class="u-e-mail" href="mailto:kearney@ualberta.ca" rel="me"><i class="fa fa-envelope"></i></a>
@@ -41,15 +59,5 @@
                   
               </section>
           </div>
-          {% if session.logged_in %}
-                  <a href="/logout">logout</a>
-          {% endif %}
-  </div>
-  <div class="spacer">
-            &nbsp;
-  </div>
-  {% block content %}
-  <body>
-        {% endblock %}
-  </body>
+    </div>
 </html>

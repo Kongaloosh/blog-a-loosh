@@ -27,6 +27,8 @@ img{
     margin-left: auto;
     margin-right: auto;
     display: block;
+    border: 20px solid white;
+    border-radius: 3px;
 }
 
 div.categories{
@@ -34,7 +36,7 @@ div.categories{
     width: 60%
 }
 
-div.date-stamp{
+di#003300date-stamp{
     float:right;
     text-align: right;
     width: 30%;
@@ -49,9 +51,24 @@ div.date-stamp{
 }
 
 .entry-list-item{
-    border: 2px solid #ccc;
+    border: 2px solid #003300;
+    /*outline: 2px solid ;*/
+    box-shadow: 0 0 3pt 0.5pt #BA9C5E;
+    border-radius: 5px;
+    min-width: 500px;
 }
 
+/*.entry-list-item:before {
+  content: " ";
+  position: absolute;
+  z-index: -1;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 5px solid #ffea00;
+}
+*/
 .entry-footer{
     margin-bottom: 20px;
     width: 100%;
@@ -80,5 +97,7 @@ div.date-stamp{
     margin-right: 10px;
     margin-left: 10px;
     margin-bottom: 10px;
-   margin-top: 10px;
+    margin-top: 10px;
 }
+
+
