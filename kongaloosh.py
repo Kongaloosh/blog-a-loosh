@@ -37,10 +37,12 @@ def init_db():
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
 
+
 """ WEBMENTION """
+
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
-    r      = requests.get(sourceURL, verify=False)
+    r = requests.get(sourceURL, verify=False)
     if r.status_code == requests.codes.ok:
         mentionData = { 'sourceURL':   sourceURL,
                         'targetURL':   targetURL,
