@@ -2,6 +2,20 @@
 {% extends "show_entries.html" %}
 {% block blog %}
 <div class="blog"> <!-- All of the blog articles are put into this format -->
+        {% if session.logged_in %}
+    <div class="add-entry">
+        <form action="/add" method=pos class="add-entry-form">
+            <dl>
+                <dt>Title:
+                <dd><input type=text size=30 name=title>
+                <dt>Text:
+                <dd><textarea name=text rows=5 cols=40></textarea>
+                <dd><input type="checkbox" name="twitter" value="twitter" checked>Tweet it. <br>
+                <dd><input type=submit value=Share> <input type="button" onclick="/">
+            </dl>
+        </form>
+    </div>
+    {% endif %}
         <ul class="entries">
             {% for entry in entries %}
             <!-- START ENTRIES -->

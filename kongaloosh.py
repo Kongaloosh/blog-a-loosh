@@ -509,7 +509,7 @@ def login():
             error = 'Invalid password'
         else:
             session['logged_in'] = True
-            return redirect('/')
+            return redirect('/add')
     return render_template('login.html', error=error)
 
 

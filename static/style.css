@@ -6,6 +6,7 @@
 html {
     box-sizing: border-box;
 }
+
 *, *:before, *:after {
     box-sizing: inherit;
 }
@@ -18,13 +19,7 @@ html {
 
 /* blog structure */
 
-body {
-  background: url(img/background.jpg) no-repeat center center fixed; 
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
-}
+
 
 /* Entries */
 
@@ -60,72 +55,4 @@ body {
     float: right;
     margin-right: 10px;
     vertical-align: center;
-}  
-
-/*.full {
-    display: block;
-    height: 100%;
-    width: 100%;
-    position: relative;
-    margin-bottom: 116px;
-}*/
-
-
-
-
-
-/*.top{
-    width: 100%;
-    min-width: 200px;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    margin: 0 auto;
-    margin-bottom: 10px;
-}*/
-
- 
-/*.page-footer{
-    min-width: 200px;
-    background-color: #8D4421;
-    text-align: center;
-    padding-bottom: 10px;
-    padding-top:0;
-    top: 0;
-    left: 0;
-    height: 120px;
-    position: static;
-}*/
-
-
-/*.page-footer p{
-    margin-bottom: 10px;
-}*/
-
-
-/*.entry-list-item{
-    background: white;
-    margin: 10px;
-    margin-left:20%;
-    margin-right: 20%;
-}*/
-
-
-/*.blog{
-    margin-top: 10%;
-}*/
-
-
-/*.page{
-    background: #E6E6E6;
-}*/
-
-/*.input{
-    background: #E6E6E6;
-    margin-left: 30%;
-    margin-right: 30%;
-    margin-top: 10%;
-    margin-bottom: 10%;
-    padding: 5px;
-    border: 3px solid black;
-}*/
+} 

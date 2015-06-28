@@ -1,6 +1,15 @@
+body { 
+  background: url(img/background.jpg) no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
 /* THE CONTENT SPACING */
 
 .spacer {
+    /*background: #EEEEEC;*/
     display: block;
     height: 100%;
     width: 100%;
@@ -8,15 +17,19 @@
     margin-bottom: 116px;
 }
 
+.blog{
+  background: #EEEEEC;
+}
+
 /* add-entry */
 
 .add-entry{
-  background: grey;
-  padding: 10px;
+  padding-top: 10px;
 }
 
 .add-entry-form{
-  border: solid 10px #F3F3F3;
+  background-color: #EEEEEC;
+  border: solid 3px black;
   padding: 10px;
   margin: 10px;
 }
@@ -50,6 +63,8 @@ img{
 /* Entry spacing */
 .entries{
   padding: 20px;
+  padding-bottom: 50px;
+  list-style-type: none;
 }
 
 .entry{
@@ -85,6 +100,8 @@ div.date-stamp{
     box-shadow: 0 0 3pt 0.5pt black;
     border-radius: 5px;
     min-width: 500px;
+    margin-bottom: 10px;
+
 }
 
 

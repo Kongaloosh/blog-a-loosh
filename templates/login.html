@@ -1,7 +1,11 @@
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='login.css') }}"> <!-- blog roll styling -->
 {% extends "layout.html" %}
 {% block body %}
+<div class="input">
   <h2>Login</h2>
-  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+    {% if error %}
+  <p class=error><strong>Error:</strong> {{ error }}
+    {% endif %}
   <form action="{{ url_for('login') }}" method=post>
     <dl>
       <dt>Username:
@@ -11,4 +15,5 @@
       <dd><input type=submit value=Login>
     </dl>
   </form>
+</div>
 {% endblock %}
