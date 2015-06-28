@@ -1,5 +1,26 @@
 /* THE CONTENT SPACING */
 
+.spacer {
+    display: block;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    margin-bottom: 116px;
+}
+
+/* add-entry */
+
+.add-entry{
+  background: grey;
+  padding: 10px;
+}
+
+.add-entry-form{
+  border: solid 10px #F3F3F3;
+  padding: 10px;
+  margin: 10px;
+}
+
 /* Message Flashing */
 .flash { 
     background: #cee5F5;
@@ -25,7 +46,6 @@ img{
     max-height: 100%;
     image-orientation: from-image;
 }
-
 
 /* Entry spacing */
 .entries{
@@ -60,8 +80,8 @@ div.date-stamp{
 }
 
 .entry-list-item{
+    background: white;
     border: 2px solid #003300;
-    /*outline: 2px solid ;*/
     box-shadow: 0 0 3pt 0.5pt black;
     border-radius: 5px;
     min-width: 500px;
@@ -72,9 +92,4 @@ div.date-stamp{
 .entry-footer{
     margin-bottom: 20px;
     width: 100%;
-}
-
-.entries{
-    list-style: none;
-    margin: 0; padding: 0;
 }
