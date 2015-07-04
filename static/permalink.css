@@ -1,0 +1,14 @@
+/* THE CONTENT SPACING */
+
+/* add-entry */
+body{
+    background-color:  #EEEEEC;
+}
+
+.nav-spacer{
+    background-color: #EEEEEC;
+    display: block;
+    height: 70px;
+    width: 100%;
+    position: relative;
+}

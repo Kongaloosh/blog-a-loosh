@@ -432,7 +432,7 @@ def profile(year, month, day, name):
             entry['video'] = file_name+".mp4" # get the actual file
         if os.path.exists(file_name+".mp3"):
             entry['audio'] = file_name+".mp3" # get the actual file
-        return render_template('show_entries.html', entries=[entry])
+        return render_template('entry.html', entries=[entry])
     except:
         return render_template('page_not_found.html'), 404
 
@@ -466,7 +466,7 @@ def time_search_year(year):
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-    return render_template('show_entries.html', entries=entries)
+    return render_template('entry.html', entries=entries)
 
 
 @app.route('/e/<year>/<month>/')
@@ -481,7 +481,7 @@ def time_search_month(year, month):
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-    return render_template('show_entries.html', entries=entries)
+    return render_template('entry.html', entries=entries)
 
 
 @app.route('/e/<year>/<month>/<day>/')
@@ -498,7 +498,7 @@ def time_search(year, month, day):
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-    return render_template('show_entries.html', entries=entries)
+    return render_template('entry.html', entries=entries)
 
 
 @app.route('/login', methods=['GET', 'POST'])

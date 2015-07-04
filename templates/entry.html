@@ -1,0 +1,76 @@
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='entry.css') }}"> <!-- blog roll styling -->
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='permalink.css') }}"> <!-- blog roll styling -->
+<!--<link rel=stylesheet type=text/css href="{{ url_for('static', filename='show_entry.css') }}">-->
+{% extends "layout.html" %}
+{% block body %}
+<div class="nav-spacer"></div>
+<div class="blog"> <!-- All of the blog articles are put into this format -->
+        {% if session.logged_in %}
+    <div class="add-entry">
+        <form action="/add" method=pos class="add-entry-form">
+            <dl>
+                <dt>Title:
+                <dd><input type=text size=30 name=title>
+                <dt>Text:
+                <dd><textarea name=text rows=5 cols=40></textarea>
+                <dd><input type="checkbox" name="twitter" value="twitter" checked>Tweet it. <br>
+                <dd><input type=submit value=Share> <input type="button" onclick="/">
+            </dl>
+        </form>
+    </div>
+    {% endif %}
+        <ul class="entries">
+            {% for entry in entries %}
+            <!-- START ENTRIES -->
+            <li class="entry-list-item">
+                <article class="hentry h-entry entry">
+                    <div class="entry clearfix">
+                        <div class="entry-heading clearfix">                        <!-- Entry header -->
+                            <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+                            {% if entry.title != 'None' %}
+                            <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
+                            {% endif %}
+                            <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+                        </div>
+
+
+                        <div class="media clearfix">                                <!-- Media content -->
+                            {% if entry.photo is defined %}
+                            <img class="u-photo" src="/{{entry.photo}}">
+                            {% endif %}
+                        </div>
+
+                        <div class="text clearfix">                                 <!-- Textual content-->
+                            {% if entry.summary != 'None' %}
+                            <p class="p-summary">{{entry.summary}}</p>
+                            {% endif %}
+                        <p class="e-content">{{entry.content}}</p>
+                        </div>
+
+                        <div class="entry-footer clearfix">                         <!-- Footer -->
+                            <div class="categories">                                <!-- Catagories -->
+                                {% for c in entry.category %}
+                                    {% if c != None and c != 'None' %}
+                                    <a class="category" href="/t/{{c}}">{{c}}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <div class="date-stamp">                                <!-- If there's a date time -->
+                                <time class="dt-published">{{entry.published}}</time>
+                            </div>
+
+                            {% if entry.location is defined %}                      <!-- If there's a location -->
+                                    <p class="p-location">{{entry.location}}</p>
+                            {% endif %}
+
+                        </div>
+                    </div>                    <!-- End of entry -->
+                </article>
+            </li>                             <!-- End the blogroll -->
+                {% else %}
+            <li> No entries here so far </li> <!-- When we have nothing left -->
+                {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

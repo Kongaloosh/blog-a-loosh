@@ -41,9 +41,10 @@
     Geo:<br>
     <textarea type="text" name="location" id="geo_coord" cols="50"></textarea>
     <br>
-    <input type="submit" value="Submit">
+
     </form>
     <button onclick="getLocation()">Add Location</button>
+    <input id="submit" type="submit" value="Submit">
 </div>
 
 <script>
@@ -60,6 +61,13 @@
         x.innerHTML = "geo:" + position.coords.latitude +
         "," + position.coords.longitude;
     }
+
+    var form = document.getElementById("input");
+
+    document.getElementById("submit").addEventListener("click", function () {
+      form.submit();
+    });
+
 </script>
 {% else %}
 

@@ -1,7 +1,13 @@
 .input{
 	background: #EEEEEC;
-	padding: 20px;
+	padding: 40px;
 	padding-top: 90px;
+    padding-left: 30%;
+    padding-right: 30%;
+}
+
+.input{
+
 }
 
 body{
