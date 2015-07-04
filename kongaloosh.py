@@ -242,7 +242,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
     r = requests.get(sourceURL, verify=False)
     if r.status_code == requests.codes.ok:
-        mentionData = { 'sourceURL':   sourceURL,
+        mentionData = { '7.0.0.1/sourceURL':   sourceURL,
                         'targetURL':   targetURL,
                         'vouchDomain': vouchDomain,
                         'vouched':     False,
@@ -256,7 +256,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
         if vouchDomain is not None and cfg['require_vouch']:
             mentionData['vouched'] = processVouch(sourceURL, targetURL, vouchDomain)
-            result                 = mentionData['vouched']
+            result = mentionData['vouched']
             app.logger.info('result of vouch? %s' % result)
         else:
             result = not cfg['require_vouch']
