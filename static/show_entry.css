@@ -14,5 +14,37 @@ body {
     height: 100%;
     width: 100%;
     position: relative;
-    margin-bottom: 116px;
+    padding-top: 100px;
 }
+
+.me{
+    height: 75%;
+    width: 50%;
+    position: block;
+    padding: 10px;
+    margin-left: 25%;
+    margin-right: 25%;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 15px;
+    text-align: center;
+}
+
+
+.me p{
+    color: white;
+    font-size: 20px;
+    vertical-align: center;
+
+}
+
+.me h,
+.me a{
+    color: white;
+    font-size: 30px;
+    vertical-align: center;
+}
+
+.me i{
+    padding: 3px;
+}
+

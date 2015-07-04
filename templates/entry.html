@@ -3,7 +3,8 @@
 <!--<link rel=stylesheet type=text/css href="{{ url_for('static', filename='show_entry.css') }}">-->
 {% extends "layout.html" %}
 {% block body %}
-<div class="nav-spacer"></div>
+<div class="nav-spacer">
+</div>
 <div class="blog"> <!-- All of the blog articles are put into this format -->
         {% if session.logged_in %}
     <div class="add-entry">
