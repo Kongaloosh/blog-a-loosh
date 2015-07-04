@@ -13,12 +13,21 @@
 {% block body %}
     <div class="spacer">
         <div class="me">
-            <p>I'm an undergraduate currently wading my way through the university of Edinburgh's Computer Science
-            and Artificial Intelligence programme.</p>
-            <br>
-
             <div class="h-card">
-                <a class="u-e-mail" href="mailto:kearney@ualberta.ca" rel="me"><i class="fa fa-envelope"></i></a>
+                <div class="h-header clearfix">
+                    <div class="left-content clearfix">
+                        <img class="u-photo circular" src="{{ url_for('static', filename='img/profile.jpg') }}">
+                    </div>
+                    <div class="right-content clearfix">
+                        <h1 class="">Alex Kearney</h1>
+                    </div>
+                </div>
+
+                <p class="p-note">I study Computer Science & Artificial Intelligence at the University of Edinburgh where I'm
+                    president of UofE <a href="http://hoppers.inf.ed.ac.uk/">Hoppers</a>.<br><br>
+                    I'm spending my summer applying machine learning to bionic limbs with the RLAI lab at the University of Alberta.</p>
+                <br>
+                <a class="u-email" href="mailto:kearney@ualberta.ca" rel="me"><i class="fa fa-envelope"></i></a>
                 <a class="u-url" href="http://alexkearney.com/" rel="me"><i class="fa fa-laptop"></i></a>
                 <a href="https://twitter.com/AlexKKearney" title="Twitter" rel="me"><i class="fa fa-twitter"></i></a>
                 <a href="https://ca.linkedin.com/in/alexandrakearney" title="LinkedIn" rel="me"><i class="fa fa-linkedin"></i></a>

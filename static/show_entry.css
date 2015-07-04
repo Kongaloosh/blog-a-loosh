@@ -21,7 +21,7 @@ body {
     height: 75%;
     width: 50%;
     position: block;
-    padding: 10px;
+    padding: 20px;
     margin-left: 25%;
     margin-right: 25%;
     background: rgba(0, 0, 0, 0.7);
@@ -29,22 +29,47 @@ body {
     text-align: center;
 }
 
-
 .me p{
     color: white;
-    font-size: 20px;
+    font-size: 12px;
     vertical-align: center;
-
+    text-align: center;
 }
 
-.me h,
+.me h1,
+.me h2,
+.me h3,
 .me a{
     color: white;
-    font-size: 30px;
     vertical-align: center;
 }
 
 .me i{
-    padding: 3px;
+    margin: 5px;
+    margin-top:0;
 }
 
+.h-header{
+    height: 100px;
+}
+
+.left-content{
+    float: left;
+    width:30%;
+}
+
+.right-content{
+    width:70%;
+    text-align: center;
+    float-right;
+}
+
+.right-content h1{
+    font-size: 20pt;
+}
+
+.circular {
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+}
