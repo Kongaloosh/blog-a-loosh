@@ -14,6 +14,7 @@ from slugify import slugify
 import tweeter
 import re
 from dateutil.parser import parse
+import markdown
 # configuration
 DATABASE = 'kongaloosh.db'
 DEBUG = True
@@ -176,7 +177,6 @@ def createEntry(data, image=None, video=None, audio=None):
             "slug:{slug}\n".format(title=title, slug=slug)
 
     entry += "summary:"+ str(data['summary']) + "\n"
-    entry += "content:"+ str(data['content']) + "\n"
     entry += "published:"+ str(data['published']) + "\n"
     entry += "category:" + str(data['category']) + "\n"
     entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
@@ -193,6 +193,7 @@ def createEntry(data, image=None, video=None, audio=None):
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
+    entry += "content:"+ str(data['content']) + "\n"
 
     time = data['published']
     file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
@@ -263,12 +264,11 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
             app.logger.info('no vouch domain, result %s' % result)
 
         mf2Data = Parser(doc=mentionData['content']).to_dict()
-        hcard   = extractHCard(mf2Data)
+        hcard = extractHCard(mf2Data)
 
         mentionData['hcardName'] = hcard['name']
         mentionData['hcardURL']  = hcard['url']
         mentionData['mf2data']   = mf2Data
-
 
         # Do something with the inbound mention
         g.db.execute('insert into mentions (content_text, source_url, target_url, post_date) values (?, ?, ?, ?)',
@@ -288,7 +288,10 @@ def file_parser(filename):
     except: pass
     try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
     except: pass
-    try: e['content'] = re.search('(?<=content:)(.)*', str).group()
+    try:
+        e['content'] = markdown.markdown(re.search('(?<=content:)((?!category:)(.)|(\n))*', str).group())
+        if e['content'] == None:
+            e['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group())
     except: pass
     try:
         date = parse(re.search('(?<=published:)(.)*', str).group())
