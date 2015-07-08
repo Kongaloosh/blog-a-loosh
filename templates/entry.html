@@ -45,7 +45,7 @@
                             {% if entry.summary != 'None' %}
                             <p class="p-summary">{{entry.summary}}</p>
                             {% endif %}
-                        <p class="e-content">{{entry.content}}</p>
+                        <div class="e-content">{{entry.content | safe}}</div>
                         </div>
 
                         <div class="entry-footer clearfix">                         <!-- Footer -->

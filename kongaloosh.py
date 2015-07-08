@@ -289,7 +289,7 @@ def file_parser(filename):
     try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
     except: pass
     try:
-        e['content'] = markdown.markdown(re.search('(?<=content:)((?!category:)(.)|(\n))*', str).group())
+        e['content'] = markdown.markdown(re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group())
         if e['content'] == None:
             e['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group())
     except: pass
