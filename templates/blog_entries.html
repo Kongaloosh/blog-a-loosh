@@ -43,7 +43,7 @@
                             {% if entry.summary != 'None' %}
                             <p class="p-summary">{{entry.summary}}</p>
                             {% endif %}
-                        <p class="e-content">{{entry.content}}</p>
+                        <p class="e-content">{{entry.content | safe}}</p>
                         </div>
 
                         <div class="entry-footer clearfix">                         <!-- Footer -->
@@ -59,8 +59,8 @@
                                 <time class="dt-published">{{entry.published}}</time>
                             </div>
 
-                            {% if entry.location is defined %}                      <!-- If there's a location -->
-                                    <p class="p-location">{{entry.location}}</p>
+                            {% if entry.location != 'None' %}                      <!-- If there's a location -->
+                                    <p class="p-location">{{entry.location | safe }}</p>
                             {% endif %}
 
                         </div>

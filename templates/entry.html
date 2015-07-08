@@ -61,8 +61,8 @@
                                 <time class="dt-published">{{entry.published}}</time>
                             </div>
 
-                            {% if entry.location is defined %}                      <!-- If there's a location -->
-                                    <p class="p-location">{{entry.location}}</p>
+                            {% if entry.geo is defined %}                      <!-- If there's a location -->
+                                    <p class="p-location">{{entry.geo}}</p>
                             {% endif %}
 
                         </div>

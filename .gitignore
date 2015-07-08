@@ -55,3 +55,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# data
+/data
+/venv
+*idea
+kongaloosh.db

@@ -307,9 +307,8 @@ def file_parser(filename):
     except: pass
     try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
     except: pass
-    try: e['lat'] = re.search('(?<=lat:)(.)*', str).group()
-    except: pass
-    try: e['long'] = re.search('(?<=long:)(.)*', str).group()
+    try:
+        e['location'] = re.search('(?<=location:)(.)*', str).group()
     except: pass
     try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
     except: pass
