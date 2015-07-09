@@ -156,11 +156,8 @@ def checkAccessToken(access_token):
     redirect_uri=https://example.com/auth&
     client_id=https://example.com/
     """
-
-    f1=open('testfile', 'w+')
-    f1.write('ninaaa')
-    f1.close()
-    r = ninka.indieauth.validateAuthCode(code=access_token, client_id='https://kongaloosh.com/', redirect_uri='https://kongaloosh.com/')
+    app.logger.info('acccess [%s]' % access_token)
+    r = ninka.indieauth.validateAuthCode(code=access_token, client_id='http://kongaloosh.com/', redirect_uri='http://kongaloosh.com/')
     return r['status'] == requests.codes.ok
 
 """ MICROPUB """
