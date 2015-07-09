@@ -15,7 +15,6 @@ import ninka
 from mf2py.parser import Parser
 from slugify import slugify
 from dateutil.parser import parse
-
 from posse_scripts import tweeter
 
 # configuration
@@ -143,7 +142,7 @@ def processVouch(sourceURL, targetURL, vouchDomain):
                     authURL = url
                     break
                 if authURL is not None:
-                    result = True
+                    r   esult = True
                     with open(vouchFile, 'a+') as h:
                         h.write('\n%s' % vouchDomain)
 
@@ -158,7 +157,7 @@ def checkAccessToken(access_token):
     app.logger.info('checking')
     r = ninka.indieauth.validateAuthCode(code=access_token,
                                          client_id='http://kongaloosh.com/',
-                                         redirect_uri='http://kongaloosh.com/')
+                                         redirect_uri='http://kongaloosh.com/micropub')
     app.logger.info('val: {r}'.format(r=r))
     return r['status'] == requests.codes.ok
 
