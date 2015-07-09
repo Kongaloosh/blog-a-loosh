@@ -150,14 +150,16 @@ def processVouch(sourceURL, targetURL, vouchDomain):
 
 """ AUTHENTICATION"""
 def checkAccessToken(access_token):
-    """Check if the given access token matches any in the data stored
-
+    """
     code=gk7n4opsyuUxhvF4&
     redirect_uri=https://example.com/auth&
     client_id=https://example.com/
     """
-    app.logger.info('acccess [%s]' % access_token)
-    r = ninka.indieauth.validateAuthCode(code=access_token, client_id='http://kongaloosh.com/', redirect_uri='http://kongaloosh.com/')
+    app.logger.info('checking')
+    r = ninka.indieauth.validateAuthCode(code=access_token,
+                                         client_id='http://kongaloosh.com/',
+                                         redirect_uri='http://kongaloosh.com/')
+    app.logger.info('val: {r}'.format(r=r))
     return r['status'] == requests.codes.ok
 
 """ MICROPUB """
