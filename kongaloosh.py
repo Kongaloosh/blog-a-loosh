@@ -1,20 +1,23 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash, make_response, Response, send_file
+    render_template, flash, Response, send_file
 from contextlib import closing
 import os
 from operator import itemgetter
+from datetime import datetime
+import pickle
+import re
+import markdown
+
 import requests
 import ronkyuu
 import ninka
 from mf2py.parser import Parser
-from datetime import datetime
-import pickle
 from slugify import slugify
-import tweeter
-import re
 from dateutil.parser import parse
-import markdown
+
+from posse_scripts import tweeter
+
 # configuration
 DATABASE = 'kongaloosh.db'
 DEBUG = True
@@ -279,6 +282,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
 
 def file_parser(filename):
+    """ for a given entry, finds all of the info we want to display """
     f = open(filename, 'r')
     str = f.read()
     e = {}
@@ -331,10 +335,6 @@ def validURL(targetURL):
         result = 404
     return result
 
-""" SYNDICATION """
-def tweet(data):
-    pass
-
 """ DECORATORS """
 @app.before_request
 def before_request():
@@ -347,10 +347,9 @@ def teardown_request(exception):
         db.close()
 
 """ ROUTING """
-
-
 @app.route('/')
 def show_entries():
+    """ The main view: presents author info and entries. """
     entries = []
     for subdir, dir, files  in os.walk("data", topdown=True):
         dir.sort(reverse=True)
@@ -366,11 +365,13 @@ def show_entries():
 
 @app.route('/stream')
 def show_entries_stream():
+    """ A simple stream that people can go to if they don't want the cover """
     pass
 
 
 @app.route('/add', methods=['GET', 'POST'])
 def add():
+    """ The form for user-submission """
     if request.method == 'GET':
         return render_template('add.html')
     elif request.method == 'POST':
@@ -408,7 +409,7 @@ def add():
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
 def image_fetcher_depricated(year, month, day, name):
-    print("HERE\n\n\n\n")
+    """ do not use---old image fetcher """
     entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     print(entry)
     img = open(entry)
@@ -418,6 +419,7 @@ def image_fetcher_depricated(year, month, day, name):
 
 @app.route('/data/<year>/<month>/<day>/<name>')
 def image_fetcher(year, month, day, name):
+    """ Retruns a specific image """
     entry = 'data/{year}/{month}/{day}/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     img = open(entry)
     return send_file(img)
@@ -425,6 +427,7 @@ def image_fetcher(year, month, day, name):
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
+    """ Get a specific article """
     try:
         file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
         entry = file_parser(file_name+".md")
@@ -441,7 +444,7 @@ def profile(year, month, day, name):
 
 @app.route('/t/<category>')
 def tag_search(category):
-    # try:
+    """ Get all entries with a specific tag """
     entries = []
     cur = g.db.execute(
         "SELECT entries.location FROM categories" \
@@ -452,14 +455,14 @@ def tag_search(category):
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
 
-    return render_template('show_entries.html', entries=entries)
+    return render_template('entry.html', entries=entries)
     # except: return ('page_not_found.html')
 
 
 @app.route('/e/<year>/')
 def time_search_year(year):
+    """ Gets all entries posted during a specific year """
     entries = []
-
     cur = g.db.execute(
         """SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
@@ -473,8 +476,8 @@ def time_search_year(year):
 
 @app.route('/e/<year>/<month>/')
 def time_search_month(year, month):
+    """ Gets all entries posted during a specific month """
     entries = []
-
     cur = g.db.execute(
         """SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
@@ -488,8 +491,8 @@ def time_search_month(year, month):
 
 @app.route('/e/<year>/<month>/<day>/')
 def time_search(year, month, day):
+    """ Gets all notes posted on a specific day """
     entries = []
-
     cur = g.db.execute(
         """SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
@@ -501,6 +504,24 @@ def time_search(year, month, day):
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
     return render_template('entry.html', entries=entries)
+
+
+@app.route('/a/')
+def articles(category):
+    """ Gets all the articles """
+    entries = []
+    cur = g.db.execute(
+        "SELECT entries.location FROM categories" \
+        +" INNER JOIN entries ON"
+        +" entries.slug = categories.slug AND "
+        +" entries.published = categories.published"
+        +" WHERE categories.category='{category}'".format(category=category))
+    for (row,) in cur.fetchall():
+        entries.append(file_parser(row+".md"))
+
+    return render_template('entry.html', entries=entries)
+    # except: return ('page_not_found.html')
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -529,9 +550,12 @@ def handleMicroPub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':
         access_token = request.headers.get('Authorization')
+        app.logger.info('token [%s]' % access_token)
         if access_token: #todo: MAKE SURE THIS IS CLEAR
             access_token = access_token.replace('Bearer ', '')
+            app.logger.info('acccess [%s]' % access_token)
             if checkAccessToken(access_token): #todo: MAKE SURE THIS IS CLEAR
+                app.logger.info('authed')
                 data = {}
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
@@ -562,11 +586,20 @@ def handleMicroPub():
                 syndication = ''
                 try:
                     if('twitter.com' in data['syndicate-to[]']):
-                        pass
-                    try:
-                        syndication += tweeter.main(data['content'], data['photo'])
-                    except:
-                        syndication += tweeter.main(data['content'])
+                        try:
+                            syndication += tweeter.main(data['content'], data['photo'])
+                        except:
+                            syndication += tweeter.main(data['content'])
+                    if('tumblr.com' in data['syndicate-to[]']):
+                        try:
+                            pass
+                        except:
+                            pass
+                    if('instagram' in data['syndicate-to[]']):
+                        try:
+                            pass
+                        except:
+                            pass
                 except:
                     pass
                 data['syndication'] = syndication
@@ -585,10 +618,13 @@ def handleMicroPub():
         qs = request.query_string
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
-                'facebook.com/','twitter.com/',
-                'instagram.com/', 'linkedin.com/']
+                # 'facebook.com/',
+                'twitter.com/',
+                'instagram.com/',
+                # 'linkedin.com/'
+                ]
             r = ''
-            while len(syndicate_to)>1:
+            while len(syndicate_to) > 1:
                 r += 'syndicate-to[]=' + syndicate_to.pop() + '&'
             r += 'syndicate-to[]=' + syndicate_to.pop()
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)

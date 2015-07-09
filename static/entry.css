@@ -86,6 +86,12 @@ div.date-stamp{
 
 }
 
+.entry-list-item i,
+.entry-list-item a{
+    color:black;
+    text-decoration: none
+}
+
 
 /* a */
 .entry-footer{
