@@ -142,7 +142,7 @@ def processVouch(sourceURL, targetURL, vouchDomain):
                     authURL = url
                     break
                 if authURL is not None:
-                    r   esult = True
+                    result = True
                     with open(vouchFile, 'a+') as h:
                         h.write('\n%s' % vouchDomain)
 
@@ -159,6 +159,9 @@ def checkAccessToken(access_token):
                                          client_id='http://kongaloosh.com/',
                                          redirect_uri='http://kongaloosh.com/micropub')
     app.logger.info('val: {r}'.format(r=r))
+
+    r = ninka.i
+
     return r['status'] == requests.codes.ok
 
 """ MICROPUB """

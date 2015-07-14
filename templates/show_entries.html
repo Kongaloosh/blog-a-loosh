@@ -1,46 +1,5 @@
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='show_entry.css') }}"> <!-- blog roll styling -->
 {% extends "layout.html" %}
-
-{% block cover %}
-    {% if session.logged_in %}
-    <a href="/logout">logout</a>
-    {% endif %}
-    <div class="top"></div>
-    <div class="spacer"></div>
-{% endblock %}
-
-
 {% block body %}
-    <div class="spacer">
-        <div class="me">
-            <div class="h-card">
-                <div class="h-header clearfix">
-                    <div class="left-content clearfix">
-                        <img class="u-photo circular" src="{{ url_for('static', filename='img/profile.jpg') }}">
-                    </div>
-                    <div class="right-content clearfix">
-                        <h1 class="">Alex Kearney</h1>
-                    </div>
-                </div>
-
-                <p class="p-note">I study Computer Science & Artificial Intelligence at the University of Edinburgh where I'm
-                    president of UofE <a href="http://hoppers.inf.ed.ac.uk/">Hoppers</a>.<br><br>
-                    I'm spending my summer applying machine learning to bionic limbs with the RLAI lab at the University of Alberta.</p>
-                <br>
-                <a class="u-email" href="mailto:kearney@ualberta.ca" rel="me"><i class="fa fa-envelope"></i></a>
-                <a class="u-url" href="http://alexkearney.com/" rel="me"><i class="fa fa-laptop"></i></a>
-                <a href="https://twitter.com/AlexKKearney" title="Twitter" rel="me"><i class="fa fa-twitter"></i></a>
-                <a href="https://ca.linkedin.com/in/alexandrakearney" title="LinkedIn" rel="me"><i class="fa fa-linkedin"></i></a>
-                <!--<a href="#" title="Instagram"><i class="fa fa-instagram"></i></a>-->
-                <a href="https://github.com/Kongaloosh" title="Github" rel="me"><i class="fa fa-github-alt"></i></a>
-                <!--<a href="#" title="Facebook"><i class="fa fa-facebook"></i></a>-->
-                <a href="https://plus.google.com/+AlexandraKearney/" title="Google+" rel="me"><i class="fa fa-google-plus"></i></a>
-                <a href="https://instagram.com/kongaloosh" title="instagram" rel="me"><i class="fa fa-instagram"></i></a>
-                <a href="https://www.facebook.com/alex.k.kearney" title="facebook" rel="me"><i class="fa fa-facebook-square"></i></a>
-                <a href="http://kongaloosh.tumblr.com/" title="tumblr" rel="me"><i class="fa fa-tumblr-square"></i></a>
-            </div>
-        </div>
-    </div>
     {% block blog %}
         <!-- Blog entries go here -->
     {% endblock %}

@@ -5,8 +5,7 @@
 {% block body %}
 <div class="nav-spacer">
 </div>
-<div class="blog"> <!-- All of the blog articles are put into this format -->
-        {% if session.logged_in %}
+    {% if session.logged_in %}
     <div class="add-entry">
         <form action="/add" method=pos class="add-entry-form">
             <dl>
@@ -72,6 +71,4 @@
                 {% else %}
             <li> No entries here so far </li> <!-- When we have nothing left -->
                 {% endfor %}
-        </ul>
-    </div>
 {% endblock %}
