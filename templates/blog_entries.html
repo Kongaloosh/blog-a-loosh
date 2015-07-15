@@ -1,5 +1,5 @@
-{% extends "show_entries.html" %}
-{% block blog %}
+{% extends "layout.html" %}
+{% block body %}
     {% if session.logged_in %}
     <div class="add-entry">
         <form action="/add" method=pos class="add-entry-form">

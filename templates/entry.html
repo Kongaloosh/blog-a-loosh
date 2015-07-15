@@ -1,74 +1,171 @@
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='entry.css') }}"> <!-- blog roll styling -->
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='permalink.css') }}"> <!-- blog roll styling -->
-<!--<link rel=stylesheet type=text/css href="{{ url_for('static', filename='show_entry.css') }}">-->
-{% extends "layout.html" %}
-{% block body %}
-<div class="nav-spacer">
-</div>
-    {% if session.logged_in %}
-    <div class="add-entry">
-        <form action="/add" method=pos class="add-entry-form">
-            <dl>
-                <dt>Title:
-                <dd><input type=text size=30 name=title>
-                <dt>Text:
-                <dd><textarea name=text rows=5 cols=40></textarea>
-                <dd><input type="checkbox" name="twitter" value="twitter" checked>Tweet it. <br>
-                <dd><input type="submit" value="Share"> <input type="button" onclick="location.href = '/add';" value="Large Form" onclick="/">
-            </dl>
-        </form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Clean Blog - Sample Post</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='clean-blog.min.css') }}" rel="stylesheet">
+    <!-- Custom Fonts -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html">Start Bootstrap</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="index.html">Home</a>
+                </li>
+                <li>
+                    <a href="about.html">About</a>
+                </li>
+                <li>
+                    <a href="post.html">Sample Post</a>
+                </li>
+                <li>
+                    <a href="contact.html">Contact</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
     </div>
-    {% endif %}
-        <ul class="entries">
-            {% for entry in entries %}
-            <!-- START ENTRIES -->
-            <li class="entry-list-item">
-                <article class="hentry h-entry entry">
-                    <div class="entry clearfix">
-                        <div class="entry-heading clearfix">                        <!-- Entry header -->
-                            <a rel="author" class="p-author" href="http://alexkearney.com/">Alex Kearney</a>
-                            {% if entry.title != 'None' %}
-                            <p class="p-name"><a href="/e{{entry.url}}">{{ entry.title }}</a></p>
-                            {% endif %}
-                            <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
-                        </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Post Content -->
+<!-- Page Header -->
+<header class="intro-header" style="background-image: url('{{ url_for('static', filename='img/home-bg.jpg') }}')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    {% if entry.title != 'None' %}
+                    <h2 class="post-title p-name">
+                        <a href="/e{{entry.url}}">{{ entry.title }}</a>
+                    </h2>
+                    {% endif %}
+                    {% if entry.summary != 'None' %}
+                    <h3 class="post-subtitle p-summary">
+                        {{entry.summary}}
+                    </h3>
+                    {% endif%}
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
 
 
-                        <div class="media clearfix">                                <!-- Media content -->
-                            {% if entry.photo is defined %}
-                            <img class="u-photo" src="/{{entry.photo}}">
-                            {% endif %}
-                        </div>
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 hentry">
+                {% if entry.photo is defined %}
+                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                     style="image-orientation: from-image; max-height:300px"
+                     src="/{{entry.photo}}">
+                {% endif %}
+                <p class="e-content">{{entry.content | safe}}</p>
+                <div class="entry-footer clearfix">                         <!-- Footer -->
+                    <div class="categories">                                <!-- Catagories -->
+                        {% for c in entry.category %}
+                        {% if c != None and c != 'None' %}
+                        <a class="category" href="/t/{{c}}">{{c}}</a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="row post-meta">
+                    <p class="authorship col-md-9">
+                        Posted by
+                        <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+                        on
+                        <time class="dt-published">{{entry.published}}</time>
+                        {% if entry.location != 'None' %} <!-- If there's a location -->
+                        at
+                        <a class="p-location"> {{entry.location | safe }} </a>
+                        {% endif %}
+                    </p>
+                    <p><a class="u-url u-uid pull-right col-md-3" href="/e{{entry.url}}"><i class="fa fa-link"></i></a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</article>
+<hr>
 
-                        <div class="text clearfix">                                 <!-- Textual content-->
-                            {% if entry.summary != 'None' %}
-                            <p class="p-summary">{{entry.summary}}</p>
-                            {% endif %}
-                        <div class="e-content">{{entry.content | safe}}</div>
-                        </div>
-
-                        <div class="entry-footer clearfix">                         <!-- Footer -->
-                            <div class="categories">                                <!-- Catagories -->
-                                {% for c in entry.category %}
-                                    {% if c != None and c != 'None' %}
-                                    <a class="category" href="/t/{{c}}">{{c}}</a>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-
-                            <div class="date-stamp">                                <!-- If there's a date time -->
-                                <time class="dt-published">{{entry.published}}</time>
-                            </div>
-
-                            {% if entry.geo is defined %}                      <!-- If there's a location -->
-                                    <p class="p-location">{{entry.geo}}</p>
-                            {% endif %}
-
-                        </div>
-                    </div>                    <!-- End of entry -->
-                </article>
-            </li>                             <!-- End the blogroll -->
-                {% else %}
-            <li> No entries here so far </li> <!-- When we have nothing left -->
-                {% endfor %}
-{% endblock %}
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="#">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Your Website 2014</p>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- jQuery -->
+<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<!-- Custom Theme JavaScript -->
+<script src="{{ url_for('static', filename='js/clean-blog.min.js') }}"></script>
+</body>
+</html>

@@ -438,7 +438,7 @@ def profile(year, month, day, name):
             entry['video'] = file_name+".mp4" # get the actual file
         if os.path.exists(file_name+".mp3"):
             entry['audio'] = file_name+".mp3" # get the actual file
-        return render_template('entry.html', entries=[entry])
+        return render_template('entry.html', entry=entry)
     except:
         return render_template('page_not_found.html'), 404
 
