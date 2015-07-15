@@ -536,6 +536,7 @@ def login():
         else:
             session['logged_in'] = True
             return redirect('/add')
+        app.logger.info(error)
     return render_template('login.html', error=error)
 
 
