@@ -150,7 +150,7 @@ def processVouch(sourceURL, targetURL, vouchDomain):
 
 
 """ AUTHENTICATION"""
-def checkAccessToken(access_token):
+def checkAccessToken(access_token, client_id):
     """
     code=gk7n4opsyuUxhvF4&
     redirect_uri=https://example.com/auth&
@@ -158,11 +158,9 @@ def checkAccessToken(access_token):
     """
     app.logger.info('checking')
     r = ninka.indieauth.validateAuthCode(code=access_token,
-                                         client_id='http://kongaloosh.com/',
-                                         redirect_uri='http://kongaloosh.com/micropub')
+                                         client_id=client_id,
+                                         redirect_uri='http://kongaloosh.com/')
     app.logger.info('val: {r}'.format(r=r))
-
-    r = ninka.i
 
     return r['status'] == requests.codes.ok
 
@@ -554,7 +552,7 @@ def handleMicroPub():
         if access_token: #todo: MAKE SURE THIS IS CLEAR
             access_token = access_token.replace('Bearer ', '')
             app.logger.info('acccess [%s]' % access_token)
-            if checkAccessToken(access_token): #todo: MAKE SURE THIS IS CLEAR
+            if checkAccessToken(access_token, request.form.client_id.data): #todo: MAKE SURE THIS IS CLEAR
                 app.logger.info('authed')
                 data = {}
                 for key in (
