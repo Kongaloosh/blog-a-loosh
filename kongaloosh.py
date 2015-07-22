@@ -8,7 +8,6 @@ from datetime import datetime
 import pickle
 import re
 import markdown
-
 import requests
 import ronkyuu
 import ninka
@@ -16,6 +15,9 @@ from mf2py.parser import Parser
 from slugify import slugify
 from dateutil.parser import parse
 from posse_scripts import tweeter
+from jinja2 import Environment
+
+jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
 DATABASE = 'kongaloosh.db'
@@ -455,9 +457,7 @@ def tag_search(category):
         +" WHERE categories.category='{category}'".format(category=category))
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-
-    return render_template('entry.html', entries=entries)
-    # except: return ('page_not_found.html')
+    return render_template('blog_entries.html', entries=entries)
 
 
 @app.route('/e/<year>/')
@@ -472,7 +472,7 @@ def time_search_year(year):
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-    return render_template('entry.html', entries=entries)
+    return render_template('blog_entries.html', entries=entries)
 
 
 @app.route('/e/<year>/<month>/')
@@ -487,7 +487,7 @@ def time_search_month(year, month):
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-    return render_template('entry.html', entries=entries)
+    return render_template('blog_entries.html', entries=entries)
 
 
 @app.route('/e/<year>/<month>/<day>/')
@@ -504,11 +504,11 @@ def time_search(year, month, day):
 
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-    return render_template('entry.html', entries=entries)
+    return render_template('blog_entries.html', entries=entries)
 
 
 @app.route('/a/')
-def articles(category):
+def articles():
     """ Gets all the articles """
     entries = []
     cur = g.db.execute(
@@ -516,13 +516,11 @@ def articles(category):
         +" INNER JOIN entries ON"
         +" entries.slug = categories.slug AND "
         +" entries.published = categories.published"
-        +" WHERE categories.category='{category}'".format(category=category))
+        +" WHERE categories.category='{category}'".format(category='article'))
+
     for (row,) in cur.fetchall():
         entries.append(file_parser(row+".md"))
-
-    return render_template('entry.html', entries=entries)
-    # except: return ('page_not_found.html')
-
+    return render_template('blog_entries.html', entries=entries)
 
 
 @app.route('/login', methods=['GET', 'POST'])
