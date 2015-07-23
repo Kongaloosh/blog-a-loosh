@@ -175,7 +175,7 @@ def createEntry(data, image=None, video=None, audio=None):
         title = data['name']
         slug = title
     else:
-        slug = (data['content'].split('.')[0])[:10]
+        slug = (data['content'].split('.')[0])
         title = None
 
     slug = slugify(slug)
@@ -230,7 +230,8 @@ def createEntry(data, image=None, video=None, audio=None):
             file_writer.close()
 
         g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
-                 [slug, data['published'], total_path])
+                     [slug, data['published'], total_path]
+                     )
         g.db.commit()
 
         if data['category']:
@@ -363,7 +364,7 @@ def show_entries():
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
-    return render_template('blog_entries.html', entries=entries)
+    return render_template('blog_entries.html', entries=entries[:10])
 
 
 @app.route('/stream')
