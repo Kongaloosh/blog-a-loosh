@@ -16,6 +16,9 @@ from slugify import slugify
 from dateutil.parser import parse
 from posse_scripts import tweeter
 from jinja2 import Environment
+import urllib
+import uuid
+import requests
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -157,11 +160,12 @@ def checkAccessToken(access_token, client_id):
     client_id=https://example.com/
     """
     app.logger.info('checking')
-    r = ninka.indieauth.validateAuthCode(code=access_token,
-                                         client_id=client_id,
-                                         redirect_uri='http://kongaloosh.com/')
-    app.logger.info('val: {r}'.format(r=r))
-
+    # r = ninka.indieauth.validateAuthCode(code=access_token,
+    #                                      client_id=client_id,
+    #                                      redirect_uri='http://kongaloosh.com/')
+    # app.logger.info('val: {r}'.format(r=r))
+    r = requests.get(url='https://tokens.indieauth.com/token', headers={'Authorization': 'Bearer '+access_token})
+    app.logger.info(r)
     return r['status'] == requests.codes.ok
 
 """ MICROPUB """
@@ -551,8 +555,8 @@ def handleMicroPub():
         app.logger.info('token [%s]' % access_token)
         if access_token: #todo: MAKE SURE THIS IS CLEAR
             access_token = access_token.replace('Bearer ', '')
-            app.logger.info('acccess [%s]' % access_token)
-            if checkAccessToken(access_token, request.form.client_id.data): #todo: MAKE SURE THIS IS CLEAR
+            app.logger.info('acccess [%s]' % request)
+            if checkAccessToken(access_token, request.form.get("client_id.data")): #todo: MAKE SURE THIS IS CLEAR
                 app.logger.info('authed')
                 data = {}
                 for key in (
@@ -658,6 +662,56 @@ def handleWebmention():
         else:
             return 'invalid post', 404
 
+
+@app.route('/token', methods=['POST', 'GET'])
+def handleToken():
+    app.logger.info('handleToken [%s]' % request.method)
+
+    if request.method == 'GET':
+        access_token = request.headers.get('Authorization')
+        if access_token:
+            access_token = access_token.replace('Bearer ', '')
+        me, client_id, scope = checkAccessToken(access_token)
+
+        if me is None or client_id is None:
+            return ('Token is not valid', 400, {})
+        else:
+            params = { 'me':        me,
+                       'client_id': client_id,
+                     }
+            if scope is not None:
+                params['scope'] = scope
+            return (urllib.urlencode(params), 200, {'Content-Type': 'application/x-www-form-urlencoded'})
+
+    elif request.method == 'POST':
+        code         = request.form.get('code')
+        me           = request.form.get('me')
+        redirect_uri = request.form.get('redirect_uri')
+        client_id    = request.form.get('client_id')
+        state        = request.form.get('state')
+
+        r = ninka.indieauth.validateAuthCode(code=code,
+                                             client_id=me,
+                                             state=state,
+                                             redirect_uri=redirect_uri)
+        if r['status'] == requests.codes.ok:
+            app.logger.info('token request auth code verified')
+            scope = r['response']['scope']
+            key = 'app-%s-%s-%s' % (me, client_id, scope)
+            token = key
+            if token is None:
+                token = str(uuid.uuid4())
+                token_key = 'token-%s' % token
+                g.db.set(key, token)
+                g.set(token_key, key)
+
+            app.logger.info('[%s] [%s]' % (key, token))
+
+            params = { 'me': me,
+                       'scope': scope,
+                       'access_token': token
+                     }
+            return (urllib.urlencode(params), 200, {'Content-Type': 'application/x-www-form-urlencoded'})
 
 
 if __name__ == "__main__":
