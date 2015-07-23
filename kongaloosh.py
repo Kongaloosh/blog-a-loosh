@@ -356,15 +356,27 @@ def teardown_request(exception):
 def show_entries():
     """ The main view: presents author info and entries. """
     entries = []
-    for subdir, dir, files  in os.walk("data", topdown=True):
-        dir.sort(reverse=True)
-        for file in files:
-            if file.endswith('.md'):
-                e = file_parser(filename=subdir+os.sep+file)
-                entries.append(e)
-        if len(entries) >= 10: break
-    entries = sorted(entries, key=itemgetter('published'), reverse=True)
-    pickle.dump(entries, open('entries', 'wb'))
+    cur = g.db.execute(
+        "SELECT entries.location FROM categories"
+        +" INNER JOIN entries ON"
+        +" entries.slug = categories.slug AND "
+        +" entries.published = categories.published"
+        +" WHERE categories.category='{category}'"
+        +"ORDER BY entries.published".format(category=category))
+    for (row,) in cur.fetchall():
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
+
+
+    # for subdir, dir, files  in os.walk("data", topdown=True):
+    #     dir.sort(reverse=True)
+    #     for file in files:
+    #         if file.endswith('.md'):
+    #             e = file_parser(filename=subdir+os.sep+file)
+    #             entries.append(e)
+    #     if len(entries) >= 10: break
+    # entries = sorted(entries, key=itemgetter('published'), reverse=True)
+    # pickle.dump(entries, open('entries', 'wb'))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -456,9 +468,11 @@ def tag_search(category):
         +" INNER JOIN entries ON"
         +" entries.slug = categories.slug AND "
         +" entries.published = categories.published"
-        +" WHERE categories.category='{category}'".format(category=category))
+        +" WHERE categories.category='{category}'"
+        +"ORDER BY entries.published".format(category=category))
     for (row,) in cur.fetchall():
-        entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -473,7 +487,8 @@ def time_search_year(year):
         """.format(year=int(year)))
 
     for (row,) in cur.fetchall():
-        entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -488,7 +503,8 @@ def time_search_month(year, month):
         ORDER BY entries.published""".format(year=int(year), month=int(month)))
 
     for (row,) in cur.fetchall():
-        entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -505,7 +521,8 @@ def time_search(year, month, day):
         """.format(year=int(year), month=int(month), day=int(day)))
 
     for (row,) in cur.fetchall():
-        entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -521,7 +538,8 @@ def articles():
         +" WHERE categories.category='{category}'".format(category='article'))
 
     for (row,) in cur.fetchall():
-        entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -550,13 +568,13 @@ def logout():
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handleMicroPub():
     app.logger.info('handleMicroPub [%s]' % request.method)
-    if request.method == 'POST':
-        access_token = request.headers.get('Authorization')
+    if request.method == 'POST':                                                    # if post, authorise and create
+        access_token = request.headers.get('Authorization')                         # get the token and report it
         app.logger.info('token [%s]' % access_token)
-        if access_token: #todo: MAKE SURE THIS IS CLEAR
+        if access_token:                                                            # if the token is not none...
             access_token = access_token.replace('Bearer ', '')
             app.logger.info('acccess [%s]' % request)
-            if checkAccessToken(access_token, request.form.get("client_id.data")): #todo: MAKE SURE THIS IS CLEAR
+            if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
                 data = {}
                 for key in (
@@ -606,7 +624,7 @@ def handleMicroPub():
                     pass
                 data['syndication'] = syndication
 
-                location = createEntry(data, img=data['photo'])
+                location = createEntry(data, image=data['photo'])
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
@@ -661,57 +679,6 @@ def handleWebmention():
                     return 'Webmention is invalid', 400
         else:
             return 'invalid post', 404
-
-
-@app.route('/token', methods=['POST', 'GET'])
-def handleToken():
-    app.logger.info('handleToken [%s]' % request.method)
-
-    if request.method == 'GET':
-        access_token = request.headers.get('Authorization')
-        if access_token:
-            access_token = access_token.replace('Bearer ', '')
-        me, client_id, scope = checkAccessToken(access_token)
-
-        if me is None or client_id is None:
-            return ('Token is not valid', 400, {})
-        else:
-            params = { 'me':        me,
-                       'client_id': client_id,
-                     }
-            if scope is not None:
-                params['scope'] = scope
-            return (urllib.urlencode(params), 200, {'Content-Type': 'application/x-www-form-urlencoded'})
-
-    elif request.method == 'POST':
-        code         = request.form.get('code')
-        me           = request.form.get('me')
-        redirect_uri = request.form.get('redirect_uri')
-        client_id    = request.form.get('client_id')
-        state        = request.form.get('state')
-
-        r = ninka.indieauth.validateAuthCode(code=code,
-                                             client_id=me,
-                                             state=state,
-                                             redirect_uri=redirect_uri)
-        if r['status'] == requests.codes.ok:
-            app.logger.info('token request auth code verified')
-            scope = r['response']['scope']
-            key = 'app-%s-%s-%s' % (me, client_id, scope)
-            token = key
-            if token is None:
-                token = str(uuid.uuid4())
-                token_key = 'token-%s' % token
-                g.db.set(key, token)
-                g.set(token_key, key)
-
-            app.logger.info('[%s] [%s]' % (key, token))
-
-            params = { 'me': me,
-                       'scope': scope,
-                       'access_token': token
-                     }
-            return (urllib.urlencode(params), 200, {'Content-Type': 'application/x-www-form-urlencoded'})
 
 
 if __name__ == "__main__":
