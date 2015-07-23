@@ -40,7 +40,7 @@ def social_link(data):
     if not data['name'] == None:    #is it an article
         slug = data['name']
     else:
-        slug = (data['content'].split('.')[0])[:10]
+        slug = (data['content'].split('.')[0])
     slug = slugify(slug)
 
     return 'kongaloosh.com/e/{year}/{month}/{day}/{slug}'.format(
