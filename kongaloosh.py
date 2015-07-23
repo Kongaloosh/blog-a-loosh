@@ -201,7 +201,7 @@ def createEntry(data, image=None, video=None, audio=None):
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
-    entry += "content:"+ str(data['content']) + "\n"
+    entry += "content:" + str(data['content']) + "\n"
 
     time = data['published']
     file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
@@ -450,15 +450,18 @@ def tag_search(category):
     """ Get all entries with a specific tag """
     entries = []
     cur = g.db.execute(
-        "SELECT entries.location FROM categories" \
-        +" INNER JOIN entries ON"
-        +" entries.slug = categories.slug AND "
-        +" entries.published = categories.published"
-        +" WHERE categories.category='{category}'"
-        +"ORDER BY entries.published DESC".format(category=category))
+        """
+         SELECT entries.location FROM categories
+         INNER JOIN entries ON
+         entries.slug = categories.slug AND
+         entries.published = categories.published
+         WHERE categories.category='{category}'
+         ORDER BY entries.published DESC
+        """.format(category=category))
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
+            app.logger.info(row)
     return render_template('blog_entries.html', entries=entries)
 
 
