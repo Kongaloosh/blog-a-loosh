@@ -408,7 +408,7 @@ def add():
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
             pass #todo: add posse to tumblr
-        location = createEntry(data, img=data['photo'])
+        location = createEntry(data, image=data['photo'])
         return redirect(location)
 
 
@@ -606,7 +606,7 @@ def handleMicroPub():
                     pass
                 data['syndication'] = syndication
 
-                location = createEntry(data, img=data['photo'])
+                location = createEntry(data, image=data['photo'])
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
