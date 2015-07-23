@@ -160,10 +160,6 @@ def checkAccessToken(access_token, client_id):
     client_id=https://example.com/
     """
     app.logger.info('checking')
-    # r = ninka.indieauth.validateAuthCode(code=access_token,
-    #                                      client_id=client_id,
-    #                                      redirect_uri='http://kongaloosh.com/')
-    # app.logger.info('val: {r}'.format(r=r))
     r = requests.get(url='https://tokens.indieauth.com/token', headers={'Authorization': 'Bearer '+access_token})
     app.logger.info(r)
     return r.status_code == requests.codes.ok
@@ -324,7 +320,8 @@ def file_parser(filename):
     except: pass
     try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
     except: pass
-
+    try: e['in_reply_to'] = re.search('(?<=in-reply-to:)(.)*', str).group()
+    except:pass
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
     return e
@@ -441,6 +438,7 @@ def profile(year, month, day, name):
             entry['video'] = file_name+".mp4" # get the actual file
         if os.path.exists(file_name+".mp3"):
             entry['audio'] = file_name+".mp3" # get the actual file
+        app.logger.info(entry)
         return render_template('entry.html', entry=entry)
     except:
         return render_template('page_not_found.html'), 404
