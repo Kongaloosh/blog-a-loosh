@@ -359,21 +359,10 @@ def show_entries():
     cur = g.db.execute(
         "SELECT location "
         +"FROM entries "
-        +"ORDER BY published")
+        +"ORDER BY published DESC")
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
-
-
-    # for subdir, dir, files  in os.walk("data", topdown=True):
-    #     dir.sort(reverse=True)
-    #     for file in files:
-    #         if file.endswith('.md'):
-    #             e = file_parser(filename=subdir+os.sep+file)
-    #             entries.append(e)
-    #     if len(entries) >= 10: break
-    # entries = sorted(entries, key=itemgetter('published'), reverse=True)
-    # pickle.dump(entries, open('entries', 'wb'))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -466,7 +455,7 @@ def tag_search(category):
         +" entries.slug = categories.slug AND "
         +" entries.published = categories.published"
         +" WHERE categories.category='{category}'"
-        +"ORDER BY entries.published".format(category=category))
+        +"ORDER BY entries.published DESC".format(category=category))
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
@@ -478,9 +467,10 @@ def time_search_year(year):
     """ Gets all entries posted during a specific year """
     entries = []
     cur = g.db.execute(
-        """SELECT entries.location FROM entries
+        """
+        SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
-        ORDER BY entries.published
+        ORDER BY entries.published DESC
         """.format(year=int(year)))
 
     for (row,) in cur.fetchall():
@@ -494,10 +484,12 @@ def time_search_month(year, month):
     """ Gets all entries posted during a specific month """
     entries = []
     cur = g.db.execute(
-        """SELECT entries.location FROM entries
+        """
+        SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
         AND CAST(strftime('%m',entries.published)AS INT) = {month}
-        ORDER BY entries.published""".format(year=int(year), month=int(month)))
+        ORDER BY entries.published DESC
+        """.format(year=int(year), month=int(month)))
 
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
@@ -510,11 +502,12 @@ def time_search(year, month, day):
     """ Gets all notes posted on a specific day """
     entries = []
     cur = g.db.execute(
-        """SELECT entries.location FROM entries
+        """
+        SELECT entries.location FROM entries
         WHERE CAST(strftime('%Y',entries.published)AS INT) = {year}
         AND CAST(strftime('%m',entries.published)AS INT) = {month}
         AND CAST(strftime('%d',entries.published)AS INT) = {day}
-        ORDER BY entries.published
+        ORDER BY entries.published DESC
         """.format(year=int(year), month=int(month), day=int(day)))
 
     for (row,) in cur.fetchall():
@@ -528,11 +521,12 @@ def articles():
     """ Gets all the articles """
     entries = []
     cur = g.db.execute(
-        "SELECT entries.location FROM categories" \
+        "SELECT entries.location FROM categories"
         +" INNER JOIN entries ON"
         +" entries.slug = categories.slug AND "
         +" entries.published = categories.published"
-        +" WHERE categories.category='{category}'".format(category='article'))
+        +" WHERE categories.category='{category} "
+        +" ORDER BY entries.published DESC'".format(category='article'))
 
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
