@@ -357,8 +357,9 @@ def show_entries():
     """ The main view: presents author info and entries. """
     entries = []
     cur = g.db.execute(
-        "SELECT entries.location FROM entries"
-        +"ORDER BY entries.published")
+        "SELECT location "
+        +"FROM entries "
+        +"ORDER BY published")
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
