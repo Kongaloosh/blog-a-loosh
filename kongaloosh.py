@@ -166,7 +166,7 @@ def checkAccessToken(access_token, client_id):
     # app.logger.info('val: {r}'.format(r=r))
     r = requests.get(url='https://tokens.indieauth.com/token', headers={'Authorization': 'Bearer '+access_token})
     app.logger.info(r)
-    return r['status'] == requests.codes.ok
+    return r.status_code == requests.codes.ok
 
 """ MICROPUB """
 def createEntry(data, image=None, video=None, audio=None):
