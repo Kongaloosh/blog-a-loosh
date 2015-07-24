@@ -19,7 +19,6 @@ from jinja2 import Environment
 import urllib
 import uuid
 import requests
-
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -320,7 +319,20 @@ def file_parser(filename):
     except: pass
     try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
     except: pass
-    try: e['in_reply_to'] = re.search('(?<=in-reply-to:)(.)*', str).group()
+    try:
+        replies = re.search('(?<=in-reply-to:)(.)*', str).group()
+        if replies != 'None':
+            e['in_reply_to'] = []
+            replies = replies.split(',')
+        else:
+            e['in_reply_to'] = replies
+
+
+        for site in replies:
+            if site.startswith('http'):         # if it's an external site, we simply add it
+                e['in_reply_to'].append(site)
+            elif site.startswith('/'):          # if it's a local id, we append it with the site's url
+                e['in_reply_to'].append(file_parser('data'+site+'.md'))
     except:pass
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
