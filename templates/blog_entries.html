@@ -23,11 +23,28 @@
         <a href="/e{{entry.url}}">{{ entry.title }}</a>
     </h2>
     {% endif %}
-    {% if entry.in_reply_to != 'None' %}
+
+    {% if entry.in_reply_to != 'None' and entry.in_reply_to is string %}
     <h3 class="post-subtitle u-in-reply-to">
         {{entry.in_reply_to}}
     </h3>
+    {% endif%}
+
+    {% if entry.in_reply_to is sequence %}
+    {% for site in entry.in_reply_to %}
+    {% if site.photo is defined %}
+    <a href="/e{{site.url}}">
+        <img
+                class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                style="image-orientation: from-image; max-height:300px"
+                src="/{{site.photo}}"
+                >
+    </a>
+    {% else %}
     {% endif %}
+    {% endfor %}
+    {% endif %}
+
     {% if entry.photo is defined %}
     <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
          style="image-orientation: from-image; max-height:300px"

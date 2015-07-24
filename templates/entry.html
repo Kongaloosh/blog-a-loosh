@@ -64,13 +64,14 @@
                 {% if entry.in_reply_to is sequence %}
                 {% for site in entry.in_reply_to %}
                 {% if site.photo is defined %}
-                {{site.url}}
                 <a href="/e{{site.url}}">
                     <img
                             class="u-photo img-responsive center-block img-thumbnail img-rounded"
                             style="image-orientation: from-image; max-height:300px"
-                            src="/{{site.photo}}">
+                            src="/{{site.photo}}"
+                            >
                 </a>
+                {% else %}
                 {% endif %}
                 {% endfor %}
                 {% endif %}
