@@ -420,6 +420,44 @@ def add():
         return redirect(location)
 
 
+@app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET', 'POST'])
+def edit(year,month,day,name):
+    """ The form for user-submission """
+    if request.method == 'GET':
+        return render_template('edit_entry.html')
+    elif request.method == 'POST':
+        data = {}
+        for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                    data[key] = None
+
+        for title in request.form:
+            data[title] = request.form[title]
+
+        for title in request.files:
+            data[title] = request.files[title].read()
+
+        try:
+            photo = request.files['photo']
+        except:
+            photo = None
+
+        for key in data:
+            if data[key] == "":
+                data[key] = None
+
+        data['published'] = datetime.now()
+
+        if request.form.get('twitter'):
+            data['syndication'] = tweeter.main(data, photo=photo) + ","
+        if request.form.get('instagram'):
+            pass #todo: add posse to instagram
+        if request.form.get('tumblr'):
+            pass #todo: add posse to tumblr
+        location = createEntry(data, image=data['photo'])
+        return redirect(location)
+
+
 @app.route('/data/<year>/<month>/<day>/image/<name>')
 def image_fetcher_depricated(year, month, day, name):
     """ do not use---old image fetcher """
