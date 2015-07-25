@@ -55,7 +55,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
                         'vouched':     False,
                         'received':    datetime.date.today().strftime('%d %b %Y %H:%M'),
                         'postDate':    datetime.date.today().strftime('%Y-%m-%dT%H:%M:%S')
-                      }
+                        }
         if 'charset' in r.headers.get('content-type', ''):
             mentionData['content'] = r.text
         else:
@@ -104,7 +104,7 @@ def mention(sourceURL, targetURL, vouchDomain=None):
 def extractHCard(mf2Data):
     result = { 'name': '',
                'url':  '',
-             }
+               }
     if 'items' in mf2Data:
         for item in mf2Data['items']:
             if 'type' in item and 'h-card' in item['type']:
@@ -172,9 +172,9 @@ def createEntry(data, image=None, video=None, audio=None):
 
     slug = slugify(slug)
 
-    entry += "p-name:\n"\
-            "title:{title}\n"\
-            "slug:{slug}\n".format(title=title, slug=slug)
+    entry += "p-name:\n" \
+             "title:{title}\n" \
+             "slug:{slug}\n".format(title=title, slug=slug)
 
     entry += "summary:"+ str(data['summary']) + "\n"
     entry += "published:"+ str(data['published']) + "\n"
@@ -229,7 +229,7 @@ def createEntry(data, image=None, video=None, audio=None):
         if data['category']:
             for c in data['category'].split(','):
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                     [slug, data['published'], c])
+                             [slug, data['published'], c])
                 g.db.commit()
 
         return '/e/{year}/{month}/{day}/{slug}'.format(
@@ -246,9 +246,9 @@ def editEntry(data, old_entry):
     title = data['name']
     slug = old_entry['slug']
 
-    entry += "p-name:\n"\
-            "title:{title}\n"\
-            "slug:{slug}\n".format(title=title, slug=slug)
+    entry += "p-name:\n" \
+             "title:{title}\n" \
+             "slug:{slug}\n".format(title=title, slug=slug)
 
     entry += "summary:" + str(data['summary']) + "\n"
     entry += "published:" + str(old_entry['published']) + "\n"
@@ -269,9 +269,23 @@ def editEntry(data, old_entry):
 
         if data['category']:
             for c in data['category'].split(','):
-                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                     [old_entry['slug'], old_entry['published'], c])
-                g.db.commit()
+                if c is not 'None':
+                    app.logger.info("""
+                         SELECT *
+                         FROM categories
+                         WHERE slug = '{a}' AND published = '{b}' AND category = '{c}'
+                         """.format(a=old_entry['slug'], b=old_entry['published'], c=c))
+                    cur = g.db.execute(
+                         """
+                         SELECT *
+                         FROM categories
+                         WHERE slug = '{a}' AND published = '{b}' AND category = '{c}'
+                         """.format(a=old_entry['slug'], b=old_entry['published'], c=c))
+                    if cur:
+                        g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                                     [old_entry['slug'], old_entry['published'], c])
+                        g.db.commit()
+
         return '/e' + old_entry['url']
     else:
         return "This doesn't exist"
@@ -287,7 +301,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
                         'vouched':     False,
                         'received':    datetime.date.today().strftime('%d %b %Y %H:%M'),
                         'postDate':    datetime.date.today().strftime('%Y-%m-%dT%H:%M:%S')
-                      }
+                        }
         if 'charset' in r.headers.get('content-type', ''):
             mentionData['content'] = r.text
         else:
@@ -310,7 +324,7 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
         # Do something with the inbound mention
         g.db.execute('insert into mentions (content_text, source_url, target_url, post_date) values (?, ?, ?, ?)',
-                 [mentionData['content'], mentionData['sourceURL'], mentionData['targetURL'], mentionData['postDate']])
+                     [mentionData['content'], mentionData['sourceURL'], mentionData['targetURL'], mentionData['postDate']])
         g.db.commit()
 
     return result
@@ -476,7 +490,7 @@ def add():
         data = {}
         for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                    data[key] = None
+            data[key] = None
 
         for title in request.form:
             data[title] = request.form[title]
@@ -520,7 +534,7 @@ def edit(year, month, day, name):
         data = {}
         for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                     'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                    data[key] = None
+            data[key] = None
 
         for title in request.form:
             data[title] = request.form[title]
@@ -769,7 +783,7 @@ def handleMicroPub():
                 'twitter.com/',
                 'instagram.com/',
                 # 'linkedin.com/'
-                ]
+            ]
             r = ''
             while len(syndicate_to) > 1:
                 r += 'syndicate-to[]=' + syndicate_to.pop() + '&'
