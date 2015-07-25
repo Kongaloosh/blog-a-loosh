@@ -16,8 +16,6 @@ from slugify import slugify
 from dateutil.parser import parse
 from posse_scripts import tweeter
 from jinja2 import Environment
-import urllib
-import uuid
 import requests
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -158,10 +156,9 @@ def checkAccessToken(access_token, client_id):
     redirect_uri=https://example.com/auth&
     client_id=https://example.com/
     """
-    app.logger.info('checking')
     r = requests.get(url='https://tokens.indieauth.com/token', headers={'Authorization': 'Bearer '+access_token})
-    app.logger.info(r)
     return r.status_code == requests.codes.ok
+
 
 """ MICROPUB """
 def createEntry(data, image=None, video=None, audio=None):
@@ -187,7 +184,7 @@ def createEntry(data, image=None, video=None, audio=None):
         month = str(data['published'].month),
         day = str(data['published'].day),
         slug = str(slug)) + "\n"
-    entry += "u-uid" + '/{year}/{month}/{day}/{slug}'.format(
+    entry += "u-uid:" + '/{year}/{month}/{day}/{slug}'.format(
         year = str(data['published'].year),
         month = str(data['published'].month),
         day = str(data['published'].day),
@@ -243,84 +240,41 @@ def createEntry(data, image=None, video=None, audio=None):
     else: return "this has already been made"
 
 
-def editEntry(data, image=None, video=None, audio=None):
+def editEntry(data, old_entry):
+    # todo: delete unwanted categories
     entry = ''
-    if not data['name'] == None:    #is it an article
-        title = data['name']
-        slug = title
-    else:
-        slug = (data['content'].split('.')[0])
-        title = None
-
-    slug = slugify(slug)
+    title = data['name']
+    slug = old_entry['slug']
 
     entry += "p-name:\n"\
             "title:{title}\n"\
             "slug:{slug}\n".format(title=title, slug=slug)
 
-    entry += "summary:"+ str(data['summary']) + "\n"
-    entry += "published:"+ str(data['published']) + "\n"
+    entry += "summary:" + str(data['summary']) + "\n"
+    entry += "published:" + str(old_entry['published']) + "\n"
     entry += "category:" + str(data['category']) + "\n"
-    entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
-    entry += "u-uid" + '/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
+    entry += "url:"+ old_entry['url'] + "\n"
+    entry += "u-uid:" + str(old_entry['uid']) + "\n"
     entry += "location:" + str(data['location'])+ "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
     entry += "content:" + str(data['content']) + "\n"
 
-    time = data['published']
-    file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
-    if os.path.exists(file_path):
-        os.makedirs(os.path.dirname(file_path))
-
-    total_path = file_path+"{slug}".format(slug=slug)
-
-    if not os.path.isfile(total_path+'.md'):
-        file_writer = open(total_path+".md", 'wb')
+    total_path = old_entry['url']
+    if os.path.isfile('data' + total_path + '.md'):
+        file_writer = open('data' + total_path + ".md", 'wb')
         file_writer.write(entry)
         file_writer.close()
-        if image:
-            file_writer = open(total_path+".jpg", 'wb')
-            file_writer.write(image)
-            file_writer.close()
-
-        if video:
-            file_writer = open(total_path+".mp4", 'wb')
-            file_writer.write(image)
-            file_writer.close()
-
-        if audio:
-            file_writer = open(total_path+".mp3", 'wb')
-            file_writer.write(image)
-            file_writer.close()
-
-        g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
-                     [slug, data['published'], total_path]
-                     )
-        g.db.commit()
 
         if data['category']:
             for c in data['category'].split(','):
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                     [slug, data['published'], c])
+                     [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
-
-        return '/e/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug))
-    else: return "This doesn't exist"
-
+        return '/e' + old_entry['url']
+    else:
+        return "This doesn't exist"
 
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
@@ -388,7 +342,12 @@ def file_parser(filename):
     except: pass
     try: e['url'] = re.search('(?<=url:)(.)*', str).group()
     except: pass
-    try: e['uid'] = re.search('(?<=uid:)(.)*', str).group()
+    try:
+        e['uid'] = re.search('(?<=u-uid:)(.)*', str)
+        if e['uid']:
+            e['uid'] = e['uid'].group()
+        else:
+            e['uid'] = re.search('(?<=u-uid)(.)*', str).group()
     except: pass
     try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
     except: pass
@@ -433,10 +392,10 @@ def get_bare_file(filename):
         e['content'] =re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
         if e['content'] == None:
             e['content'] = re.search('(?<=content:)((.)|(\n))*$', str).group()
-    except: pass
+    except:
+        pass
     try:
-        date = parse(re.search('(?<=published:)(.)*', str).group())
-        e['published'] = date.date()
+        e['published'] = re.search('(?<=published:)(.)*', str).group()
     except: pass
     try: e['author'] = re.search('(?<=author:)(.)*', str).group()
     except: pass
@@ -444,7 +403,12 @@ def get_bare_file(filename):
     except: pass
     try: e['url'] = re.search('(?<=url:)(.)*', str).group()
     except: pass
-    try: e['uid'] = re.search('(?<=uid:)(.)*', str).group()
+    try:
+        e['uid'] = re.search('(?<=u-uid:)(.)*', str)
+        if e['uid']:
+            e['uid'] = e['uid'].group()
+        else:
+            e['uid'] = re.search('(?<=u-uid)(.)*', str).group()
     except: pass
     try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
     except: pass
@@ -456,6 +420,7 @@ def get_bare_file(filename):
     except: pass
     try: e['in_reply_to'] = re.search('(?<=in-reply-to:)(.)*', str).group()
     except:pass
+    app.logger.info(e)
     return e
 
 
@@ -538,51 +503,46 @@ def add():
             pass #todo: add posse to tumblr
         location = createEntry(data, image=data['photo'])
         return redirect(location)
+    else:
+        return render_template('page_not_found.html'), 404
 
-
-@app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET'])
-def edit(year,month,day,name):
+@app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
+def edit(year, month, day, name):
     """ The form for user-submission """
-    try:
-        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-        entry = get_bare_file(file_name+".md")
-        return render_template('edit_entry.html', entry=entry)
-    except:
-        return render_template('page_not_found.html')
+    if request.method == "GET":
+        try:
+            file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+            entry = get_bare_file(file_name+".md")
+            return render_template('edit_entry.html', entry=entry)
+        except:
+            return render_template('page_not_found.html')
+    elif request.method == "POST":
+        data = {}
+        for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                    data[key] = None
 
+        for title in request.form:
+            data[title] = request.form[title]
 
-@app.route('/edit', methods=['POST'])
-def edit_subission():
-    data = {}
-    for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+        for title in request.files:
+            data[title] = request.files[title].read()
+
+        for key in data:
+            if data[key] == "":
                 data[key] = None
 
-    for title in request.form:
-        data[title] = request.form[title]
+        if request.form.get('twitter'):
+            data['syndication'] = tweeter.main(data, photo=photo) + ","
+        if request.form.get('instagram'):
+            pass #todo: add posse to instagram
+        if request.form.get('tumblr'):
+            pass #todo: add posse to tumblr
+        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+        entry = get_bare_file(file_name+".md")
+        location = editEntry(data, old_entry=entry)
+        return redirect(location)
 
-    for title in request.files:
-        data[title] = request.files[title].read()
-
-    try:
-        photo = request.files['photo']
-    except:
-        photo = None
-
-    for key in data:
-        if data[key] == "":
-            data[key] = None
-
-    data['published'] = datetime.now()
-
-    if request.form.get('twitter'):
-        data['syndication'] = tweeter.main(data, photo=photo) + ","
-    if request.form.get('instagram'):
-        pass #todo: add posse to instagram
-    if request.form.get('tumblr'):
-        pass #todo: add posse to tumblr
-    location = createEntry(data, image=data['photo'])
-    return redirect(location)
 
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
@@ -615,7 +575,6 @@ def profile(year, month, day, name):
             entry['video'] = file_name+".mp4" # get the actual file
         if os.path.exists(file_name+".mp3"):
             entry['audio'] = file_name+".mp3" # get the actual file
-        app.logger.info(entry)
         return render_template('entry.html', entry=entry)
     except:
         return render_template('page_not_found.html'), 404
@@ -637,7 +596,6 @@ def tag_search(category):
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
-            app.logger.info(row)
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -724,7 +682,6 @@ def login():
         else:
             session['logged_in'] = True
             return redirect('/add')
-        app.logger.info(error)
     return render_template('login.html', error=error)
 
 
