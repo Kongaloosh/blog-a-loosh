@@ -270,18 +270,16 @@ def editEntry(data, old_entry):
         if data['category']:
             for c in data['category'].split(','):
                 if c is not 'None':
-                    app.logger.info("""
-                         SELECT *
-                         FROM categories
-                         WHERE slug = '{a}' AND published = '{b}' AND category = '{c}'
-                         """.format(a=old_entry['slug'], b=old_entry['published'], c=c))
                     cur = g.db.execute(
                          """
                          SELECT *
                          FROM categories
                          WHERE slug = '{a}' AND published = '{b}' AND category = '{c}'
                          """.format(a=old_entry['slug'], b=old_entry['published'], c=c))
-                    if cur:
+
+                    a = [row for (row) in cur.fetchall()]
+                    app.logger.info(a)
+                    if a == []:
                         g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                                      [old_entry['slug'], old_entry['published'], c])
                         g.db.commit()
@@ -434,7 +432,7 @@ def get_bare_file(filename):
     except: pass
     try: e['in_reply_to'] = re.search('(?<=in-reply-to:)(.)*', str).group()
     except:pass
-    app.logger.info(e)
+    # app.logger.info(e)
     return e
 
 
