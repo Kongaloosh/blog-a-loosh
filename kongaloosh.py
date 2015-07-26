@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# coding: utf-8
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
     render_template, flash, Response, send_file
@@ -193,7 +195,9 @@ def createEntry(data, image=None, video=None, audio=None):
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
-    entry += "content:" + str(data['content']) + "\n"
+    app.logger.info(data['content'])
+    entry += "content:" + data['content'].encode('utf-8') + "\n"
+    app.logger.info(data['content'].encode('utf-8'))
 
     time = data['published']
     file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
@@ -259,7 +263,7 @@ def editEntry(data, old_entry):
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
-    entry += "content:" + str(data['content']) + "\n"
+    entry += "content:" + data['content'].encode('utf-8') + "\n"
 
     total_path = old_entry['url']
     if os.path.isfile('data' + total_path + '.md'):
@@ -332,6 +336,7 @@ def file_parser(filename):
     """ for a given entry, finds all of the info we want to display """
     f = open(filename, 'r')
     str = f.read()
+    str = str.decode('utf-8')
     e = {}
     try: e['title'] = re.search('(?<=title:)(.)*', str).group()
     except: pass
@@ -340,7 +345,8 @@ def file_parser(filename):
     try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
     except: pass
     try:
-        e['content'] = markdown.markdown(re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group())
+        e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
+        e['content'] = markdown.markdown(e['content'])
         if e['content'] == None:
             e['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group())
     except: pass
@@ -377,8 +383,6 @@ def file_parser(filename):
             replies = replies.split(',')
         else:
             e['in_reply_to'] = replies
-
-
         for site in replies:
             if site.startswith('http'):         # if it's an external site, we simply add it
                 e['in_reply_to'].append(site)
@@ -387,12 +391,14 @@ def file_parser(filename):
     except:pass
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
+
     return e
 
 def get_bare_file(filename):
     """ for a given entry, finds all of the info we want to display """
     f = open(filename, 'r')
     str = f.read()
+    str = str.decode('utf-8')
     e = {}
     try: e['title'] = re.search('(?<=title:)(.)*', str).group()
     except: pass
@@ -748,9 +754,9 @@ def handleMicroPub():
                 try:
                     if('twitter.com' in data['syndicate-to[]']):
                         try:
-                            syndication += tweeter.main(data['content'], data['photo'])
+                            syndication += tweeter.main(str(data['content']).encode('utf-8'), data['photo'])
                         except:
-                            syndication += tweeter.main(data['content'])
+                            syndication += tweeter.main(str(data['content']).encode('utf-8'))
                     if('tumblr.com' in data['syndicate-to[]']):
                         try:
                             pass
