@@ -670,12 +670,14 @@ def articles():
     """ Gets all the articles """
     entries = []
     cur = g.db.execute(
-        "SELECT entries.location FROM categories"
-        +" INNER JOIN entries ON"
-        +" entries.slug = categories.slug AND "
-        +" entries.published = categories.published"
-        +" WHERE categories.category='{category} "
-        +" ORDER BY entries.published DESC'".format(category='article'))
+        """
+         SELECT entries.location FROM categories
+         INNER JOIN entries ON
+         entries.slug = categories.slug AND
+         entries.published = categories.published
+         WHERE categories.category='{category}'
+         ORDER BY entries.published DESC
+        """.format(category='article'))
 
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
