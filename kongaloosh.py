@@ -195,9 +195,7 @@ def createEntry(data, image=None, video=None, audio=None):
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
-    app.logger.info(data['content'])
-    entry += "content:" + data['content'].encode('utf-8') + "\n"
-    app.logger.info(data['content'].encode('utf-8'))
+    entry += "content:" + data['content']+ "\n"
 
     time = data['published']
     file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
@@ -208,7 +206,7 @@ def createEntry(data, image=None, video=None, audio=None):
 
     if not os.path.isfile(total_path+'.md'):
         file_writer = open(total_path+".md", 'wb')
-        file_writer.write(entry)
+        file_writer.write(entry.encode('utf-8') )
         file_writer.close()
         if image:
             file_writer = open(total_path+".jpg", 'wb')
@@ -263,12 +261,12 @@ def editEntry(data, old_entry):
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
-    entry += "content:" + data['content'].encode('utf-8') + "\n"
+    entry += "content:" + data['content'] + "\n"
 
     total_path = old_entry['url']
     if os.path.isfile('data' + total_path + '.md'):
         file_writer = open('data' + total_path + ".md", 'wb')
-        file_writer.write(entry)
+        file_writer.write(entry.encode('utf-8'))
         file_writer.close()
 
         if data['category']:
