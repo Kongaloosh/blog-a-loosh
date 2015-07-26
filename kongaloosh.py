@@ -9,7 +9,7 @@ from operator import itemgetter
 from datetime import datetime
 import pickle
 import re
-import markdown
+import markdown2
 import requests
 import ronkyuu
 import ninka
@@ -343,10 +343,11 @@ def file_parser(filename):
     try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
     except: pass
     try:
+
         e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        e['content'] = markdown.markdown(e['content'])
+        e['content'] = markdown2.markdown(e['content'], extras=['tables','fenced_code'])
         if e['content'] == None:
-            e['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group())
+            e['content'] = markdown2.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extras=['tables','fenced-code-blocks'])
     except: pass
     try:
         date = parse(re.search('(?<=published:)(.)*', str).group())
