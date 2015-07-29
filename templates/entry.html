@@ -30,14 +30,17 @@
 {% block content %}
 <!-- Post Content -->
 <!-- Page Header -->
-<header class="intro-header" style="background-image: url('{{ url_for('static', filename='img/home-bg.jpg') }}')">
+<header class="intro-header"
+        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+        background-size:cover;
+">
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
                     {% if entry.title != 'None' %}
                     <h2 class="post-title p-name">
-                        <a href="/e{{entry.url}}">{{ entry.title }}</a>
+                        <a href="/e{{entry.url}}" style="color: #d1d1d1">{{ entry.title }}</a>
                     </h2>
                     {% endif %}
                     {% if entry.summary != 'None' %}
