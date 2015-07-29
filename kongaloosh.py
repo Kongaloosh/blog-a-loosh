@@ -5,13 +5,10 @@ from flask import Flask, request, session, g, redirect, url_for, \
     render_template, flash, Response, send_file
 from contextlib import closing
 import os
-from operator import itemgetter
 from datetime import datetime
-import pickle
 import re
-import markdown2
-import requests
 import ronkyuu
+import markdown2
 import ninka
 from mf2py.parser import Parser
 from slugify import slugify
@@ -62,7 +59,6 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
             mentionData['content'] = r.text
         else:
             mentionData['content'] = r.content
-
         if vouchDomain is not None and cfg['require_vouch']:
             mentionData['vouched'] = processVouch(sourceURL, targetURL, vouchDomain)
             result                 = mentionData['vouched']
@@ -73,7 +69,6 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
 
         mf2Data = Parser(doc=mentionData['content']).to_dict()
         hcard   = extractHCard(mf2Data)
-
         mentionData['hcardName'] = hcard['name']
         mentionData['hcardURL']  = hcard['url']
         mentionData['mf2data']   = mf2Data
@@ -285,7 +280,6 @@ def editEntry(data, old_entry):
                         g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                                      [old_entry['slug'], old_entry['published'], c])
                         g.db.commit()
-
         return '/e' + old_entry['url']
     else:
         return "This doesn't exist"
@@ -343,7 +337,6 @@ def file_parser(filename):
     try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
     except: pass
     try:
-
         e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
         e['content'] = markdown2.markdown(e['content'], extras=['tables','fenced_code'])
         if e['content'] == None:
@@ -463,6 +456,7 @@ def teardown_request(exception):
     if db is not None:
         db.close()
 
+
 """ ROUTING """
 @app.route('/')
 def show_entries():
@@ -477,6 +471,10 @@ def show_entries():
             entries.append(file_parser(row+".md"))
     return render_template('blog_entries.html', entries=entries[:10])
 
+
+@app.route('/404')
+def four_oh_four():
+    return render_template('page_not_found.html'), 404
 
 @app.route('/stream')
 def show_entries_stream():
@@ -521,7 +519,7 @@ def add():
         location = createEntry(data, image=data['photo'])
         return redirect(location)
     else:
-        return render_template('page_not_found.html'), 404
+        return redirect('/404'), 404
 
 @app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
 def edit(year, month, day, name):
@@ -594,7 +592,7 @@ def profile(year, month, day, name):
             entry['audio'] = file_name+".mp3" # get the actual file
         return render_template('entry.html', entry=entry)
     except:
-        return render_template('page_not_found.html'), 404
+        return redirect('/404'), 404
 
 
 @app.route('/t/<category>')
@@ -824,7 +822,7 @@ def handleWebmention():
                 else:
                     return 'Webmention is invalid', 400
         else:
-            return 'invalid post', 404
+            return redirect('/404'), 404
 
 
 if __name__ == "__main__":
