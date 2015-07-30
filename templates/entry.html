@@ -91,6 +91,7 @@
                 <p class="e-content">{{entry.content | safe}}</p>
                 <div class="entry-footer clearfix">                         <!-- Footer -->
                     <div class="categories">                                <!-- Catagories -->
+                        <i class="fa fa-tags"></i>
                         {% for c in entry.category %}
                         {% if c != None and c != 'None' %}
                         <a class="category" href="/t/{{c}}">{{c}}</a>
