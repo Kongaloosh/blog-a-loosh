@@ -70,6 +70,10 @@
         </div>
     </div>
     <div class="row post-meta">
+        <p class="pull-right">
+            <i class="fa fa-comments"></i>
+            <span data-indieweb-comment-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
+        </p>
         <p class="authorship col-md-9">
             Posted by
             <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
@@ -79,8 +83,8 @@
             at
             <a class="p-location"> {{entry.location | safe }} </a>
             {% endif %}
+            <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
         </p>
-        <p><a class="u-url u-uid pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a></p>
     </div>
 </div>
 <hr>
@@ -88,3 +92,4 @@
 <p>No entries here so far </p> <!-- When we have nothing left -->
 {% endfor %}
 {% endblock %}
+

@@ -71,11 +71,11 @@ $(function() {
 //    });
 //});
 
-
-/*When clicking on Full hide fail/success boxes */
-$('#name').focus(function() {
-    $('#success').html('');
-});
+//
+///*When clicking on Full hide fail/success boxes */
+//$('#name').focus(function() {
+//    $('#success').html('');
+//});
 
  // jqBootstrapValidation
  // * A plugin for automating validation on Twitter Bootstrap formatted forms.
