@@ -9,12 +9,12 @@ from datetime import datetime
 from jinja2 import Environment
 import ronkyuu
 import ninka
-from mf2py.parser import Parser
 from dateutil.parser import parse
 import requests
 
 from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
+from pysrc.authentication.indieauth import checkAccessToken
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -40,172 +40,6 @@ def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
 
 
-""" WEBMENTION """
-def processWebmention(sourceURL, targetURL, vouchDomain=None):
-    result = False
-    r = requests.get(sourceURL, verify=False)
-    if r.status_code == requests.codes.ok:
-        mentionData = { 'sourceURL':   sourceURL,
-                        'targetURL':   targetURL,
-                        'vouchDomain': vouchDomain,
-                        'vouched':     False,
-                        'received':    datetime.date.today().strftime('%d %b %Y %H:%M'),
-                        'postDate':    datetime.date.today().strftime('%Y-%m-%dT%H:%M:%S')
-                        }
-        if 'charset' in r.headers.get('content-type', ''):
-            mentionData['content'] = r.text
-        else:
-            mentionData['content'] = r.content
-        if vouchDomain is not None and cfg['require_vouch']:
-            mentionData['vouched'] = processVouch(sourceURL, targetURL, vouchDomain)
-            result                 = mentionData['vouched']
-            app.logger.info('result of vouch? %s' % result)
-        else:
-            result = not cfg['require_vouch']
-            app.logger.info('no vouch domain, result %s' % result)
-
-        mf2Data = Parser(doc=mentionData['content']).to_dict()
-        hcard   = extractHCard(mf2Data)
-        mentionData['hcardName'] = hcard['name']
-        mentionData['hcardURL']  = hcard['url']
-        mentionData['mf2data']   = mf2Data
-
-        # Do something with the inbound mention
-
-    return result
-
-
-def mention(sourceURL, targetURL, vouchDomain=None):
-    """Process the Webmention of the targetURL from the sourceURL.
-
-    To verify that the sourceURL has indeed referenced our targetURL
-    we run findMentions() at it and scan the resulting href list.
-    """
-    app.logger.info('discovering Webmention endpoint for %s' % sourceURL)
-
-    mentions = ronkyuu.findMentions(sourceURL)
-    result   = False
-    app.logger.info('mentions %s' % mentions)
-    for href in mentions['refs']:
-        if href != sourceURL and href == targetURL:
-            app.logger.info('post at %s was referenced by %s' % (targetURL, sourceURL))
-
-            result = processWebmention(sourceURL, targetURL, vouchDomain)
-    app.logger.info('mention() returning %s' % result)
-    return result
-
-
-def extractHCard(mf2Data):
-    result = { 'name': '',
-               'url':  '',
-               }
-    if 'items' in mf2Data:
-        for item in mf2Data['items']:
-            if 'type' in item and 'h-card' in item['type']:
-                result['name'] = item['properties']['name']
-                if 'url' in item['properties']:
-                    result['url'] = item['properties']['url']
-    return result
-
-
-def processVouch(sourceURL, targetURL, vouchDomain):
-    """Determine if a vouch domain is valid.
-
-    This implements a very simple method for determining if a vouch should
-    be considered valid:
-    1. does the vouch domain have it's own webmention endpoint
-    2. does the vouch domain have an indieauth endpoint
-    3. does the domain exist in the list of domains i've linked to
-
-    yep, super simple but enough for me to test implement vouches
-    """
-    vouchFile = os.path.join(cfg['basepath'], 'vouch_domains.txt')
-    with open(vouchFile, 'r') as h:
-        vouchDomains = []
-        for domain in h.read():
-            vouchDomains.append(domain.strip().lower())
-
-    if vouchDomain.lower() in vouchDomains:
-        result = True
-    else:
-        wmStatus, wmUrl = ronkyuu.discoverEndpoint(vouchDomain, test_urls=False)
-        if wmUrl is not None and wmStatus == 200:
-            authEndpoints = ninka.indieauth.discoverAuthEndpoints(vouchDomain)
-
-            if 'authorization_endpoint' in authEndpoints:
-                authURL = None
-                for url in authEndpoints['authorization_endpoint']:
-                    authURL = url
-                    break
-                if authURL is not None:
-                    result = True
-                    with open(vouchFile, 'a+') as h:
-                        h.write('\n%s' % vouchDomain)
-
-
-""" AUTHENTICATION"""
-def checkAccessToken(access_token, client_id):
-    """
-    code=gk7n4opsyuUxhvF4&
-    redirect_uri=https://example.com/auth&
-    client_id=https://example.com/
-    """
-    r = requests.get(url='https://tokens.indieauth.com/token', headers={'Authorization': 'Bearer '+access_token})
-    return r.status_code == requests.codes.ok
-
-
-""" MICROPUB """
-
-def processWebmention(sourceURL, targetURL, vouchDomain=None):
-    result = False
-    r = requests.get(sourceURL, verify=False)
-    if r.status_code == requests.codes.ok:
-        mentionData = { '7.0.0.1/sourceURL':   sourceURL,
-                        'targetURL':   targetURL,
-                        'vouchDomain': vouchDomain,
-                        'vouched':     False,
-                        'received':    datetime.date.today().strftime('%d %b %Y %H:%M'),
-                        'postDate':    datetime.date.today().strftime('%Y-%m-%dT%H:%M:%S')
-                        }
-        if 'charset' in r.headers.get('content-type', ''):
-            mentionData['content'] = r.text
-        else:
-            mentionData['content'] = r.content
-
-        if vouchDomain is not None and cfg['require_vouch']:
-            mentionData['vouched'] = processVouch(sourceURL, targetURL, vouchDomain)
-            result = mentionData['vouched']
-            app.logger.info('result of vouch? %s' % result)
-        else:
-            result = not cfg['require_vouch']
-            app.logger.info('no vouch domain, result %s' % result)
-
-        mf2Data = Parser(doc=mentionData['content']).to_dict()
-        hcard = extractHCard(mf2Data)
-
-        mentionData['hcardName'] = hcard['name']
-        mentionData['hcardURL']  = hcard['url']
-        mentionData['mf2data']   = mf2Data
-
-        # Do something with the inbound mention
-        g.db.execute('insert into mentions (content_text, source_url, target_url, post_date) values (?, ?, ?, ?)',
-                     [mentionData['content'], mentionData['sourceURL'], mentionData['targetURL'], mentionData['postDate']])
-        g.db.commit()
-
-
-def validURL(targetURL):
-    """
-        Validate the target URL exists.
-        In a real app you would need to do a database lookup or a HEAD request, here we just check the URL
-    """
-    if '/article' in targetURL:
-        result = 200
-    else:
-        result = 404
-    return result
-
-
-""" DECORATORS """
 @app.before_request
 def before_request():
     g.db = connect_db()
@@ -218,7 +52,6 @@ def teardown_request(exception):
         db.close()
 
 
-""" ROUTING """
 @app.route('/')
 def show_entries():
     """ The main view: presents author info and entries. """
@@ -311,7 +144,7 @@ def edit(year, month, day, name):
                 data[key] = None
 
         if request.form.get('twitter'):
-            data['syndication'] = tweeter.main(data, photo=photo) + ","
+            data['syndication'] = tweeter.main(data, photo=None) + ","
         if request.form.get('instagram'):
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
@@ -571,35 +404,6 @@ def handleMicroPub():
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
         return 'not implemented', 501
-
-
-@app.route('/webmention', methods=['POST'])
-def handleWebmention():
-    app.logger.info('handleWebmention [%s]' % request.method)
-    if request.method == 'POST':
-        valid = False
-        source = request.form.get('source')
-        target = request.form.get('target')
-        vouch = request.form.get('vouch')
-        app.logger.info('source: %s target: %s vouch %s' % (source, target, vouch))
-
-        valid = validURL(target)
-
-        app.logger.info('valid? %s' % valid)
-
-        f = open('mention.txt', 'w+')
-        f.write(str(source) + str(target))
-
-        if valid == requests.codes.ok:
-            if mention(source, target, vouch):
-                return redirect(target)
-            else:
-                if vouch is None and cfg['require_vouch']:
-                    return 'Vouch required for webmention', 449
-                else:
-                    return 'Webmention is invalid', 400
-        else:
-            return redirect('/404'), 404
 
 
 if __name__ == "__main__":
