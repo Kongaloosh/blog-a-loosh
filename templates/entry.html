@@ -69,6 +69,11 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            {% for mention in mentions %}
+                {{mention.data}}
+            {% endfor %}
+        </div>
     </div>
 </article>
 {% endblock %}
