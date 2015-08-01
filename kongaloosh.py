@@ -576,8 +576,8 @@ def image_fetcher(year, month, day, name):
     return send_file(img)
 
 
-def get_mentions():
-    r = requests.get('http://webmention.io/api/mentions?target=http://kongaloosh.com/e/2015/7/31/i-hooked-my-brain-up-to-a-computer-today-for-science')
+def get_mentions(url):
+    r = requests.get(url)
     p = r.json()
     mentions = []
     for link in p['links']:
@@ -597,7 +597,8 @@ def profile(year, month, day, name):
             entry['video'] = file_name+".mp4" # get the actual file
         if os.path.exists(file_name+".mp3"):
             entry['audio'] = file_name+".mp3" # get the actual file
-        mentions = get_mentions()
+        mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
+                                format(year=year, month=month, day=day, name=name))
         app.logger.info(mentions)
         return render_template('entry.html', entry=entry, mentions=mentions)
     except:

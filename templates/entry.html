@@ -17,6 +17,10 @@
     </div>
 </header>
 
+{% if mentions %}
+<link href="{{ url_for('static', filename='mentions.css') }}" rel="stylesheet">
+{% endif %}
+
 <article>
     <div class="container">
         <div class="row">
@@ -67,28 +71,40 @@
                     </p>
                     <p><a class="u-url u-uid pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a></p>
                 </div>
-                {% for mention in mentions %}
-                <div class="row">
-                    <div class="header">
-
-                    </div>
-                    {% if entry.photo is defined %}
-                    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                         style="image-orientation: from-image; max-height:300px"
-                         src="/{{entry.photo}}">
-                    {% endif %}
-                    {{mention.name}}
-                    <div class="footer mentions">
-                        <p>
-                            Posted on
-                            <a href="{{mention.url | safe}}">{{mention.published}}</a>
-                            by
-                            <a href="{{mention.author.url  | safe}}">{{mention.author.name}}</a></p>
-                    </div>
-                    <hr>
-                </div>
-                {% endfor %}
             </div>
+            {% if mentions %}
+            <div class="mention-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center">
+                <div class="text-center">
+                    <h3><i class="fa fa-comments"></i></h3>
+                    <strong>Mentioned elsewhere on the indieweb</strong>
+                    <hr class="small" style="border-color:grey;">
+                </div>
+            </div>
+            {% endif %}
+            {% for mention in mentions %}
+            <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 mention">
+                <div class="mention-header">
+                    {% if mention.name != mention.content %}
+                    {{mention.name}}
+                    {% endif %}
+                </div>
+                {% if mention.photo %}
+                <img class="img-responsive center-block img-thumbnail img-rounded"
+                     style="image-orientation: from-image; max-height:300px"
+                     src="{{mention.photo}}">
+                {% endif %}
+                {{mention.content}}
+                <div class="mentions-footer">
+                    <p>
+                        Posted on
+                        <a href="{{mention.url}}">{{mention.published}}</a>
+                        by
+                        <a href="{{mention.author.url}}">{{mention.author.name}}</a>
+                    </p>
+                </div>
+                <hr>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </article>
