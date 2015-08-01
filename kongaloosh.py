@@ -6,16 +6,15 @@ from flask import Flask, request, session, g, redirect, url_for, \
 from contextlib import closing
 import os
 from datetime import datetime
-import re
+from jinja2 import Environment
 import ronkyuu
-import markdown2
 import ninka
 from mf2py.parser import Parser
-from slugify import slugify
 from dateutil.parser import parse
-from posse_scripts import tweeter
-from jinja2 import Environment
 import requests
+
+from pysrc.posse_scripts import tweeter
+from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -156,132 +155,6 @@ def checkAccessToken(access_token, client_id):
 
 
 """ MICROPUB """
-def createEntry(data, image=None, video=None, audio=None):
-    entry = ''
-    if not data['name'] == None:    #is it an article
-        title = data['name']
-        slug = title
-    else:
-        slug = (data['content'].split('.')[0])
-        title = None
-
-    slug = slugify(slug)
-
-    entry += "p-name:\n" \
-             "title:{title}\n" \
-             "slug:{slug}\n".format(title=title, slug=slug)
-
-    entry += "summary:"+ str(data['summary']) + "\n"
-    entry += "published:"+ str(data['published']) + "\n"
-    entry += "category:" + str(data['category']) + "\n"
-    entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
-    entry += "u-uid:" + '/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
-    entry += "location:" + str(data['location'])+ "\n"
-    entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
-    entry += "repost-of:" + str(data['repost-of']) + "\n"
-    entry += "syndication:" + str(data['syndication']) + "\n"
-    entry += "content:" + data['content']+ "\n"
-
-    time = data['published']
-    file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
-    if not os.path.exists(file_path):
-        os.makedirs(os.path.dirname(file_path))
-
-    total_path = file_path+"{slug}".format(slug=slug)
-
-    if not os.path.isfile(total_path+'.md'):
-        file_writer = open(total_path+".md", 'wb')
-        file_writer.write(entry.encode('utf-8') )
-        file_writer.close()
-        if image:
-            file_writer = open(total_path+".jpg", 'wb')
-            file_writer.write(image)
-            file_writer.close()
-
-        if video:
-            file_writer = open(total_path+".mp4", 'wb')
-            file_writer.write(image)
-            file_writer.close()
-
-        if audio:
-            file_writer = open(total_path+".mp3", 'wb')
-            file_writer.write(image)
-            file_writer.close()
-
-        g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
-                     [slug, data['published'], total_path]
-                     )
-        g.db.commit()
-
-        if data['category']:
-            for c in data['category'].split(','):
-                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                             [slug, data['published'], c])
-                g.db.commit()
-
-        return '/e/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug))
-    else: return "this has already been made"
-
-
-def editEntry(data, old_entry):
-    # todo: delete unwanted categories
-    entry = ''
-    title = data['name']
-    slug = old_entry['slug']
-
-    entry += "p-name:\n" \
-             "title:{title}\n" \
-             "slug:{slug}\n".format(title=title, slug=slug)
-
-    entry += "summary:" + str(data['summary']) + "\n"
-    entry += "published:" + str(old_entry['published']) + "\n"
-    entry += "category:" + str(data['category']) + "\n"
-    entry += "url:"+ old_entry['url'] + "\n"
-    entry += "u-uid:" + str(old_entry['uid']) + "\n"
-    entry += "location:" + str(data['location'])+ "\n"
-    entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
-    entry += "repost-of:" + str(data['repost-of']) + "\n"
-    entry += "syndication:" + str(data['syndication']) + "\n"
-    entry += "content:" + data['content'] + "\n"
-
-    total_path = old_entry['url']
-    if os.path.isfile('data' + total_path + '.md'):
-        file_writer = open('data' + total_path + ".md", 'wb')
-        file_writer.write(entry.encode('utf-8'))
-        file_writer.close()
-
-        if data['category']:
-            for c in data['category'].split(','):
-                if c is not 'None':
-                    cur = g.db.execute(
-                         """
-                         SELECT *
-                         FROM categories
-                         WHERE slug = '{a}' AND published = '{b}' AND category = '{c}'
-                         """.format(a=old_entry['slug'], b=old_entry['published'], c=c))
-
-                    a = [row for (row) in cur.fetchall()]
-                    app.logger.info(a)
-                    if a == []:
-                        g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                                     [old_entry['slug'], old_entry['published'], c])
-                        g.db.commit()
-        return '/e' + old_entry['url']
-    else:
-        return "This doesn't exist"
-
 
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
@@ -319,118 +192,6 @@ def processWebmention(sourceURL, targetURL, vouchDomain=None):
                      [mentionData['content'], mentionData['sourceURL'], mentionData['targetURL'], mentionData['postDate']])
         g.db.commit()
 
-    return result
-
-
-def file_parser(filename):
-    """ for a given entry, finds all of the info we want to display """
-    f = open(filename, 'r')
-    str = f.read()
-    str = str.decode('utf-8')
-    e = {}
-    try: e['title'] = re.search('(?<=title:)(.)*', str).group()
-    except: pass
-    try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
-    except: pass
-    try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
-    except: pass
-    try:
-        e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        e['content'] = markdown2.markdown(e['content'], extras=['tables','fenced_code'])
-        if e['content'] == None:
-            e['content'] = markdown2.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extras=['tables','fenced-code-blocks'])
-    except: pass
-    try:
-        date = parse(re.search('(?<=published:)(.)*', str).group())
-        e['published'] = date.date()
-    except: pass
-    try: e['author'] = re.search('(?<=author:)(.)*', str).group()
-    except: pass
-    try: e['category'] = re.search('(?<=category:)(.)*', str).group().split(',')
-    except: pass
-    try: e['url'] = re.search('(?<=url:)(.)*', str).group()
-    except: pass
-    try:
-        e['uid'] = re.search('(?<=u-uid:)(.)*', str)
-        if e['uid']:
-            e['uid'] = e['uid'].group()
-        else:
-            e['uid'] = re.search('(?<=u-uid)(.)*', str).group()
-    except: pass
-    try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
-    except: pass
-    try:
-        e['location'] = re.search('(?<=location:)(.)*', str).group()
-    except: pass
-    try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
-    except: pass
-    try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
-    except: pass
-    try:
-        replies = re.search('(?<=in-reply-to:)(.)*', str).group()
-        if replies != 'None':
-            e['in_reply_to'] = []
-            replies = replies.split(',')
-        else:
-            e['in_reply_to'] = replies
-        for site in replies:
-            if site.startswith('http'):         # if it's an external site, we simply add it
-                e['in_reply_to'].append(site)
-            elif site.startswith('/'):          # if it's a local id, we append it with the site's url
-                e['in_reply_to'].append(file_parser('data'+site+'.md'))
-    except:pass
-    if os.path.exists(filename.split('.md')[0]+".jpg"):
-        e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
-
-    return e
-
-def get_bare_file(filename):
-    """ for a given entry, finds all of the info we want to display """
-    f = open(filename, 'r')
-    str = f.read()
-    str = str.decode('utf-8')
-    e = {}
-    try: e['title'] = re.search('(?<=title:)(.)*', str).group()
-    except: pass
-    try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
-    except: pass
-    try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
-    except: pass
-    try:
-        e['content'] =re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        if e['content'] == None:
-            e['content'] = re.search('(?<=content:)((.)|(\n))*$', str).group()
-    except:
-        pass
-    try:
-        e['published'] = re.search('(?<=published:)(.)*', str).group()
-    except: pass
-    try: e['author'] = re.search('(?<=author:)(.)*', str).group()
-    except: pass
-    try: e['category'] = re.search('(?<=category:)(.)*', str).group()
-    except: pass
-    try: e['url'] = re.search('(?<=url:)(.)*', str).group()
-    except: pass
-    try:
-        e['uid'] = re.search('(?<=u-uid:)(.)*', str)
-        if e['uid']:
-            e['uid'] = e['uid'].group()
-        else:
-            e['uid'] = re.search('(?<=u-uid)(.)*', str).group()
-    except: pass
-    try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
-    except: pass
-    try: e['location'] = re.search('(?<=location:)(.)*', str).group()
-    except: pass
-    try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
-    except: pass
-    try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
-    except: pass
-    try: e['in_reply_to'] = re.search('(?<=in-reply-to:)(.)*', str).group()
-    except:pass
-    # app.logger.info(e)
-    return e
-
 
 def validURL(targetURL):
     """
@@ -443,10 +204,12 @@ def validURL(targetURL):
         result = 404
     return result
 
+
 """ DECORATORS """
 @app.before_request
 def before_request():
     g.db = connect_db()
+
 
 @app.teardown_request
 def teardown_request(exception):
@@ -473,6 +236,7 @@ def show_entries():
 @app.route('/404')
 def four_oh_four():
     return render_template('page_not_found.html'), 404
+
 
 @app.route('/stream')
 def show_entries_stream():
@@ -514,10 +278,11 @@ def add():
             pass #todo: add posse to instagram
         if request.form.get('tumblr'):
             pass #todo: add posse to tumblr
-        location = createEntry(data, image=data['photo'])
+        location = createEntry(data, image=data['photo'], g=g)
         return redirect(location)
     else:
         return redirect('/404'), 404
+
 
 @app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
 def edit(year, month, day, name):
@@ -553,9 +318,8 @@ def edit(year, month, day, name):
             pass #todo: add posse to tumblr
         file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
         entry = get_bare_file(file_name+".md")
-        location = editEntry(data, old_entry=entry)
+        location = editEntry(data, old_entry=entry, g=g)
         return redirect(location)
-
 
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
@@ -578,31 +342,34 @@ def image_fetcher(year, month, day, name):
 
 def get_mentions(url):
     r = requests.get(url)
-    p = r.json()
     mentions = []
-    for link in p['links']:
-        mentions.append(link['data'])
+    try:
+        p = r.json()
+        for link in p['links']:
+            mentions.append(link['data'])
+    except:
+        pass
     return mentions
 
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
     """ Get a specific article """
-    try:
-        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-        entry = file_parser(file_name+".md")
-        if os.path.exists(file_name+".jpg"):
-            entry['photo'] = file_name+".jpg" # get the actual file
-        if os.path.exists(file_name+".mp4"):
-            entry['video'] = file_name+".mp4" # get the actual file
-        if os.path.exists(file_name+".mp3"):
-            entry['audio'] = file_name+".mp3" # get the actual file
-        mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
-                                format(year=year, month=month, day=day, name=name))
-        app.logger.info(mentions)
-        return render_template('entry.html', entry=entry, mentions=mentions)
-    except:
-        return redirect('/404'), 404
+    # try:
+    file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+    entry = file_parser(file_name+".md")
+    if os.path.exists(file_name+".jpg"):
+        entry['photo'] = file_name+".jpg" # get the actual file
+    if os.path.exists(file_name+".mp4"):
+        entry['video'] = file_name+".mp4" # get the actual file
+    if os.path.exists(file_name+".mp3"):
+        entry['audio'] = file_name+".mp3" # get the actual file
+    mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
+                            format(year=year, month=month, day=day, name=name))
+    app.logger.info(mentions)
+    return render_template('entry.html', entry=entry, mentions=mentions)
+    # except:
+    #     return redirect('/404'), 404
 
 
 @app.route('/t/<category>')
@@ -778,7 +545,7 @@ def handleMicroPub():
                     pass
                 data['syndication'] = syndication
 
-                location = createEntry(data, image=data['photo'])
+                location = createEntry(data, image=data['photo'], g=g)
 
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
