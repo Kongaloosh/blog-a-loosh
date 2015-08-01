@@ -576,6 +576,15 @@ def image_fetcher(year, month, day, name):
     return send_file(img)
 
 
+def get_mentions():
+    r = requests.get('http://webmention.io/api/mentions?target=http://kongaloosh.com/e/2015/7/31/i-hooked-my-brain-up-to-a-computer-today-for-science')
+    p = r.json()
+    mentions = []
+    for link in p['links']:
+        mentions.append(link['data'])
+    return mentions
+
+
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
     """ Get a specific article """
@@ -588,7 +597,9 @@ def profile(year, month, day, name):
             entry['video'] = file_name+".mp4" # get the actual file
         if os.path.exists(file_name+".mp3"):
             entry['audio'] = file_name+".mp3" # get the actual file
-        return render_template('entry.html', entry=entry)
+        mentions = get_mentions()
+        app.logger.info(mentions)
+        return render_template('entry.html', entry=entry, mentions=mentions)
     except:
         return redirect('/404'), 404
 

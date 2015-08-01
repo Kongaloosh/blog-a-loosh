@@ -67,12 +67,28 @@
                     </p>
                     <p><a class="u-url u-uid pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a></p>
                 </div>
+                {% for mention in mentions %}
+                <div class="row">
+                    <div class="header">
+
+                    </div>
+                    {% if entry.photo is defined %}
+                    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                         style="image-orientation: from-image; max-height:300px"
+                         src="/{{entry.photo}}">
+                    {% endif %}
+                    {{mention.name}}
+                    <div class="footer mentions">
+                        <p>
+                            Posted on
+                            <a href="{{mention.url | safe}}">{{mention.published}}</a>
+                            by
+                            <a href="{{mention.author.url  | safe}}">{{mention.author.name}}</a></p>
+                    </div>
+                    <hr>
+                </div>
+                {% endfor %}
             </div>
-        </div>
-        <div class="row">
-            {% for mention in mentions %}
-                {{mention.data}}
-            {% endfor %}
         </div>
     </div>
 </article>
