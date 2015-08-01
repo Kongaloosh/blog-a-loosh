@@ -24,7 +24,6 @@ DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'Anubis'
 PASSWORD = 'Munc4kin))'
-
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -43,7 +42,6 @@ def connect_db():
 
 
 """ WEBMENTION """
-
 def processWebmention(sourceURL, targetURL, vouchDomain=None):
     result = False
     r = requests.get(sourceURL, verify=False)
