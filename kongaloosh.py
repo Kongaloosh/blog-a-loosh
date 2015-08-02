@@ -7,8 +7,6 @@ from contextlib import closing
 import os
 from datetime import datetime
 from jinja2 import Environment
-import ronkyuu
-import ninka
 from dateutil.parser import parse
 import requests
 
