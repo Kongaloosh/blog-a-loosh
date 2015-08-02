@@ -13,6 +13,7 @@ import requests
 from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
 from pysrc.authentication.indieauth import checkAccessToken
+from pysrc.webmention.webemention_checking import get_mentions
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -171,36 +172,23 @@ def image_fetcher(year, month, day, name):
     return send_file(img)
 
 
-def get_mentions(url):
-    r = requests.get(url)
-    mentions = []
-    try:
-        p = r.json()
-        for link in p['links']:
-            mentions.append(link['data'])
-    except:
-        pass
-    return mentions
-
-
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
     """ Get a specific article """
-    # try:
-    file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-    entry = file_parser(file_name+".md")
-    if os.path.exists(file_name+".jpg"):
-        entry['photo'] = file_name+".jpg" # get the actual file
-    if os.path.exists(file_name+".mp4"):
-        entry['video'] = file_name+".mp4" # get the actual file
-    if os.path.exists(file_name+".mp3"):
-        entry['audio'] = file_name+".mp3" # get the actual file
-    mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
-                            format(year=year, month=month, day=day, name=name))
-    app.logger.info(mentions)
-    return render_template('entry.html', entry=entry, mentions=mentions)
-    # except:
-    #     return redirect('/404'), 404
+    try:
+        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+        entry = file_parser(file_name+".md")
+        if os.path.exists(file_name+".jpg"):
+            entry['photo'] = file_name+".jpg" # get the actual file
+        if os.path.exists(file_name+".mp4"):
+            entry['video'] = file_name+".mp4" # get the actual file
+        if os.path.exists(file_name+".mp3"):
+            entry['audio'] = file_name+".mp3" # get the actual file
+        mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
+                                format(year=year, month=month, day=day, name=name))
+        return render_template('entry.html', entry=entry, mentions=mentions)
+    except:
+        return redirect('/404'), 404
 
 
 @app.route('/t/<category>')

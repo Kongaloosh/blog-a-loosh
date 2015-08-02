@@ -4,7 +4,7 @@ import sys
 import markdown2
 from slugify import slugify
 from dateutil.parser import parse
-sys.path.insert(0, os.getcwd())
+# sys.path.insert(0, os.getcwd())
 
 __author__ = 'alex'
 
