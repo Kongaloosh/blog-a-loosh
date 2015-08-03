@@ -22,4 +22,4 @@ def get_mentions(url):
     return mentions
 
 if __name__ == '__main__':
-    get_mentions('http://kongaloosh.com/e/2015/8/2/this-is-a-test-note-to-use-as-a-source-for-sending-web-mentions')
+    get_mentions('http://kongaloosh.com/e/2015/8/1/im-so-glad-andrew-donnelly-is-mcing-the-canmore-folk-fest-too-this-year-its-going-to-be-a-blast')
