@@ -5,10 +5,10 @@ from slugify import slugify
 
 def get_keys():
     cfg = {}
-    cfg['access_token'] = open('/config/twitter/twitter_access_token','rb').read()
-    cfg['access_token_secret'] = open('/config/twitter/twitter_access_token_secret','rb').read()
-    cfg['consumer_key'] = open('/config/twitter/twitter_consumer_key','rb').read()
-    cfg['consumer_secret'] = open('/config/twitter/twitter_consumer_secret','rb').read()
+    cfg['access_token'] = open('config/twitter/twitter_access_token','rb').read()
+    cfg['access_token_secret'] = open('config/twitter/twitter_access_token_secret','rb').read()
+    cfg['consumer_key'] = open('config/twitter/twitter_consumer_key','rb').read()
+    cfg['consumer_secret'] = open('config/twitter/twitter_consumer_secret','rb').read()
     return cfg
 
 def get_api(cfg):

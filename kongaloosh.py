@@ -17,9 +17,9 @@ jinja_env = Environment(extensions=['jinja2.ext.with_'])
 # configuration
 DATABASE = 'kongaloosh.db'
 DEBUG = True
-SECRET_KEY = open('config/development_key', 'rb').readall()
-USERNAME = open('config/site_authentication/username', 'rb').readall()
-PASSWORD = open('config/site_authentication/password', 'rb').readall()
+SECRET_KEY = open('config/development_key', 'rb').read()
+USERNAME = open('config/site_authentication/username', 'rb').read()
+PASSWORD = open('config/site_authentication/password', 'rb').read()
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -349,11 +349,13 @@ def handleMicroPub():
                 try:
                     audio = request.files.get('audio').read()
                     data['audio'] = audio
+                    data['category'] += ',audio'                # we've added an image, so append it
                 except: pass
 
                 try:
                     video = request.files.get('video').read()
                     data['video'] = video
+                    data['category'] += ',video'                # we've added an image, so append it
                 except: pass
 
                 syndication = ''
