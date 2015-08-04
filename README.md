@@ -17,6 +17,10 @@ Right now, to varying degrees of effectiveness, it can:
   * recieve webmentions using webmention.io
   * send webmentions
 
+In short, it has most of the functionality of an indieweb site. 
+
+Keep in mind, I'm not a web-developer. That, and I just wanted to build this as rapidly as possible. 
+
 There's still a large degree of testing which is yet to be done. Proceed with caution. 
 
 ### How do I use this?
