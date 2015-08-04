@@ -1,0 +1,83 @@
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='add.css') }}"> <!-- blog roll styling -->
+
+{% extends "layout.html" %}
+{% block content %}
+<header class="intro-header"
+        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+        background-size:cover;
+">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <div class="site-heading">
+                        <h1>Edit</h1>
+                        <hr class="small">
+                        <span class="subheading">Time to write.</span>
+                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+{% if session.logged_in %}
+<div class="container">
+    <i class="fa fa-times pull-right"></i>
+    <div class="container input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
+            Title:<br>
+            <input type="text" name="name" value="{{entry.title}}">
+            <br>
+            Reply-to:<br>
+            <input type="text" name="in-reply-to" value="{{entry.in_reply_to}}">
+            <br>
+            Tags:<br>
+            <input type="text" name="category" value="{{entry.category}}">
+            <br>
+            <textarea cols="50" rows="5" name="content" form_id="input">{{entry.content}}</textarea>
+            <br>
+            <textarea cols="50" rows="5" name="social_content" form_id="">tweet preview</textarea>
+            <br>
+            Summary:<br>
+            <input type="text" name="summary" value="{{entry.summary}}">
+            <br>
+            <input type="checkbox" name="tumblr" value="tumblr">tumblr
+            <br>
+            <input type="checkbox" name="instagram" value="instagram">instagram
+            <br>
+            <input type="checkbox" name="twitter" value="twitter">twitter
+            <br>
+            Geo:<br>
+            <textarea type="text" name="location" id="geo_coord" cols="50" value="{{entry.geo}}"></textarea>
+            <br>
+        </form>
+        <button onclick="getLocation()">Add Location</button>
+        <input id="submit" type="submit" value="Submit">
+    </div>
+</div>
+<script>
+    var x = document.getElementById("geo_coord");
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            x.innerHTML = "Geolocation is not supported by this browser.";
+        }
+    }
+
+    function showPosition(position) {
+        x.innerHTML = "geo:" + position.coords.latitude +
+        "," + position.coords.longitude;
+    }
+
+    var form = document.getElementById("input");
+
+    document.getElementById("submit").addEventListener("click", function () {
+      form.submit();
+    });
+
+</script>
+{% else %}
+<div class="container">
+    <p>You need to be logged in, buck-eye</p>
+</div>
+{% endif %}
+{% endblock %}
