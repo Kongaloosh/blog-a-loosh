@@ -175,20 +175,26 @@ def image_fetcher(year, month, day, name):
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
     """ Get a specific article """
-    try:
-        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-        entry = file_parser(file_name+".md")
-        if os.path.exists(file_name+".jpg"):
-            entry['photo'] = file_name+".jpg" # get the actual file
-        if os.path.exists(file_name+".mp4"):
-            entry['video'] = file_name+".mp4" # get the actual file
-        if os.path.exists(file_name+".mp3"):
-            entry['audio'] = file_name+".mp3" # get the actual file
-        mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
-                                format(year=year, month=month, day=day, name=name))
-        return render_template('entry.html', entry=entry, mentions=mentions)
-    except:
-        return redirect('/404'), 404
+    # try:
+    file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+    entry = file_parser(file_name+".md")
+    if os.path.exists(file_name+".jpg"):
+        entry['photo'] = file_name+".jpg" # get the actual file
+    if os.path.exists(file_name+".mp4"):
+        entry['video'] = file_name+".mp4" # get the actual file
+    if os.path.exists(file_name+".mp3"):
+        entry['audio'] = file_name+".mp3" # get the actual file
+    mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
+                            format(year=year, month=month, day=day, name=name))
+    reply_to = []
+    for i in entry['in_reply_to']:
+        if i.startswith('http'):        #if it's not local
+            reply_to.append(i)
+
+    app.logger.info(reply_to)
+    return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
+    # except:
+    #     return redirect('/404'), 404
 
 
 @app.route('/t/<category>')

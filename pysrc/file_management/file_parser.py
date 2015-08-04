@@ -68,7 +68,6 @@ def file_parser(filename):
     except:pass
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
-
     return e
 
 

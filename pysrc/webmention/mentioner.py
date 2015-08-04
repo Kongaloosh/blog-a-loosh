@@ -23,13 +23,16 @@ def send_mention(source, target):
     try:
         endpoint = find_end_point(target)
         payload = {'source': source, 'target': target}
-        headers = {'Accept': 'text/html, application/json'}
-        r = requests.post('https://webmention.io/kongaloosh.com/webmention', data=payload, headers=headers)
+        # headers = {'Accept': 'text/html, application/json'}
+        r = requests.post(endpoint, data=payload)
+        print(r.text)
     except:
         pass
 
 
 if __name__ == '__main__':
-    send_mention(
-        'http://kongaloosh.com/e/2015/8/2/this-is-a-test-note-to-use-as-a-source-for-sending-web-mentions',
-        'http://kongaloosh.com/e/2015/8/1/im-so-glad-andrew-donnelly-is-mcing-the-canmore-folk-fest-too-this-year-its-going-to-be-a-blast')
+    s = 'http://kongaloosh.com/e/2015/8/2/this-is-a-test-note-to-use-as-a-source-for-sending-web-mentions'
+    t = 'http://kongaloosh.com/e/2015/8/3/another-test-note-for-webmentions'
+    send_mention(s,t)
+    from webemention_checking import get_mentions
+    print len(get_mentions(t))

@@ -1,23 +1,24 @@
 .hentry{
-    box-shadow: 0px 0px 10px 5px #aaaaaa;
+   % box-shadow: 0px -10px -10px 0.5px #aaaaaa;
+    box-shadow: 0px 0px 10px 0.5px rgba(0,0,0,0.75);
 }
 
-.mention-topper{
+.reply-topper{
     margin-top:8px;
     z-index: -1;
     background-color: #FCFCFC;
 }
 
-.mention{
+.reply{
     z-index: -1;
     background-color: #FCFCFC;
 }
 
-.mention-header{
+.reply-header{
     margin-top:5px;
     margin-bottom:5px
 }
 
-.mention-footer{
+.reply-footer{
     margin-top:5px;
 }
