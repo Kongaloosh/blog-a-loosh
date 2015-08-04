@@ -21,9 +21,34 @@
 <link href="{{ url_for('static', filename='mentions.css') }}" rel="stylesheet">
 {% endif %}
 
+{% if reply_to %}
+<link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
+{% endif %}
+
 <article>
     <div class="container">
         <div class="row">
+            {% if reply_to %}
+            <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center">
+                <div class="text-center">
+                    <h3><i class="fa fa-share"></i></h3>
+                    <strong>In response to</strong>
+                    <hr class="small" style="border-color:grey;">
+                </div>
+            </div>
+            {% endif %}
+            {% for reply in reply_to %}
+            <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply">
+                <div class="reply-header text-center">
+                    <a class="" href="{{reply}}">{{reply}}</a>
+                </div>
+
+                <div class="reply-footer">
+
+                </div>
+                <hr>
+            </div>
+            {% endfor %}
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 hentry">
                 {% if session.logged_in %}
                 <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
@@ -57,7 +82,8 @@
                         {% endif %}
                         {% endfor %}
                     </div>
-                </div>
+                </div><!-- END ENTRY DETAILS -->
+
                 <div class="row post-meta">
                     <p class="authorship col-md-9">
                         Posted by
