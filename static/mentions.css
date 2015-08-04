@@ -1,0 +1,23 @@
+.hentry{
+    box-shadow: 0px 0px 10px 5px #aaaaaa;
+}
+
+.mention-topper{
+    margin-top:8px;
+    z-index: -1;
+    background-color: #FCFCFC;
+}
+
+.mention{
+    z-index: -1;
+    background-color: #FCFCFC;
+}
+
+.mention-header{
+    margin-top:5px;
+    margin-bottom:5px
+}
+
+.mention-footer{
+    margin-top:5px;
+}
