@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 from jinja2 import Environment
 from dateutil.parser import parse
+from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
 from pysrc.authentication.indieauth import checkAccessToken
@@ -189,7 +190,7 @@ def profile(year, month, day, name):
     reply_to = []                       # where we store our replies so we can fetch their info
     for i in entry['in_reply_to']:      # for all the replies we have...
         if i.startswith('http'):        # which are not data resources on our site...
-            reply_to.append(i)          # collect and parse
+            reply_to.append(get_entry_content(i))          # collect and parse
     # todo: add some entry-fetching functionality
     """
         need:
@@ -391,10 +392,8 @@ def handleMicroPub():
         qs = request.query_string
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
-                # 'facebook.com/',
                 'twitter.com/',
                 'instagram.com/',
-                # 'linkedin.com/'
             ]
             r = ''
             while len(syndicate_to) > 1:
