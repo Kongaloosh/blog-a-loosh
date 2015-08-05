@@ -4,20 +4,28 @@
 
 .mention-topper{
     margin-top:8px;
+    padding-right:40px;
+    padding-left:40px;
     z-index: -1;
     background-color: #FCFCFC;
 }
 
 .mention{
+    padding-right:40px;
+    padding-left:40px;
     z-index: -1;
     background-color: #FCFCFC;
 }
 
 .mention-header{
+    padding-right:40px;
+    padding-left:40px;
     margin-top:5px;
     margin-bottom:5px
 }
 
 .mention-footer{
+    padding-right:40px;
+    padding-left:40px;
     margin-top:5px;
 }

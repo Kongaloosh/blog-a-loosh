@@ -1,5 +1,8 @@
 {% extends "layout.html" %}
 {%block content%}
+<link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
+
+
 <header class="intro-header"
         style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
@@ -28,28 +31,32 @@
 <article>
     <div class="container">
         <div class="row">
+
             {% if reply_to %}
-            <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center">
+            <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center"> <!-- REPLY DECORATOR END -->
                 <div class="text-center">
                     <h3><i class="fa fa-share"></i></h3>
                     <strong>In response to</strong>
                     <hr class="small" style="border-color:grey;">
                 </div>
-            </div>
+            </div> <!-- REPLY DECORATOR END -->
+
             {% endif %}
             {% for reply in reply_to %}
-            <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply">
+            <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
                 <div class="reply-header text-center">
-                    <a class="" href="{{reply}}">{{reply}}</a>
+                        {{reply.content | safe}}
                 </div>
 
                 <div class="reply-footer">
-
+                    <p>Published <a class="" href="{{reply.url | safe}}">{{reply.published}}</a> by {{reply.author}}</p>
                 </div>
                 <hr>
-            </div>
+            </div> <!-- REPLY END -->
             {% endfor %}
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 hentry">
+
+
+            <div class="hentry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 {% if session.logged_in %}
                 <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
                 {% endif %}
@@ -98,6 +105,8 @@
                     <p><a class="u-url u-uid pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a></p>
                 </div>
             </div>
+
+
             {% if mentions %}
             <div class="mention-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center">
                 <div class="text-center">
