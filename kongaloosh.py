@@ -178,6 +178,7 @@ def profile(year, month, day, name):
     # try:
     file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
     entry = file_parser(file_name+".md")
+
     if os.path.exists(file_name+".jpg"):
         entry['photo'] = file_name+".jpg" # get the actual file
     if os.path.exists(file_name+".mp4"):
@@ -187,11 +188,12 @@ def profile(year, month, day, name):
     mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
-    reply_to = []                       # where we store our replies so we can fetch their info
-    for i in entry['in_reply_to']:      # for all the replies we have...
-        if i.startswith('http'):        # which are not data resources on our site...
-            reply_to.append(get_entry_content(i))          # collect and parse
-    # todo: add some entry-fetching functionality
+    reply_to = []                                           # where we store our replies so we can fetch their info
+    for i in entry['in_reply_to']:                          # for all the replies we have...
+        if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
+            pass                                            # todo: put something meaningful here!
+        if i.startswith('http'):                            # which are not data resources on our site...
+
     """
         need:
             * The author's Name & URL
