@@ -8,8 +8,7 @@ import os
 from datetime import datetime
 from jinja2 import Environment
 from dateutil.parser import parse
-import requests
-
+from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
 from pysrc.authentication.indieauth import checkAccessToken
@@ -19,21 +18,22 @@ jinja_env = Environment(extensions=['jinja2.ext.with_'])
 # configuration
 DATABASE = 'kongaloosh.db'
 DEBUG = True
-SECRET_KEY = 'development key'
-USERNAME = 'Anubis'
-PASSWORD = 'Munc4kin))'
+SECRET_KEY = open('config/development_key', 'rb').read().rstrip('\n')
+USERNAME = open('config/site_authentication/username', 'rb').read().rstrip('\n')
+PASSWORD = open('config/site_authentication/password', 'rb').read().rstrip('\n')
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['STATIC_FOLDER'] = os.getcwd()
 cfg = None
 
-""" DATABASE """
+
 def init_db():
     with closing(connect_db()) as db:
         with app.open_resource('schema.sql', mode='r') as f:
             db.cursor().executescript(f.read())
         db.commit()
+
 
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
@@ -186,11 +186,18 @@ def profile(year, month, day, name):
         entry['audio'] = file_name+".mp3" # get the actual file
     mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
-    reply_to = []
-    for i in entry['in_reply_to']:
-        if i.startswith('http'):        #if it's not local
-            reply_to.append(i)
 
+    reply_to = []                       # where we store our replies so we can fetch their info
+    for i in entry['in_reply_to']:      # for all the replies we have...
+        if i.startswith('http'):        # which are not data resources on our site...
+            reply_to.append(get_entry_content(i))          # collect and parse
+    # todo: add some entry-fetching functionality
+    """
+        need:
+            * The author's Name & URL
+            * date published
+            * the content or summary
+    """
     app.logger.info(reply_to)
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
     # except:
@@ -296,7 +303,9 @@ def login():
     if request.method == 'POST':
         if request.form['username'] != app.config['USERNAME']:
             error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
+            app.logger.info(request.form['username'])
+	    app.logger.info(app.config['USERNAME'].split(' '))
+	elif request.form['password'] != app.config['PASSWORD']:
             error = 'Invalid password'
         else:
             session['logged_in'] = True
@@ -335,18 +344,21 @@ def handleMicroPub():
                     data['published'] = parse(data['published'])
 
                 try:
-                    img = request.files.get('photo')
+                    img = request.files.get('photo').read()
                     data['photo'] = img
+                    data['category'] += ',image'                # we've added an image, so append it
                 except: pass
 
                 try:
                     audio = request.files.get('audio').read()
                     data['audio'] = audio
+                    data['category'] += ',audio'                # we've added an image, so append it
                 except: pass
 
                 try:
                     video = request.files.get('video').read()
                     data['video'] = video
+                    data['category'] += ',video'                # we've added an image, so append it
                 except: pass
 
                 syndication = ''
@@ -369,9 +381,7 @@ def handleMicroPub():
                 except:
                     pass
                 data['syndication'] = syndication
-
                 location = createEntry(data, image=data['photo'], g=g)
-
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
@@ -384,10 +394,8 @@ def handleMicroPub():
         qs = request.query_string
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
-                # 'facebook.com/',
                 'twitter.com/',
                 'instagram.com/',
-                # 'linkedin.com/'
             ]
             r = ''
             while len(syndicate_to) > 1:

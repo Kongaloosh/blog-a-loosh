@@ -4,20 +4,40 @@
 
 .mention-topper{
     margin-top:8px;
+<<<<<<< HEAD
+=======
+    padding-right:40px;
+    padding-left:40px;
+>>>>>>> 83775300d6f251df158464e14583942f9b1fae3b
     z-index: -1;
     background-color: #FCFCFC;
 }
 
 .mention{
+<<<<<<< HEAD
+=======
+    padding-right:40px;
+    padding-left:40px;
+>>>>>>> 83775300d6f251df158464e14583942f9b1fae3b
     z-index: -1;
     background-color: #FCFCFC;
 }
 
 .mention-header{
+<<<<<<< HEAD
+=======
+    padding-right:40px;
+    padding-left:40px;
+>>>>>>> 83775300d6f251df158464e14583942f9b1fae3b
     margin-top:5px;
     margin-bottom:5px
 }
 
 .mention-footer{
+<<<<<<< HEAD
+=======
+    padding-right:40px;
+    padding-left:40px;
+>>>>>>> 83775300d6f251df158464e14583942f9b1fae3b
     margin-top:5px;
 }

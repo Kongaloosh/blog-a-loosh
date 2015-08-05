@@ -3,6 +3,14 @@ __author__ = 'alex'
 import tweepy
 from slugify import slugify
 
+def get_keys():
+    cfg = {}
+    cfg['access_token'] = open('config/twitter/twitter_access_token','rb').read()
+    cfg['access_token_secret'] = open('config/twitter/twitter_access_token_secret','rb').read()
+    cfg['consumer_key'] = open('config/twitter/twitter_consumer_key','rb').read()
+    cfg['consumer_secret'] = open('config/twitter/twitter_consumer_secret','rb').read()
+    return cfg
+
 def get_api(cfg):
     auth = tweepy.OAuthHandler(cfg['consumer_key'], cfg['consumer_secret'])
     auth.set_access_token(cfg['access_token'], cfg['access_token_secret'])
@@ -10,12 +18,7 @@ def get_api(cfg):
 
 def main(data, photo=None):
     # Fill in the values noted in previous step here
-    cfg = {
-        "consumer_key": "DVjfycLdIZzr0gzC442VfEmjd",
-        "consumer_secret": "PFvWgbQvvLVJb5lhJxDlWAIgXd7X5Yt7fh08nd69Hi2eRaI04q",
-        "access_token": "785209428-XTDjPkQ3a48Z32rXoT6st9SAqcAj1IoVEvQJxEvM",
-        "access_token_secret": "NX7iD7CEmLimGwWQjqzZ9xHwGLSasWVp8yt3dvg0DmCIg"
-    }
+    cfg = get_keys()
 
     api = get_api(cfg)
     short_length = api.configuration()['short_url_length']
