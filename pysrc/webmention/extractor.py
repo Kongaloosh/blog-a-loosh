@@ -36,4 +36,4 @@ if __name__ == '__main__':
     # get_entry_content('http://rhiaro.co.uk/2015/08/ilooklikeanengineer')
     # get_entry_content('https://aaronparecki.com/notes/2015/08/03/5/')
     # get_entry_content('https://waterpigs.co.uk/notes/4cMEwe/')
-    get_entry_content('http://127.0.0.1:5000/e/2015/8/1/things')1
+    get_entry_content('http://127.0.0.1:5000/e/2015/8/1/things')
