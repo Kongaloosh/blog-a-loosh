@@ -5,12 +5,11 @@
 
 .reply-topper{
     margin-top:8px;
-    z-index: -1;
     background-color: #FCFCFC;
 }
 
 .reply{
-    z-index: -1;
+    z-index: 0;
     background-color: #FCFCFC;
 }
 
