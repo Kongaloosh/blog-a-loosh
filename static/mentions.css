@@ -6,7 +6,6 @@
     margin-top:8px;
     padding-right:40px;
     padding-left:40px;
-    z-index: -1;
     background-color: #FCFCFC;
 }
 
@@ -27,5 +26,4 @@
 .mention-footer{
     padding-right:40px;
     padding-left:40px;
-    margin-top:5px;
 }

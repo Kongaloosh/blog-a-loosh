@@ -1,0 +1,4 @@
+sudo pip install pyasn1;
+sudo pip install ndg-httpsclient;
+
+
