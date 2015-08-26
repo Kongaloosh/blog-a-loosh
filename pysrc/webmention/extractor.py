@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 
 __author__ = 'alex'
 
+
 def get_entry_content(url):
     print "requesting"
     r = requests.get(url)
@@ -11,25 +12,39 @@ def get_entry_content(url):
     print "here"
     try:
         entry_full = soup.find_all(class_="hentry")[0]
-    except:
-        entry_full = soup.find_all(class_="h-entry")[0]
+    except (IndexError, AttributeError):
+        try:
+            entry_full = soup.find_all(class_="h-entry")[0]
+        except (IndexError, AttributeError):
+            pass
+
     try:
         entry['author'] = soup.find(class_="p-author").find(class_='p-name').text
-    except:
-        entry['author'] = soup.find(class_="p-author").find(class_='p-name')
+    except (KeyError, AttributeError):
+        try:
+            entry['author'] = soup.find(class_="p-author").find(class_='p-name')
+        except AttributeError:
+            pass
+
     try:
         if entry['author'] == '':
             entry['author'] = soup.find(class_="p-author").find(class_='p-name')['value']
-    except:
+    except (KeyError, AttributeError):
         pass
+
     try:
         if entry['author'] == None:
             entry['author'] = soup.find(class_="p-author")['title']
-    except:
+    except KeyError:
         pass
-    entry['published'] = soup.find_all(class_='dt-published')[0].contents[0]
+
+    try:
+        entry['published'] = soup.find_all(class_='dt-published')[0].contents[0]
+    except IndexError:
+        pass
     entry['content'] = soup.find(class_='e-content')
     entry['url'] = url
+    return entry
     return entry
 
 if __name__ == '__main__':
