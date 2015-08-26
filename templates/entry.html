@@ -121,17 +121,17 @@
             {% endif %}
             {% for mention in mentions %}
             <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 mention">
-                <div class="mention-header">
-                    {% if mention.name != mention.content %}
-                    {{mention.name}}
-                    {% endif %}
-                </div>
+                <!--<div class="mention-header">-->
+                    <!--{% if mention.name != mention.content %}-->
+                    <!--{{mention.name}}-->
+                    <!--{% endif %}-->
+                <!--</div>-->
                 {% if mention.photo %}
                 <img class="img-responsive center-block img-thumbnail img-rounded"
                      style="image-orientation: from-image; max-height:300px"
                      src="{{mention.photo}}">
                 {% endif %}
-                {{mention.content}}
+                {{ mention.content | markdown }}
                 <div class="mentions-footer">
                     <p>
                         Posted on
