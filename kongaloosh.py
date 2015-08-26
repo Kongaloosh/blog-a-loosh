@@ -155,7 +155,7 @@ def edit(year, month, day, name):
 
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
-def image_fetcher_depricated(year, month, day, name):
+def image_fetcher_depricated(yea, month, day, name):
     """ do not use---old image fetcher """
     entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     print(entry)

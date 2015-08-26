@@ -44,6 +44,7 @@
             {% endif %}
             {% for reply in reply_to %}
             <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
+                {% if reply.content != None %}
                 <div class="reply-header text-center">
                         {{reply.content | safe}}
                 </div>
@@ -51,6 +52,9 @@
                 <div class="reply-footer">
                     <p>Published <a class="" href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
                 </div>
+                {% else %}
+                    <a class="" href="{{reply.url}}">{{reply.url}}</a>
+                {% endif %}
                 <hr>
             </div> <!-- REPLY END -->
             {% endfor %}
@@ -70,7 +74,6 @@
                             src="/{{site.photo}}"
                             >
                 </a>
-                {% else %}
                 {% endif %}
                 {% endfor %}
                 {% endif %}
