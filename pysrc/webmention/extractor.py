@@ -5,11 +5,10 @@ __author__ = 'alex'
 
 
 def get_entry_content(url):
-    print "requesting"
+    print "requesting " + str(url)
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
-    entry ={}
-    print "here"
+    entry = {}
     try:
         entry_full = soup.find_all(class_="hentry")[0]
     except (IndexError, AttributeError):
@@ -42,7 +41,10 @@ def get_entry_content(url):
         entry['published'] = soup.find_all(class_='dt-published')[0].contents[0]
     except IndexError:
         pass
-    entry['content'] = soup.find(class_='e-content')
+    try:
+        entry['content'] = soup.find(class_='e-content').text
+    except AttributeError:
+        pass
     entry['url'] = url
     return entry
     return entry
