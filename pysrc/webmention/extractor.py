@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-
+import html2text
 __author__ = 'alex'
 
 
@@ -42,15 +42,19 @@ def get_entry_content(url):
     except IndexError:
         pass
     try:
-        entry['content'] = soup.find(class_='e-content').text
+        h = html2text.HTML2Text()
+        h.ignore_links = False
+        post = ' '.join([str(i) for i in soup.find(class_='e-content').contents])
+        entry['content'] = h.handle(post)
     except AttributeError:
         pass
     entry['url'] = url
     return entry
-    return entry
 
 if __name__ == '__main__':
-    # get_entry_content('http://rhiaro.co.uk/2015/08/ilooklikeanengineer')
-    # get_entry_content('https://aaronparecki.com/notes/2015/08/03/5/')
-    # get_entry_content('https://waterpigs.co.uk/notes/4cMEwe/')
-    get_entry_content('http://127.0.0.1:5000/e/2015/8/1/things')
+    entry = get_entry_content('https://kylewm.com/2015/08/you-could-take-another-look-at-your-mf2-e-content')
+    # entry = get_entry_content('http://rhiaro.co.uk/2015/08/ilooklikeanengineer')
+    # entry = get_entry_content('https://aaronparecki.com/notes/2015/08/03/5/')
+    # entry = get_entry_content('https://waterpigs.co.uk/notes/4cMEwe/')
+    print entry['content']
+    # get_entry_content('http://127.0.0.1:5000/e/2015/8/1/things')
