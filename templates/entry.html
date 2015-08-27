@@ -82,13 +82,13 @@
                      style="image-orientation: from-image; max-height:300px"
                      src="/{{entry.photo}}">
                 {% endif %}
-                <p class="e-content">{{entry.content | safe}}</p>
+                <div class="e-content p-note">{{entry.content | safe}}</div>
                 <div class="entry-footer clearfix">                         <!-- Footer -->
                     <div class="categories">                                <!-- Catagories -->
                         <i class="fa fa-tags"></i>
                         {% for c in entry.category %}
                         {% if c != None and c != 'None' %}
-                        <a class="category" href="/t/{{c}}">{{c}}</a>
+                        <a class="p-category" href="/t/{{c}}">{{c}}</a>
                         {% endif %}
                         {% endfor %}
                     </div>
@@ -131,7 +131,7 @@
                      style="image-orientation: from-image; max-height:300px"
                      src="{{mention.photo}}">
                 {% endif %}
-                {{ mention.content | markdown }}
+                {{ mention.content | safe}}
                 <div class="mentions-footer">
                     <p>
                         Posted on

@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import html2text
+import markdown2
 __author__ = 'alex'
 
 
@@ -45,7 +46,7 @@ def get_entry_content(url):
         h = html2text.HTML2Text()
         h.ignore_links = False
         post = ' '.join([str(i) for i in soup.find(class_='e-content').contents])
-        entry['content'] = h.handle(post)
+        entry['content'] = markdown2.markdown(h.handle(post))
     except AttributeError:
         pass
     entry['url'] = url
