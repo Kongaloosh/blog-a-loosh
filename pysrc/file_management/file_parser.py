@@ -4,8 +4,8 @@ import sys
 import markdown2
 from slugify import slugify
 from dateutil.parser import parse
-# sys.path.insert(0, os.getcwd())
-
+sys.path.insert(0, os.getcwd())
+from pysrc.webmention.mentioner import send_mention
 __author__ = 'alex'
 
 
@@ -236,10 +236,15 @@ def createEntry(data, g, image=None, video=None, audio=None):
                              [slug, data['published'], c])
                 g.db.commit()
 
-        return '/e/{year}/{month}/{day}/{slug}'.format(
+        source = '/e/{year}/{month}/{day}/{slug}'.format(
             year = str(data['published'].year),
             month = str(data['published'].month),
             day = str(data['published'].day),
             slug = str(slug))
+
+        for reply in data['in-reply-to']:
+            send_mention('http://kongaloosh.com' + source, reply)
+
+        return source
     else: return "this has already been made"
 

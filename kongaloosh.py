@@ -62,7 +62,47 @@ def show_entries():
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
-    return render_template('blog_entries.html', entries=entries[:10])
+
+    try:
+        before = entries[len(entries)-1]['published']
+    except IndexError:
+        before = 0
+
+    try:
+        entries=entries[:10]
+    except IndexError:
+        entries=None
+
+    return render_template('blog_entries.html', entries=entries, before=before)
+
+
+@app.route('/before/<datetime>')
+def show_entries_before(datetime):
+    """The driver for linear navigation."""
+    entries = []
+    cur = g.db.execute(
+        """
+        SELECT entries.location FROM entries
+        WHERE entries.published < date({datetime}, '-1 day')
+        ORDER BY entries.published DESC
+        """.format(datetime=datetime)
+    )
+
+    for (row,) in cur.fetchall():
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
+
+    try:
+        before = entries[len(entries)-1]['published']
+    except IndexError:
+        before = 0
+
+    try:
+        entries=entries[:10]
+    except IndexError:
+        entries=None
+
+    return render_template('blog_entries.html', entries=entries, before=before)
 
 
 @app.route('/404')
