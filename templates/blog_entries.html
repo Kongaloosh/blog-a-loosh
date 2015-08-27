@@ -47,33 +47,38 @@
     {% endif %}
     {% endfor %}
     {% endif %}
-
-    {% if entry.photo is defined %}
-    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-         style="image-orientation: from-image; max-height:300px"
-         src="/{{entry.photo}}">
-    {% endif %}
-    {% if entry.summary != 'None' %}
-    <h3 class="post-subtitle p-summary">
-        {{entry.summary}}
-    </h3>
-    {% endif%}
-    <p class="e-content">{{entry.content | safe}}</p>
-    <div class="entry-footer clearfix">                         <!-- Footer -->
-        <div class="categories">                                <!-- Catagories -->
-            <i class="fa fa-tags"></i>
-            {% for c in entry.category %}
-            {% if c != None and c != 'None' %}
-            <a class="category" href="/t/{{c}}">{{c}}</a>
-            {% endif %}
-            {% endfor %}
+    <div class="e-content">
+        {% if entry.photo is defined %}
+        <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+             style="image-orientation: from-image; max-height:300px"
+             src="/{{entry.photo}}">
+        {% endif %}
+        {% if entry.summary != 'None' %}
+        <h3 class="post-subtitle p-summary">
+            {{entry.summary}}
+        </h3>
+        {% endif%}
+        <p class="e-content">{{entry.content | safe}}</p>
+        <div class="entry-footer clearfix">                         <!-- Footer -->
+            <div class="categories">                                <!-- Catagories -->
+                <i class="fa fa-tags"></i>
+                {% for c in entry.category %}
+                {% if c != None and c != 'None' %}
+                <a class="category" href="/t/{{c}}">{{c}}</a>
+                {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
     <div class="row post-meta">
         <p class="pull-right">
+            {% if entry.in_reply_to != 'None' %}
+            <span>{{entry.in_reply_to | length}}</span>
+            <i class="fa fa-reply"></i>
+            {% endif %}
+            <span data-webmention-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
             <i class="fa fa-comments"></i>
-            <span data-indieweb-comment-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
-        </p>
+            </p>
         <p class="authorship col-md-9">
             Posted by
             <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>

@@ -31,7 +31,6 @@
     <link rel="authorization_endpoint" href="https://indieauth.com/auth"> <!-- Auth point for Quill -->
     <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
     <link rel="micropub" href="http://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
-    <link rel="pingback" href="https://webmention.io/kongaloosh.com/xmlrpc" />
     <link rel="webmention" href="https://webmention.io/kongaloosh.com/webmention" />
     <meta name="viewport" content="initial-scale=1">
     <title>kongaloosh</title>
@@ -171,6 +170,8 @@
 <!-- Custom Theme JavaScript -->
 <script src="{{ url_for('static', filename='js/clean-blog.js') }}"></script>
 
+<!--http://webmention.io/js/mentions.js-->
+
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -181,7 +182,32 @@
   ga('send', 'pageview');
 </script>
 
-<script type="text/javascript" src="http://webmention.io/js/mentions.js"></script>
+<script type="text/javascript" >
+  jQuery(function($){
+      var urls = [];
+      var base;
+      $("*[data-webmention-count]").each(function(i,e){
+        var parser = document.createElement('a');
+        parser.href = $(e).data('url');
+        base = parser.protocol + "//" + parser.hostname;
+        urls.push(parser.pathname+parser.search);
+      });
+
+      $.getJSON("https://webmention.io/api/count?jsonp=?", {
+        base: base,
+        targets: urls.join(",")
+      }, function(data){
+            $("*[data-webmention-count]").each(function(i,e){
+            $(e).text(data.count[$(e).data('url')]);
+            if (null == $(e).text()){
+            }else{
+                $(e).text('0');
+            }
+      });
+    });
+  });
+
+</script>
 
 </body>
 </html>

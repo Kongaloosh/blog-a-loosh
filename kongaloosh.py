@@ -197,7 +197,7 @@ def edit(year, month, day, name):
 
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
-def image_fetcher_depricated(yea, month, day, name):
+def image_fetcher_depricated(year, month, day, name):
     """ do not use---old image fetcher """
     entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
     print(entry)
@@ -344,8 +344,8 @@ def login():
         if request.form['username'] != app.config['USERNAME']:
             error = 'Invalid username'
             app.logger.info(request.form['username'])
-	    app.logger.info(app.config['USERNAME'].split(' '))
-	elif request.form['password'] != app.config['PASSWORD']:
+            app.logger.info(app.config['USERNAME'].split(' '))
+        elif request.form['password'] != app.config['PASSWORD']:
             error = 'Invalid password'
         else:
             session['logged_in'] = True
@@ -376,8 +376,6 @@ def handleMicroPub():
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
-
-                # data = dict((k, v) for k, v in data.iteritems() if v)
                 if not data['published']:
                     data['published'] = datetime.today()
                 else:
@@ -444,7 +442,6 @@ def handleMicroPub():
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
         return 'not implemented', 501
-
 
 if __name__ == "__main__":
     app.run(debug=True)

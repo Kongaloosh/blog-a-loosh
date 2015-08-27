@@ -243,10 +243,10 @@ def createEntry(data, g, image=None, video=None, audio=None):
             slug = str(slug))
 
         try:
-	    for reply in data['in-reply-to']:
+            for reply in data['in-reply-to']:
                 send_mention('http://kongaloosh.com' + source, reply)
-	except TypeError:
-	    pass
-        return source
-    else: return "this has already been made"
+        except TypeError:
+            pass
+    else:
+        return "this has already been made"
 
