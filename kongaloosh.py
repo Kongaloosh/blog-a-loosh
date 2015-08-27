@@ -64,14 +64,14 @@ def show_entries():
             entries.append(file_parser(row+".md"))
 
     try:
-        before = entries[len(entries)-1]['published']
-    except IndexError:
-        before = 0
-
-    try:
         entries=entries[:10]
     except IndexError:
         entries=None
+
+    try:
+        before = entries[len(entries)-1]['published']
+    except IndexError:
+        before = 0
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -80,10 +80,11 @@ def show_entries():
 def show_entries_before(datetime):
     """The driver for linear navigation."""
     entries = []
+    app.logger.info(datetime)
     cur = g.db.execute(
         """
         SELECT entries.location FROM entries
-        WHERE entries.published < date({datetime}, '-1 day')
+        WHERE date('{datetime}') > entries.published
         ORDER BY entries.published DESC
         """.format(datetime=datetime)
     )
@@ -93,14 +94,15 @@ def show_entries_before(datetime):
             entries.append(file_parser(row+".md"))
 
     try:
+        entries=entries[:10]
+    except IndexError:
+        entries=None
+
+    try:
         before = entries[len(entries)-1]['published']
     except IndexError:
         before = 0
 
-    try:
-        entries=entries[:10]
-    except IndexError:
-        entries=None
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
