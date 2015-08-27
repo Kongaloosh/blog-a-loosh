@@ -9,6 +9,12 @@ def get_keys():
     cfg['access_token_secret'] = open('config/twitter/twitter_access_token_secret','rb').read()
     cfg['consumer_key'] = open('config/twitter/twitter_consumer_key','rb').read()
     cfg['consumer_secret'] = open('config/twitter/twitter_consumer_secret','rb').read()
+    cfg = {
+        "consumer_key": "DVjfycLdIZzr0gzC442VfEmjd",
+        "consumer_secret": "PFvWgbQvvLVJb5lhJxDlWAIgXd7X5Yt7fh08nd69Hi2eRaI04q",
+        "access_token": "785209428-XTDjPkQ3a48Z32rXoT6st9SAqcAj1IoVEvQJxEvM",
+        "access_token_secret": "NX7iD7CEmLimGwWQjqzZ9xHwGLSasWVp8yt3dvg0DmCIg"
+    }
     return cfg
 
 def get_api(cfg):
