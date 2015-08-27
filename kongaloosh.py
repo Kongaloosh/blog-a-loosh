@@ -185,15 +185,16 @@ def profile(year, month, day, name):
         entry['video'] = file_name+".mp4" # get the actual file
     if os.path.exists(file_name+".mp3"):
         entry['audio'] = file_name+".mp3" # get the actual file
+
     mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
     for i in entry['in_reply_to']:                          # for all the replies we have...
         if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
-            pass                                            # todo: put something meaningful here!
-        elif i.startswith('http://127.'):
-            pass
+            reply_to.append(file_parser(i.replace('http://kongaloosh.com/e/', 'data/', 1) + ".md"))
+        elif i.startswith('http://127.0.0.1:5000'):
+            reply_to.append(file_parser(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".md"))
         elif i.startswith('http'):                          # which are not data resources on our site...
             reply_to.append(get_entry_content(i))
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
