@@ -76,10 +76,12 @@ def show_entries():
     for entry in entries:
         for i in entry['syndication'].split(','):
             if i.startswith('http://twitter.com/'):
-                entry['twitter'] = dict()
-                vals = i.split('/')
-                entry['twitter']['id'] = vals[len(vals)-1]
-                entry['twitter']['link'] = i
+                twitter = dict()
+		vals = i.split('/')
+                twitter['id'] = vals[len(vals)-1]
+                twitter['link'] = i
+                entry['twitter'] = twitter
+                break
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
@@ -155,10 +157,9 @@ def add():
 
         if request.form.get('twitter'):
             data['syndication'] = tweeter.main(data, photo=photo) + ","
-        if request.form.get('instagram'):
-            pass #todo: add posse to instagram
         if request.form.get('tumblr'):
             pass #todo: add posse to tumblr
+
         location = createEntry(data, image=data['photo'], g=g)
         return redirect(location)
     else:
@@ -412,6 +413,7 @@ def handleMicroPub():
                 except: pass
 
                 syndication = ''
+
                 try:
                     if('twitter.com' in data['syndicate-to[]']):
                         try:
@@ -428,9 +430,11 @@ def handleMicroPub():
                             pass
                         except:
                             pass
-                except:
+                except KeyError:
                     pass
-                data['syndication'] = syndication
+
+                data['syndication'] += syndication
+
                 location = createEntry(data, image=data['photo'], g=g)
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
@@ -445,7 +449,7 @@ def handleMicroPub():
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
                 'twitter.com/',
-                'instagram.com/',
+                'tumblr.com/',
             ]
             r = ''
             while len(syndicate_to) > 1:
