@@ -13,7 +13,8 @@ def get_mentions(url):
         r = requests.get('http://webmention.io/api/mentions?target='+url)
         p = r.json()
         for link in p['links']:
-            mentions.append(link['data'])
+            if link['data']['content']:
+		mentions.append(link['data'])
     except:
         pass
     return mentions

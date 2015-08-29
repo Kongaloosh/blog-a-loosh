@@ -44,7 +44,7 @@
             {% endif %}
             {% for reply in reply_to %}
             <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
-                {% if reply.content != None %}
+                {% if reply.content %}
                 <div class="reply-header text-center">
                         {{reply.content | safe}}
                 </div>
@@ -60,7 +60,7 @@
             {% endfor %}
 
 
-            <div class="hentry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 {% if session.logged_in %}
                 <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
                 {% endif %}
@@ -77,12 +77,13 @@
                 {% endif %}
                 {% endfor %}
                 {% endif %}
-                {% if entry.photo is defined %}
+                <div class="e-content p-note">
+		{% if entry.photo is defined %}
                 <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
                      style="image-orientation: from-image; max-height:300px"
                      src="/{{entry.photo}}">
                 {% endif %}
-                <div class="e-content p-note">{{entry.content | safe}}</div>
+                {{entry.content | safe}}</div>
                 <div class="entry-footer clearfix">                         <!-- Footer -->
                     <div class="categories">                                <!-- Catagories -->
                         <i class="fa fa-tags"></i>

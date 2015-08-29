@@ -232,9 +232,14 @@ def profile(year, month, day, name):
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
+    app.logger.info("I TOLD A JOKE THAT SET THE WHOLE WORLD CRYING")
     for i in entry['in_reply_to']:                          # for all the replies we have...
-        if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
-            reply_to.append(file_parser(i.replace('http://kongaloosh.com/e/', 'data/', 1) + ".md"))
+        app.logger.info(i)
+	if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
+            reply = file_parser(i.replace('http://kongaloosh.com/e', 'data/', 1) + ".md")
+	    reply['author'] = 'Alex Kearney'
+	    reply['url'] = 'http://kongaloosh.com/e'+reply['url']
+	    reply_to.append(reply)
         elif i.startswith('http://127.0.0.1:5000'):
             reply_to.append(file_parser(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".md"))
         elif i.startswith('http'):                          # which are not data resources on our site...
