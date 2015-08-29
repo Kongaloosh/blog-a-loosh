@@ -73,7 +73,6 @@ def show_entries():
     except IndexError:
         before = 0
 
-    twitter = None
     for entry in entries:
         for i in entry['syndication'].split(','):
             if i.startswith('http://twitter.com/'):
@@ -81,7 +80,9 @@ def show_entries():
                 vals = rev(i.split('/'))
                 twitter['id'] = vals[0]
                 twitter['link'] = i
-    return render_template('blog_entries.html', entries=entries, before=before, twitter=twitter)
+                entry['twitter'] = twitter
+                break
+    return render_template('blog_entries.html', entries=entries, before=before)
 
 
 @app.route('/before/<datetime>')
@@ -443,7 +444,7 @@ def handleMicroPub():
         if request.args.get('q') == 'syndicate-to':
             syndicate_to = [
                 'twitter.com/',
-                'instagram.com/',
+                'tumblr.com/',
             ]
             r = ''
             while len(syndicate_to) > 1:
