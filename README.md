@@ -37,12 +37,18 @@ From there, sign up for [indieauth](https://indieauth.com/). This allows you to 
 
 The data is kept as .md files in a folder called data. All other multimedia is kept alongside their respective textual .md files. The data folder is broken down by year/month/day. Additionally we keep a sqlite database which acts as a cache, maintaining the most recent posts, their location, and what tags are associated with them.
 
+### Recently Done Things
+1. clean-up the social-media refrences so other people can simply drop their own details in
+2. fetching of reply-to details for presentation
+3. better formatting of reply-to and mentions
+4. better formatting fo entries
+
 ### Roadmap
 
-1. clean-up the social-media refrences so other people can simply drop their own details in
-2. (maybe) write a script which auto-magically does this
-3. testing
-4. fetching of reply-to details for presentation
-5. better formatting of reply-to and mentions
-6. better formatting fo entries
-
+1. (maybe) write a script which auto-magically configures social-keys
+2. testing
+3. Display my syndication information somewhere on the post
+4. Indie-actions allowing people to auto-like, & auto-reply on Instagram
+5. Indie-actions allowing people to auto-like, auto-repost, and auto-reply on Twitter
+6. Web-mention box on the bottom of a page
+7. Search-bar
