@@ -70,48 +70,60 @@
             </div>
         </div>
     </div>
-    <div class="row post-meta">
-        <p class="pull-right">
+
+    <div class="row">
+        <div class="col-md-9">
+            Posted by
+            <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+            on
+            <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
+            {% if entry.location != 'None' %} <!-- If there's a location -->
+            at
+            <a class="p-location"> {{entry.location | safe }} </a>
+            {% endif %}
+        </div> <!-- END POST DETAILS -->
+
+        <div class="col-md-3">
             {% if entry.in_reply_to != 'None' %}
             <span>{{entry.in_reply_to | length}}</span>
             <i class="fa fa-reply"></i>
             {% endif %}
             <span data-webmention-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
             <i class="fa fa-comments"></i>
-        </p>
-        <p class="authorship col-md-9">
-            Posted by
-            <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-            on
-            <time class="dt-published">{{entry.published}}</time>
-            {% if entry.location != 'None' %} <!-- If there's a location -->
-            at
-            <a class="p-location"> {{entry.location | safe }} </a>
-            {% endif %}
-            <a class="u-url u-uid" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
-        </p>
-        {% if twitter %}
-        <div class="row post-actions pull-left">
+            <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+        </div> <!-- END PERMALINK -->
+    </div> <!-- END AUTHORSHIP -->
+
+    {% if entry.twitter %}
+    <div class="row">
+        <div class="actions col-md-9 pull-left">
             <indie-action do="like" with="http://kongaloosh.com/e{{entry.url}}">
-                <a target="" href="https://twitter.com/intent/favorite?tweet_id={{twitter}}">
+                <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
                     <i class="fa fa-star"></i>
                     Like
                 </a>
             </indie-action>
             <indie-action do="repost" with="http://kongaloosh.com/e{{entry.url}}">
-                <a target="" href="https://twitter.com/intent/retweet?tweet_id={{twitter}}">
+                <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
                     <i class="fa fa-retweet"></i>
                     Repost
                 </a>
             </indie-action>
             <indie-action do="reply" with="http://kongaloosh.com/e{{entry.url}}">
-                <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{twitter}}">
+                <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
                     <i class="fa fa-reply"></i>
                     Reply
                 </a>
             </indie-action>
-        </div>
-    </div>
+        </div> <!-- END ACTIONS -->
+
+        <div class="actions col-md-3 pull-right">
+            <a href="{entry.twitter.url}">
+                On Twitter
+                <i class="fa fa-twitter"></i>
+            </a>
+        </div> <!-- END TWITTER LINK -->
+    </div><!-- END TWITTER SYNDICATION -->
     {% endif %}
 </div>
 <hr>
