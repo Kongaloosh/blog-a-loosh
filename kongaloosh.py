@@ -73,15 +73,14 @@ def show_entries():
     except IndexError:
         before = 0
 
-    twitter = None
     for entry in entries:
         for i in entry['syndication'].split(','):
             if i.startswith('http://twitter.com/'):
-                twitter = dict()
-                vals = rev(i.split('/'))
-                twitter['id'] = vals[0]
-                twitter['link'] = i
-    return render_template('blog_entries.html', entries=entries, before=before, twitter=twitter)
+                entry['twitter'] = dict()
+                vals = i.split('/')
+                entry['twitter']['id'] = vals[len(vals)-1]
+                entry['twitter']['link'] = i
+    return render_template('blog_entries.html', entries=entries, before=before)
 
 
 @app.route('/before/<datetime>')
