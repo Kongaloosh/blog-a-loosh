@@ -6,6 +6,8 @@ from slugify import slugify
 from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
+from geopy.geocoders import GoogleV3
+
 __author__ = 'alex'
 
 
@@ -68,6 +70,22 @@ def file_parser(filename):
     except:pass
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
+
+    if e['location'] != 'None':
+            geolocator = GoogleV3()
+            geolocator.reverse("40.752067, -73.977578")
+            location = geolocator.reverse(e['location'].split(':')[1])[0]
+            geo = ''
+            for i in location.raw['address_components']:
+                try:
+                    # app.logger.info("home-star")
+                    if 'locality' in i['types'] or 'country' in i['types']:
+                        geo += (i['long_name'] + ' ')
+                except KeyError:
+                    pass
+            e['location'] = geo
+
+
     return e
 
 

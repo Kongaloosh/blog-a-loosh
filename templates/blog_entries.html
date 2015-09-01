@@ -78,7 +78,7 @@
             on
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
             {% if entry.location != 'None' %} <!-- If there's a location -->
-            at
+            in
             <a class="p-location"> {{entry.location | safe }} </a>
             {% endif %}
 
@@ -118,7 +118,7 @@
             </indie-action>
         </div> <!-- END ACTIONS -->
 
-        <div class="actions col-md-3 pull-right">
+        <div class="actions col-md-3 text-right">
             <a href="{{entry.twitter.link}}">
                 On Twitter
                 <i class="fa fa-twitter"></i>
