@@ -7,7 +7,7 @@ from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from geopy.geocoders import GoogleV3
-
+from geopy.exc import GeocoderQuotaExceeded
 __author__ = 'alex'
 
 
@@ -75,8 +75,11 @@ def file_parser(filename):
         if e['location'] != 'None':
                 geolocator = GoogleV3()
                 geolocator.reverse("40.752067, -73.977578")
-                location = geolocator.reverse(e['location'].split(':')[1])[0]
-                geo = ''
+                try:
+			location = geolocator.reverse(e['location'].split(':')[1])[0]
+                except IndexError:
+			location = geolocator.reverse(e['location'])
+		geo = ''
                 for i in location.raw['address_components']:
                     try:
                         # app.logger.info("home-star")
