@@ -71,20 +71,22 @@ def file_parser(filename):
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
 
-    if e['location'] != 'None':
-            geolocator = GoogleV3()
-            geolocator.reverse("40.752067, -73.977578")
-            location = geolocator.reverse(e['location'].split(':')[1])[0]
-            geo = ''
-            for i in location.raw['address_components']:
-                try:
-                    # app.logger.info("home-star")
-                    if 'locality' in i['types'] or 'country' in i['types']:
-                        geo += (i['long_name'] + ' ')
-                except KeyError:
-                    pass
-            e['location'] = geo
-
+    try:
+        if e['location'] != 'None':
+                geolocator = GoogleV3()
+                geolocator.reverse("40.752067, -73.977578")
+                location = geolocator.reverse(e['location'].split(':')[1])[0]
+                geo = ''
+                for i in location.raw['address_components']:
+                    try:
+                        # app.logger.info("home-star")
+                        if 'locality' in i['types'] or 'country' in i['types']:
+                            geo += (i['long_name'] + ' ')
+                    except KeyError:
+                        pass
+                e['location'] = geo
+    except GeocoderQuotaExceeded:
+        pass
 
     return e
 
