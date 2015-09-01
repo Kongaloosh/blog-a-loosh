@@ -6,14 +6,12 @@
         style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="site-heading">
-                    <h1>Hi</h1>
-                    <hr class="small">
-                    <span class="subheading"><i class="fa fa-paper-plane"></i></span>
-                </div>
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="site-heading">
+                <h1>Hi</h1>
+                <hr class="small">
+                <span class="subheading"><i class="fa fa-paper-plane"></i></span>
             </div>
         </div>
     </div>
@@ -21,19 +19,18 @@
 
 <!-- Main Content -->
 <div class="container">
-    <div class="row">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-            {% block body %}
-            {% endblock %}
-            <!-- Pager -->
-            <ul class="pager">
-                {% if before != 0 %}
-                <li class="next">
-                    <a href="/before/{{before}}">Older Posts &rarr;</a>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
+    <!-- col-md-offset-2   col-lg-offset-2-->
+    <div class="col-lg-12 col-md-12 ">
+        {% block body %}
+        {% endblock %}
+        <!-- Pager -->
+        <ul class="pager">
+            {% if before != 0 %}
+            <li class="next">
+                <a href="/before/{{before}}">Older Posts &rarr;</a>
+            </li>
+            {% endif %}
+        </ul>
     </div>
 </div>
 {% endblock %}

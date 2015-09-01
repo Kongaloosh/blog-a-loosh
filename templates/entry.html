@@ -7,14 +7,12 @@
         style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="site-heading">
-                    <h1>Hi</h1>
-                    <hr class="small">
-                    <span class="subheading"><i class="fa fa-paper-plane"></i></span>
-                </div>
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="site-heading">
+                <h1>Hi</h1>
+                <hr class="small">
+                <span class="subheading"><i class="fa fa-paper-plane"></i></span>
             </div>
         </div>
     </div>
@@ -29,156 +27,154 @@
 {% endif %}
 
 <article>
-    <div class="container">
-        <div class="row">
-            {% if reply_to %}
-            <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center"> <!-- REPLY DECORATOR END -->
-                <div class="text-center">
-                    <h3><i class="fa fa-share"></i></h3>
-                    <strong>In response to</strong>
-                    <hr class="small" style="border-color:grey;">
-                </div>
-            </div> <!-- REPLY DECORATOR END -->
+    <div class="row">
+        {% if reply_to %}
+        <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center"> <!-- REPLY DECORATOR END -->
+            <div class="text-center">
+                <h3><i class="fa fa-share"></i></h3>
+                <strong>In response to</strong>
+                <hr class="small" style="border-color:grey;">
+            </div>
+        </div> <!-- REPLY DECORATOR END -->
 
+        {% endif %}
+        {% for reply in reply_to %}
+        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
+            {% if reply.content %}
+            <div class="reply-header text-center">
+                {{reply.content | safe}}
+            </div>
+
+            <div class="reply-footer">
+                <p>Published <a class="" href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
+            </div>
+            {% else %}
+            <a class="" href="{{reply.url}}">{{reply.url}}</a>
             {% endif %}
-            {% for reply in reply_to %}
-            <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
-                {% if reply.content %}
-                <div class="reply-header text-center">
-                    {{reply.content | safe}}
-                </div>
+            <hr>
+        </div> <!-- REPLY END -->
+        {% endfor %}
 
-                <div class="reply-footer">
-                    <p>Published <a class="" href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
-                </div>
-                {% else %}
-                <a class="" href="{{reply.url}}">{{reply.url}}</a>
-                {% endif %}
-                <hr>
-            </div> <!-- REPLY END -->
+
+        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            {% if session.logged_in %}
+            <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
+            {% endif %}
+            {% if entry.in_reply_to is sequence %}
+            {% for site in entry.in_reply_to %}
+            {% if site.photo is defined %}
+            <a href="/e{{site.url}}">
+                <img
+                        class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                        style="image-orientation: from-image; max-height:300px"
+                        src="/{{site.photo}}"
+                        >
+            </a>
+            {% endif %}
             {% endfor %}
-
-
-            <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                {% if session.logged_in %}
-                <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
-                {% endif %}
-                {% if entry.in_reply_to is sequence %}
-                {% for site in entry.in_reply_to %}
-                {% if site.photo is defined %}
-                <a href="/e{{site.url}}">
-                    <img
-                            class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                            style="image-orientation: from-image; max-height:300px"
-                            src="/{{site.photo}}"
-                            >
-                </a>
-                {% endif %}
-                {% endfor %}
-                {% endif %}
-                <div class="e-content p-note">
-		{% if entry.photo is defined %}
+            {% endif %}
+            <div class="e-content p-note">
+                {% if entry.photo is defined %}
                 <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
                      style="image-orientation: from-image; max-height:300px"
                      src="/{{entry.photo}}">
                 {% endif %}
                 {{entry.content | safe}}</div>
-                <div class="entry-footer clearfix">                         <!-- Footer -->
-                    <div class="categories">                                <!-- Catagories -->
-                        <i class="fa fa-tags"></i>
-                        {% for c in entry.category %}
-                        {% if c != None and c != 'None' %}
-                        <a class="p-category" href="/t/{{c}}">{{c}}</a>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </div><!-- END ENTRY DETAILS -->
+            <div class="entry-footer clearfix">                         <!-- Footer -->
+                <div class="categories">                                <!-- Catagories -->
+                    <i class="fa fa-tags"></i>
+                    {% for c in entry.category %}
+                    {% if c != None and c != 'None' %}
+                    <a class="p-category" href="/t/{{c}}">{{c}}</a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div><!-- END ENTRY DETAILS -->
 
-                <div class="row post-meta">
-                    <div class="col-md-9">
-                        Posted by
-                        <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-                        on
-                        <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-                        {% if entry.location != 'None' %} <!-- If there's a location -->
-                        at
-                        <a class="p-location"> {{entry.location | safe }} </a>
-                        {% endif %}
-                    </div> <!-- END POST DETAILS -->
-                    <div class="col-md-3">
-                        <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
-                    </div> <!-- END PERMALINK -->
-                </div> <!-- END AUTHORSHIP -->
+            <div class="row post-meta">
+                <div class="col-md-9">
+                    Posted by
+                    <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
+                    on
+                    <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
+                    {% if entry.location != 'None' %} <!-- If there's a location -->
+                    in
+                    <a class="p-location"> {{entry.location | safe }} </a>
+                    {% endif %}
+                </div> <!-- END POST DETAILS -->
+                <div class="col-md-3 ">
+                    <a class="pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+                </div> <!-- END PERMALINK -->
+            </div> <!-- END AUTHORSHIP -->
 
-                {% if entry.twitter %}
-                <div class="row">
-                    <div class="actions col-md-9 pull-left">
-                        <indie-action do="like" with="http://kongaloosh.com/e{{entry.url}}">
-                            <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
-                                <i class="fa fa-star"></i>
-                                Like
-                            </a>
-                        </indie-action>
-                        <indie-action do="repost" with="http://kongaloosh.com/e{{entry.url}}">
-                            <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
-                                <i class="fa fa-retweet"></i>
-                                Repost
-                            </a>
-                        </indie-action>
-                        <indie-action do="reply" with="http://kongaloosh.com/e{{entry.url}}">
-                            <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
-                                <i class="fa fa-reply"></i>
-                                Reply
-                            </a>
-                        </indie-action>
-                    </div> <!-- END ACTIONS -->
-
-                    <div class="actions col-md-3 pull-right">
-                        <a href="{entry.twitter.url}">
-                            On Twitter
-                            <i class="fa fa-twitter"></i>
+            {% if entry.twitter %}
+            <div class="row">
+                <div class="actions col-md-9 pull-left">
+                    <indie-action do="like" with="http://kongaloosh.com/e{{entry.url}}">
+                        <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
+                            <i class="fa fa-star"></i>
+                            Like
                         </a>
-                    </div> <!-- END TWITTER LINK -->
-                </div><!-- END TWITTER SYNDICATION -->
-                {% endif %}
-            </div>
+                    </indie-action>
+                    <indie-action do="repost" with="http://kongaloosh.com/e{{entry.url}}">
+                        <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
+                            <i class="fa fa-retweet"></i>
+                            Repost
+                        </a>
+                    </indie-action>
+                    <indie-action do="reply" with="http://kongaloosh.com/e{{entry.url}}">
+                        <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
+                            <i class="fa fa-reply"></i>
+                            Reply
+                        </a>
+                    </indie-action>
+                </div> <!-- END ACTIONS -->
 
-            <!-- BEGIN MENTIONS -->
-            {% if mentions %}
-            <div class="mention-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center">
-                <div class="text-center">
-                    <h3><i class="fa fa-comments"></i></h3>
-                    <strong>Mentioned elsewhere on the indieweb</strong>
-                    <hr class="small" style="border-color:grey;">
-                </div>
-            </div> <!-- END TOPPER -->
+                <div class="actions col-md-3 pull-right">
+                    <a href="{entry.twitter.url}">
+                        On Twitter
+                        <i class="fa fa-twitter"></i>
+                    </a>
+                </div> <!-- END TWITTER LINK -->
+            </div><!-- END TWITTER SYNDICATION -->
             {% endif %}
+        </div>
 
-            {% for mention in mentions %}
-            <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 mention">
-                <!--<div class="mention-header">-->
-                <!--{% if mention.name != mention.content %}-->
-                <!--{{mention.name}}-->
-                <!--{% endif %}-->
-                <!--</div>-->
-                {% if mention.photo %}
-                <img class="img-responsive center-block img-thumbnail img-rounded"
-                     style="image-orientation: from-image; max-height:300px"
-                     src="{{mention.photo}}">
-                {% endif %}
-                {{ mention.content | safe}}
-                <div class="mentions-footer">
-                    <p>
-                        Posted on
-                        <a href="{{mention.url}}">{{mention.published}}</a>
-                        by
-                        <a href="{{mention.author.url}}">{{mention.author.name}}</a>
-                    </p>
-                </div>
-                <hr>
-            </div> <!-- END MENTION ROLL -->
-            {% endfor %}
-        </div> <!-- END MENTIONS -->
-    </div>
+        <!-- BEGIN MENTIONS -->
+        {% if mentions %}
+        <div class="mention-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center">
+            <div class="text-center">
+                <h3><i class="fa fa-comments"></i></h3>
+                <strong>Mentioned elsewhere on the indieweb</strong>
+                <hr class="small" style="border-color:grey;">
+            </div>
+        </div> <!-- END TOPPER -->
+        {% endif %}
+
+        {% for mention in mentions %}
+        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 mention">
+            <!--<div class="mention-header">-->
+            <!--{% if mention.name != mention.content %}-->
+            <!--{{mention.name}}-->
+            <!--{% endif %}-->
+            <!--</div>-->
+            {% if mention.photo %}
+            <img class="img-responsive center-block img-thumbnail img-rounded"
+                 style="image-orientation: from-image; max-height:300px"
+                 src="{{mention.photo}}">
+            {% endif %}
+            {{ mention.content | safe}}
+            <div class="mentions-footer">
+                <p>
+                    Posted on
+                    <a href="{{mention.url}}">{{mention.published}}</a>
+                    by
+                    <a href="{{mention.author.url}}">{{mention.author.name}}</a>
+                </p>
+            </div>
+            <hr>
+        </div> <!-- END MENTION ROLL -->
+        {% endfor %}
+    </div> <!-- END MENTIONS -->
 </article>
 {% endblock %}

@@ -13,6 +13,7 @@ from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
+from geopy.geocoders import GoogleV3
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -77,11 +78,26 @@ def show_entries():
         for i in entry['syndication'].split(','):
             if i.startswith('http://twitter.com/'):
                 twitter = dict()
-		vals = i.split('/')
+                vals = i.split('/')
                 twitter['id'] = vals[len(vals)-1]
                 twitter['link'] = i
                 entry['twitter'] = twitter
                 break
+
+        if entry['location'] != 'None':
+            geolocator = GoogleV3()
+            geolocator.reverse("40.752067, -73.977578")
+            location = geolocator.reverse(entry['location'].split(':')[1])[0]
+            geo = ''
+            for i in location.raw['address_components']:
+                try:
+                    # app.logger.info("home-star")
+                    if 'locality' in i['types'] or 'country' in i['types']:
+                        geo += (i['long_name'] + ' ')
+                except KeyError:
+                    pass
+            app.logger.info(geo)
+            entry['location'] = geo
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
@@ -240,7 +256,6 @@ def profile(year, month, day, name):
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
-    app.logger.info("I TOLD A JOKE THAT SET THE WHOLE WORLD CRYING")
     for i in entry['in_reply_to']:                          # for all the replies we have...
         app.logger.info(i)
 	if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
