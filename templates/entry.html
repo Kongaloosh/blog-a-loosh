@@ -46,10 +46,10 @@
             </div>
 
             <div class="reply-footer">
-                <p>Published <a class="" href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
+                <p>Published <a class="" rel="in-reply-to"  href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
             </div>
             {% else %}
-            <a class="" href="{{reply.url}}">{{reply.url}}</a>
+            <a class="" rel="in-reply-to" href="{{reply.url}}">{{reply.url}}</a>
             {% endif %}
             <hr>
         </div> <!-- REPLY END -->
@@ -76,7 +76,7 @@
             <div class="e-content p-note">
                 {% if entry.photo is defined %}
                 <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                     style="image-orientation: from-image; max-height:300px"
+                     style="image-orientation: from-image; max-height:600px"
                      src="/{{entry.photo}}">
                 {% endif %}
                 {{entry.content | safe}}</div>
@@ -93,9 +93,7 @@
 
             <div class="row post-meta">
                 <div class="col-md-9">
-                    Posted by
-                    <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-                    on
+                    Posted by on
                     <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
                     {% if entry.location != 'None' %} <!-- If there's a location -->
                     in

@@ -50,7 +50,7 @@
     <div class="e-content">
         {% if entry.photo is defined %}
         <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-             style="image-orientation: from-image; max-height:300px"
+             style="image-orientation: from-image; max-height:500px"
              src="/{{entry.photo}}">
         {% endif %}
         {% if entry.summary != 'None' %}
@@ -73,9 +73,7 @@
 
     <div class="row">
         <div class="col-md-9">
-            Posted by
-            <a rel="author" class="p-author h-card" href="http://alexkearney.com/">Alex Kearney</a>
-            on
+            Posted by on
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
             {% if entry.location != 'None' %} <!-- If there's a location -->
             in
