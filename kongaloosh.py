@@ -252,6 +252,18 @@ def profile(year, month, day, name):
             reply_to.append(file_parser(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".md"))
         elif i.startswith('http'):                          # which are not data resources on our site...
             reply_to.append(get_entry_content(i))
+
+    for i in entry['syndication'].split(','):
+	app.logger.info('here')
+        if i.startswith('http://twitter.com/'):
+            twitter = dict()
+            vals = i.split('/')
+            twitter['id'] = vals[len(vals)-1]
+            twitter['link'] = i
+            entry['twitter'] = twitter
+	    app.logger.info(twitter)
+	    break
+
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
     # except:
     #     return redirect('/404'), 404
@@ -385,7 +397,7 @@ def handleMicroPub():
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
                 data = {}
-                for key in (
+		for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
@@ -413,7 +425,7 @@ def handleMicroPub():
                 except: pass
 
                 syndication = ''
-
+		app.logger.info(data)
                 try:
                     if('twitter.com' in data['syndicate-to[]']):
                         try:
@@ -430,13 +442,15 @@ def handleMicroPub():
                             pass
                         except:
                             pass
-                except KeyError:
+		    data['syndication'] += syndication
+                except (KeyError, TypeError):
                     pass
 
-                data['syndication'] += syndication
-
-                location = createEntry(data, image=data['photo'], g=g)
-                resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
+		try:
+                    location = createEntry(data, image=data['photo'], g=g)
+                except KeyError:
+		    location = createEntry(data, g=g)
+		resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
             else:
