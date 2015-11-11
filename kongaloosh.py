@@ -62,7 +62,6 @@ def show_entries():
     for (row,) in cur.fetchall():
         if os.path.exists(row+".md"):
             entries.append(file_parser(row+".md"))
-
     try:
         entries=entries[:10]
     except IndexError:
@@ -243,27 +242,25 @@ def profile(year, month, day, name):
     reply_to = []                                           # where we store our replies so we can fetch their info
     for i in entry['in_reply_to']:                          # for all the replies we have...
         app.logger.info(i)
-	if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
+        if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
             reply = file_parser(i.replace('http://kongaloosh.com/e', 'data/', 1) + ".md")
-	    reply['author'] = 'Alex Kearney'
-	    reply['url'] = 'http://kongaloosh.com/e'+reply['url']
-	    reply_to.append(reply)
+            reply['author'] = 'Alex Kearney'
+            reply['url'] = 'http://kongaloosh.com/e'+reply['url']
+            reply_to.append(reply)
         elif i.startswith('http://127.0.0.1:5000'):
             reply_to.append(file_parser(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".md"))
         elif i.startswith('http'):                          # which are not data resources on our site...
             reply_to.append(get_entry_content(i))
 
     for i in entry['syndication'].split(','):
-	app.logger.info('here')
+        app.logger.info('here')
         if i.startswith('http://twitter.com/'):
             twitter = dict()
             vals = i.split('/')
             twitter['id'] = vals[len(vals)-1]
             twitter['link'] = i
             entry['twitter'] = twitter
-	    app.logger.info(twitter)
-	    break
-
+        break
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
     # except:
     #     return redirect('/404'), 404
