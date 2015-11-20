@@ -10,7 +10,7 @@ from jinja2 import Environment
 from dateutil.parser import parse
 from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
-from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
+from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file, entry_re_write
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
@@ -162,11 +162,13 @@ def add():
         location = createEntry(data, image=data['photo'], g=g)
 
         if request.form.get('facebook'):
-            app.logger.info('http://kongaloosh.com/'+location)
-            r = send_mention('http://kongaloosh.com/'+location, 'https://brid.gy/publish/facebook')
+            app.logger.info('http://kongaloosh.com'+location)
+            r = send_mention('http://kongaloosh.com'+location, 'https://brid.gy/publish/facebook', endpoint='https://brid.gy/publish/webmention')
+            app.logger.info(r)
             syndication = r.json()
             data = get_bare_file(location)
             data['syndication'] += syndication['url']
+            entry_re_write(data)
 
         if data['in-reply-to']:
             send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])

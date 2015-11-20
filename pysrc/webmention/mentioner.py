@@ -18,21 +18,25 @@ def find_end_point(target):
     return url
 
 
-def send_mention(source, target):
+def send_mention(source, target, endpoint=None):
     """Sends a webmention to a target site from our source link"""
     try:
-        endpoint = find_end_point(target)
+        if not endpoint:
+            endpoint = find_end_point(target)
         payload = {'source': source, 'target': target}
-        # headers = {'Accept': 'text/html, application/json'}
-        r = requests.post(endpoint, data=payload)
+        headers = {'Accept': 'text/html, application/json'}
+        r = requests.post(endpoint, data=payload, headers=headers)
         return r
     except:
         pass
 
 
 if __name__ == '__main__':
-    s = 'http://kongaloosh.com/e/2015/8/2/this-is-a-test-note-to-use-as-a-source-for-sending-web-mentions'
-    t = 'http://kongaloosh.com/e/2015/8/3/another-test-note-for-webmentions'
-    send_mention(s,t)
-    from webemention_checking import get_mentions
-    print len(get_mentions(t))
+    s = 'http://kongaloosh.com/e/2015/11/20/heres-a-test-to-see-if-i-can-get-bridgy-to-post-to-facebook-for-me'
+    t = "http://brid.gy/publish/facebook"
+    r = send_mention(s,t,endpoint='https://brid.gy/publish/webmention')
+    print(r)
+    print(r.text)
+    print(r.json())
+    # from webemention_checking import get_mentions
+    # print len(get_mentions(t))

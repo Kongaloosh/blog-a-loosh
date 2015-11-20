@@ -16,10 +16,6 @@
             </div>
         </div>
     </div>
-    <a href="https://brid.gy/publish/facebook"></a>
-    <a href="https://brid.gy/publish/instagram"></a>
-    <a href="https://brid.gy/publish/twitter"></a>
-    <a href="https://brid.gy/publish/flickr"></a>
 </header>
 
 {% if mentions %}
@@ -40,8 +36,8 @@
                 <hr class="small" style="border-color:grey;">
             </div>
         </div> <!-- REPLY DECORATOR END -->
-
         {% endif %}
+
         {% for reply in reply_to %}
         <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
             {% if reply.content %}
@@ -60,6 +56,10 @@
         {% endfor %}
 
 
+        <a href="https://brid.gy/publish/facebook"></a>
+        <a href="https://brid.gy/publish/instagram"></a>
+        <a href="https://brid.gy/publish/twitter"></a>
+        <a href="https://brid.gy/publish/flickr"></a>
         <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             {% if session.logged_in %}
             <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
