@@ -20,7 +20,8 @@
     </div>
 </header>
 {% if session.logged_in %}
-<div class="container input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class="row">
+    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
     <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
         Title:<br>
         <input type="text" name="name">
@@ -61,8 +62,8 @@
     </form>
     <button onclick="getLocation()">Add Location</button>
     <input id="submit" type="submit" value="Submit">
+    </div>
 </div>
-
 <script>
     var x = document.getElementById("geo_coord");
     function getLocation() {
@@ -86,7 +87,10 @@
 
 </script>
 {% else %}
-
-<p>You need to be logged in, buck-eye</p>
+<div class="row">
+    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <p>You need to be logged in, buck-eye.</p>
+    </div>
+</div>
 {% endif %}
 {% endblock %}
