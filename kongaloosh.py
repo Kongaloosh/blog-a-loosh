@@ -14,6 +14,9 @@ from pysrc.file_management.file_parser import editEntry, createEntry, file_parse
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
+import pickle
+from threading import Timer
+
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -161,25 +164,27 @@ def add():
 
         location = createEntry(data, image=data['photo'], g=g)
 
-        if request.form.get('facebook'):
-            app.logger.info('http://kongaloosh.com'+location)
-            r = send_mention(
-                'http://kongaloosh.com'+location,
-                'https://brid.gy/publish/facebook',
-                endpoint='https://brid.gy/publish/webmention'
-            )
-            app.logger.info(r)
-            syndication = r.json()
-            data = get_bare_file('data/' + location.split('/e/')[1]+".md")
-            data['syndication'] += syndication['url']
-            entry_re_write(data)
-
         if data['in-reply-to']:
             send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
 
+        if request.form.get('facebook'):
+            t = Timer(20, bridgy_facebook(), [location])
+            t.start()
         return redirect(location)
     else:
         return redirect('/404'), 404
+
+def bridgy_facebook(location):
+    r = send_mention(
+        'http://kongaloosh.com'+location,
+        'https://brid.gy/publish/facebook',
+        endpoint='https://brid.gy/publish/webmention'
+    )
+    pickle.dump(r, open('blorp.pkl','w'))
+    syndication = r.json()
+    data = get_bare_file('data/' + location.split('/e/')[1]+".md")
+    data['syndication'] += syndication['url']
+    entry_re_write(data)
 
 
 @app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
