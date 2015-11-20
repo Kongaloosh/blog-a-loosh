@@ -163,10 +163,14 @@ def add():
 
         if request.form.get('facebook'):
             app.logger.info('http://kongaloosh.com'+location)
-            r = send_mention('http://kongaloosh.com'+location, 'https://brid.gy/publish/facebook', endpoint='https://brid.gy/publish/webmention')
+            r = send_mention(
+                'http://kongaloosh.com'+location,
+                'https://brid.gy/publish/facebook',
+                endpoint='https://brid.gy/publish/webmention'
+            )
             app.logger.info(r)
             syndication = r.json()
-            data = get_bare_file(location)
+            data = get_bare_file('data/' + location.split('/e/')[1]+".md")
             data['syndication'] += syndication['url']
             entry_re_write(data)
 
