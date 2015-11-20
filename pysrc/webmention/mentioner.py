@@ -25,7 +25,7 @@ def send_mention(source, target):
         payload = {'source': source, 'target': target}
         # headers = {'Accept': 'text/html, application/json'}
         r = requests.post(endpoint, data=payload)
-        print(r.text)
+        return r
     except:
         pass
 
