@@ -13,6 +13,7 @@ from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
+from pysrc.webmention.mentioner import send_mention
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 # configuration
@@ -157,10 +158,19 @@ def add():
 
         if request.form.get('twitter'):
             data['syndication'] = tweeter.main(data, photo=photo) + ","
-        if request.form.get('tumblr'):
-            pass #todo: add posse to tumblr
 
         location = createEntry(data, image=data['photo'], g=g)
+
+        if request.form.get('facebook'):
+            app.logger.info('http://kongaloosh.com/'+location)
+            r = send_mention('http://kongaloosh.com/'+location, 'https://brid.gy/publish/facebook')
+            syndication = r.json()
+            data = get_bare_file(location)
+            data['syndication'] += syndication['url']
+
+        if data['in-reply-to']:
+            send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
+
         return redirect(location)
     else:
         return redirect('/404'), 404
@@ -394,7 +404,7 @@ def handleMicroPub():
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
                 data = {}
-		for key in (
+                for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
@@ -422,7 +432,6 @@ def handleMicroPub():
                 except: pass
 
                 syndication = ''
-		app.logger.info(data)
                 try:
                     if('twitter.com' in data['syndicate-to[]']):
                         try:
@@ -439,15 +448,15 @@ def handleMicroPub():
                             pass
                         except:
                             pass
-		    data['syndication'] += syndication
+                    data['syndication'] += syndication
                 except (KeyError, TypeError):
                     pass
 
-		try:
+                try:
                     location = createEntry(data, image=data['photo'], g=g)
                 except KeyError:
-		    location = createEntry(data, g=g)
-		resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
+                    location = createEntry(data, g=g)
+                resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
             else:
