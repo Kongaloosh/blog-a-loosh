@@ -168,7 +168,7 @@ def add():
             send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
 
         if request.form.get('facebook'):
-            t = Timer(20, bridgy_facebook(), [location])
+            t = Timer(20, bridgy_facebook, [location])
             t.start()
         return redirect(location)
     else:
@@ -184,6 +184,7 @@ def bridgy_facebook(location):
     syndication = r.json()
     data = get_bare_file('data/' + location.split('/e/')[1]+".md")
     data['syndication'] += syndication['url']
+    app.logger.info(data['syndication'])
     entry_re_write(data)
 
 

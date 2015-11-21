@@ -1,3 +1,4 @@
+import pickle
 import re
 import os
 import sys
@@ -276,45 +277,25 @@ def createEntry(data, g, image=None, video=None, audio=None):
 
 
 def entry_re_write(data):
+    pickle.dump(data, open('data.pkl','w'))
+    data['title']
     entry = ''
-    if not data['name'] == None:    #is it an article
-        title = data['name']
-        slug = title
-    else:
-        slug = (data['content'].split('.')[0])
-        title = None
-
-    slug = slugify(slug)
-
     entry += "p-name:\n" \
              "title:{title}\n" \
-             "slug:{slug}\n".format(title=title, slug=slug)
-
+             "slug:{slug}\n".format(title=data['title'], slug=data['slug'])
     entry += "summary:"+ str(data['summary']) + "\n"
     entry += "published:"+ str(data['published']) + "\n"
     entry += "category:" + str(data['category']) + "\n"
-    entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
-    entry += "u-uid:" + '/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
+    entry += "url:"+ data['url'] + "\n"
+    entry += "u-uid:" + data['uid'] + "\n"
     entry += "location:" + str(data['location'])+ "\n"
-    entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
-    entry += "repost-of:" + str(data['repost-of']) + "\n"
+    entry += "in-reply-to:" + str(data['in_reply_to']) + "\n"
+    #entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
     entry += "content:" + data['content']+ "\n"
-
-    time = data['published']
-    file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
-
-    total_path = file_path+"{slug}".format(slug=slug)
-    if not os.path.isfile(total_path+'.md'):
-        raise IOError                                       # if the file doesn't exist, this is being used wrong
-    file_writer = open(total_path+".md", 'wb')
+    if not os.path.isfile('data/'+data['url']+".md"):
+        raise IOError('data/'+data[url]+'.md')                                      # if the file doesn't exist, this is being used wrong
+    file_writer = open('data/'+data['url']+".md", 'wb')
     file_writer.write(entry.encode('utf-8') )
     file_writer.close()
+
