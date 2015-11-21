@@ -285,7 +285,10 @@ def profile(year, month, day, name):
             twitter['id'] = vals[len(vals)-1]
             twitter['link'] = i
             entry['twitter'] = twitter
-        break
+        if i.startswith('https://www.facebook.com/'):
+            entry['facebook'] = {'link':i}
+            app.logger.info(entry['facebook'])
+        app.logger.info(i)
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
     # except:
     #     return redirect('/404'), 404

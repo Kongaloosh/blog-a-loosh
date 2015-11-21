@@ -85,36 +85,31 @@
                 {% endif %}
                 {{entry.content | safe}}</div>
             <div class="entry-footer clearfix">                         <!-- Footer -->
-                <div class="categories">                                <!-- Catagories -->
-                    <i class="fa fa-tags"></i>
-                    {% for c in entry.category %}
-                    {% if c != None and c != 'None' %}
-                    <a class="p-category" href="/t/{{c}}">{{c}}</a>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div><!-- END ENTRY DETAILS -->
-
+            <hr>
             <div class="row post-meta">
-                <div class="col-md-9">
+                <div class="col-md-6 pull-left">
                     Posted by on
                     <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-                    {% if entry.location != 'None' %} <!-- If there's a location -->
-                    in
-                    <a class="p-location"> {{entry.location | safe }} </a>
-                    {% endif %}
+                    <!--{% if entry.location != 'None' %} &lt;!&ndash; If there's a location &ndash;&gt;-->
+                    <!--in-->
+                    <!--<a class="p-location"> {{entry.location | safe }} </a>-->
+                    <!--{% endif %}-->
                     by
                     <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
                 </div> <!-- END POST DETAILS -->
-                <div class="col-md-3 ">
-                    <a class="u-url 
-pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+                <div class="col-md-6 pull-right text-right">
+                        <i class="fa fa-tags"></i>
+                        {% for c in entry.category %}
+                        {% if c != None and c != 'None' %}
+                        <a class="p-category" href="/t/{{c}}">{{c}}</a>
+                        {% endif %}
+                        {% endfor %}
+                        <a class="u-url" href="/e{{entry.url}}"></a>
                 </div> <!-- END PERMALINK -->
             </div> <!-- END AUTHORSHIP -->
-
-            {% if entry.twitter %}
             <div class="row">
-                <div class="actions col-md-9 pull-left">
+                {% if entry.twitter %}
+                <div class="actions col-md-8 pull-left">
                     <indie-action do="like" with="http://kongaloosh.com/e{{entry.url}}">
                         <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
                             <i class="fa fa-star"></i>
@@ -134,15 +129,23 @@ pull-right" href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
                         </a>
                     </indie-action>
                 </div> <!-- END ACTIONS -->
-
-                <div class="actions col-md-3 pull-right">
+                {% endif %}
+                <div class="actions col-md-4 pull-right text-right">
+                    {% if entry.twitter %}
                     <a rel="syndication" class="u-syndication" href="{{entry.twitter.link}}">
                         On Twitter
                         <i class="fa fa-twitter"></i>
                     </a>
+                    {% endif %}
+                    {% if entry.facebook %}
+                    <a rel="syndication" class="u-syndication" href="{{entry.facebook.link}}">
+                        On facebook
+                        <i class="fa fa-facebook-square"></i>
+                    </a>
+                    {% endif %}
                 </div> <!-- END TWITTER LINK -->
             </div><!-- END TWITTER SYNDICATION -->
-            {% endif %}
+            </div><!-- END ENTRY DETAILS -->
         </div>
 
         <!-- BEGIN MENTIONS -->
