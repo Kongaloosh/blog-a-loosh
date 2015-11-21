@@ -183,7 +183,10 @@ def bridgy_facebook(location):
     pickle.dump(r, open('blorp.pkl','w'))
     syndication = r.json()
     data = get_bare_file('data/' + location.split('/e/')[1]+".md")
-    data['syndication'] += syndication['url']
+    if data['syndication'] == 'None':
+        data['syndication'] = syndication['url']+","
+    else:
+        data['syndication'] += syndication['url']+","
     app.logger.info(data['syndication'])
     entry_re_write(data)
 
