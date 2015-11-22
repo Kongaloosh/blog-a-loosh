@@ -159,13 +159,17 @@ def add():
 
         data['published'] = datetime.now()
 
-        if request.form.get('twitter'):
-            data['syndication'] = tweeter.main(data, photo=photo) + ","
+        # if request.form.get('twitter'):
+            # data['syndication'] = tweeter.main(data, photo=photo) + ","
 
         location = createEntry(data, image=data['photo'], g=g)
 
         if data['in-reply-to']:
             send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
+
+        if request.form.get('twitter'):
+            t = Timer(10, bridgy_twitter, [location])
+            t.start()
 
         if request.form.get('facebook'):
             t = Timer(20, bridgy_facebook, [location])
@@ -174,10 +178,28 @@ def add():
     else:
         return redirect('/404'), 404
 
+
 def bridgy_facebook(location):
     r = send_mention(
         'http://kongaloosh.com'+location,
         'https://brid.gy/publish/facebook',
+        endpoint='https://brid.gy/publish/webmention'
+    )
+    pickle.dump(r, open('blorp.pkl','w'))
+    syndication = r.json()
+    data = get_bare_file('data/' + location.split('/e/')[1]+".md")
+    if data['syndication'] == 'None':
+        data['syndication'] = syndication['url']+","
+    else:
+        data['syndication'] += syndication['url']+","
+    app.logger.info(data['syndication'])
+    entry_re_write(data)
+
+
+def bridgy_twitter(location):
+    r = send_mention(
+        'http://kongaloosh.com'+location,
+        'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
     pickle.dump(r, open('blorp.pkl','w'))
@@ -265,7 +287,7 @@ def profile(year, month, day, name):
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
-    for i in entry['in_reply_to']:                          # for all the replies we have...
+    for i in entry['in_reply_to'].split(','):                          # for all the replies we have...
         app.logger.info(i)
         if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
             reply = file_parser(i.replace('http://kongaloosh.com/e', 'data/', 1) + ".md")
