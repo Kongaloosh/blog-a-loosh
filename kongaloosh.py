@@ -78,7 +78,7 @@ def show_entries():
 
     for entry in entries:
         for i in entry['syndication'].split(','):
-            if i.startswith('http://twitter.com/'):
+            if i.startswith('https://twitter.com/'):
                 twitter = dict()
                 vals = i.split('/')
                 twitter['id'] = vals[len(vals)-1]
@@ -93,7 +93,6 @@ def show_entries():
 def show_entries_before(datetime):
     """The driver for linear navigation."""
     entries = []
-    app.logger.info(datetime)
     cur = g.db.execute(
         """
         SELECT entries.location FROM entries
@@ -192,7 +191,6 @@ def bridgy_facebook(location):
         data['syndication'] = syndication['url']+","
     else:
         data['syndication'] += syndication['url']+","
-    app.logger.info(data['syndication'])
     entry_re_write(data)
 
 
@@ -209,7 +207,6 @@ def bridgy_twitter(location):
         data['syndication'] = syndication['url']+","
     else:
         data['syndication'] += syndication['url']+","
-    app.logger.info(data['syndication'])
     entry_re_write(data)
 
 
@@ -288,7 +285,6 @@ def profile(year, month, day, name):
 
     reply_to = []                                           # where we store our replies so we can fetch their info
     for i in entry['in_reply_to'].split(','):                          # for all the replies we have...
-        app.logger.info(i)
         if i.startswith('http://kongaloosh.com'):           # which are not images on our site...
             reply = file_parser(i.replace('http://kongaloosh.com/e', 'data/', 1) + ".md")
             reply['author'] = 'Alex Kearney'
@@ -300,8 +296,7 @@ def profile(year, month, day, name):
             reply_to.append(get_entry_content(i))
 
     for i in entry['syndication'].split(','):
-        app.logger.info('here')
-        if i.startswith('http://twitter.com/'):
+        if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
             twitter = dict()
             vals = i.split('/')
             twitter['id'] = vals[len(vals)-1]
@@ -309,8 +304,7 @@ def profile(year, month, day, name):
             entry['twitter'] = twitter
         if i.startswith('https://www.facebook.com/'):
             entry['facebook'] = {'link':i}
-            app.logger.info(entry['facebook'])
-        app.logger.info(i)
+
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
     # except:
     #     return redirect('/404'), 404
@@ -415,8 +409,6 @@ def login():
     if request.method == 'POST':
         if request.form['username'] != app.config['USERNAME']:
             error = 'Invalid username'
-            app.logger.info(request.form['username'])
-            app.logger.info(app.config['USERNAME'].split(' '))
         elif request.form['password'] != app.config['PASSWORD']:
             error = 'Invalid password'
         else:
