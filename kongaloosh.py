@@ -486,6 +486,15 @@ def handleMicroPub():
                     location = createEntry(data, image=data['photo'], g=g)
                 except KeyError:
                     location = createEntry(data, g=g)
+
+                if request.form.get('twitter') or data['photo']:
+                    t = Timer(10, bridgy_twitter, [location])
+                    t.start()
+
+                if request.form.get('facebook') or data['photo']:
+                    t = Timer(20, bridgy_facebook, [location])
+                    t.start()
+
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
