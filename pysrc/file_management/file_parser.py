@@ -73,25 +73,25 @@ def file_parser(filename):
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
 
-    try:
-        if e['location'] != 'None':
-            geolocator = GoogleV3(api_key='AIzaSyB28OwVWQ-OBIlQGRHzFy5-_EMx0wTN9IM')
-            geolocator.reverse("40.752067, -73.977578")
-            try:
-                location = geolocator.reverse(e['location'].split(':')[1])[0]
-            except IndexError:
-                location = geolocator.reverse(e['location'])
-            geo = ''
-            for i in location.raw['address_components']:
-                try:
-                    # app.logger.info("home-star")
-                    if 'locality' in i['types'] or 'country' in i['types']:
-                        geo += (i['long_name'] + ' ')
-                except KeyError:
-                    pass
-            e['location'] = geo
-    except (GeocoderQuotaExceeded, GeocoderQueryError):
-        pass
+    # try:
+    #     if e['location'] != 'None':
+    #         geolocator = GoogleV3(api_key='AIzaSyB28OwVWQ-OBIlQGRHzFy5-_EMx0wTN9IM')
+    #         geolocator.reverse("40.752067, -73.977578")
+    #         try:
+    #             location = geolocator.reverse(e['location'].split(':')[1])[0]
+    #         except IndexError:
+    #             location = geolocator.reverse(e['location'])
+    #         geo = ''
+    #         for i in location.raw['address_components']:
+    #             try:
+    #                 # app.logger.info("home-star")
+    #                 if 'locality' in i['types'] or 'country' in i['types']:
+    #                     geo += (i['long_name'] + ' ')
+    #             except KeyError:
+    #                 pass
+    #         e['location'] = geo
+    # except (GeocoderQuotaExceeded, GeocoderQueryError):
+    #     pass
 
     return e
 

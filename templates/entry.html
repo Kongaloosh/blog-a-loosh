@@ -173,16 +173,19 @@
             {% endif %}
             {{ mention.content | safe}}
             <div class="mentions-footer">
-                <p>
-                    Posted on
-                    <a href="{{mention.url}}">{{mention.published}}</a>
-                    by
-                    <a href="{{mention.author.url}}">{{mention.author.name}}</a>
-                </p>
+                <div class="mention">
+                    <p>
+                        {% if mention.author.photo %}
+                        <img src="{{mention.author.photo}}" class="img-circle" style="width:50px;height:50px">
+                        {% endif %}
+                        Posted by
+                        <a href="{{mention.url}}">{{mention.author.name}}</a>
+                    </p>
+                </div>
             </div>
             <hr>
-        </div> <!-- END MENTION ROLL -->
-        {% endfor %}
+        </div>
+        {% endfor %} <!-- END MENTION ROLL -->
     </div> <!-- END MENTIONS -->
 </article>
 {% endblock %}
