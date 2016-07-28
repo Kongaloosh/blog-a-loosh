@@ -171,7 +171,9 @@
                  style="image-orientation: from-image; width:30%; height:30%"
                  src="{{mention.photo}}">
             {% endif %}
-            {{ mention.content | safe}}
+
+            <p>{{ mention.content | safe | striptags }}</p>>
+
             <div class="mentions-footer">
                 <div class="mention">
                     <p>
