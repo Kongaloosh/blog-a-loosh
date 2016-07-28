@@ -464,17 +464,9 @@ def handle_micropub():
                     data['category'] += ',video'                # we've added an image, so append it
                 except: pass
 
-                try:
-                    location = create_entry(data, image=data['photo'], g=g)
-                except KeyError:
-<<<<<<< HEAD
-                    location = createEntry(data, g=g)
-
-=======
-                    location = create_entry(data, g=g)
-
+                location = create_entry(data, image=data['photo'], g=g)
+                
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
->>>>>>> a7293da168ef51dc514321b1b3fe53f0aea782fe
                 if request.form.get('twitter') or data['photo']:
                     t = Timer(10, bridgy_twitter, [location])
                     t.start()
