@@ -10,7 +10,7 @@ from jinja2 import Environment
 from dateutil.parser import parse
 from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
-from pysrc.file_management.file_parser import editEntry, createEntry, file_parser, get_bare_file, entry_re_write
+from pysrc.file_management.file_parser import editEntry, create_entry, file_parser, get_bare_file, entry_re_write
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
@@ -158,10 +158,7 @@ def add():
 
         data['published'] = datetime.now()
 
-        # if request.form.get('twitter'):
-            # data['syndication'] = tweeter.main(data, photo=photo) + ","
-
-        location = createEntry(data, image=data['photo'], g=g)
+        location = create_entry(data, image=data['photo'], g=g)
 
         if data['in-reply-to']:
             send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
@@ -179,6 +176,7 @@ def add():
 
 
 def bridgy_facebook(location):
+    """send a facebook mention to brid.gy"""
     r = send_mention(
         'http://kongaloosh.com'+location,
         'https://brid.gy/publish/facebook',
@@ -195,6 +193,7 @@ def bridgy_facebook(location):
 
 
 def bridgy_twitter(location):
+    """send a twitter mention to brid.gy"""
     r = send_mention(
         'http://kongaloosh.com'+location,
         'https://brid.gy/publish/twitter',
@@ -220,6 +219,7 @@ def edit(year, month, day, name):
             return render_template('edit_entry.html', entry=entry)
         except:
             return render_template('page_not_found.html')
+
     elif request.method == "POST":
         data = {}
         for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
@@ -423,7 +423,7 @@ def logout():
 
 
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
-def handleMicroPub():
+def handle_micropub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':                                                    # if post, authorise and create
         access_token = request.headers.get('Authorization')                         # get the token and report it
@@ -434,20 +434,23 @@ def handleMicroPub():
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
                 data = {}
+
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
-                if not data['published']:
+
+                if not data['published']:                       # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
 
-                try:
+                if request.files.get('photo'):
                     img = request.files.get('photo').read()
                     data['photo'] = img
                     data['category'] += ',image'                # we've added an image, so append it
-                except: pass
+                else:
+                    data['photo'] = None
 
                 try:
                     audio = request.files.get('audio').read()
@@ -461,31 +464,20 @@ def handleMicroPub():
                     data['category'] += ',video'                # we've added an image, so append it
                 except: pass
 
-                syndication = ''
                 try:
-                    if('twitter.com' in data['syndicate-to[]']):
-                        try:
-                            syndication += tweeter.main(str(data['content']).encode('utf-8'), data['photo'])
-                        except:
-                            syndication += tweeter.main(str(data['content']).encode('utf-8'))
-                    if('tumblr.com' in data['syndicate-to[]']):
-                        try:
-                            pass
-                        except:
-                            pass
-                    if('instagram' in data['syndicate-to[]']):
-                        try:
-                            pass
-                        except:
-                            pass
-                    data['syndication'] += syndication
-                except (KeyError, TypeError):
-                    pass
-
-                try:
-                    location = createEntry(data, image=data['photo'], g=g)
+                    location = create_entry(data, image=data['photo'], g=g)
                 except KeyError:
-                    location = createEntry(data, g=g)
+                    location = create_entry(data, g=g)
+
+                # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
+                if request.form.get('twitter') or data['photo']:
+                    t = Timer(10, bridgy_twitter, [location])
+                    t.start()
+
+                if request.form.get('facebook') or data['photo']:
+                    t = Timer(20, bridgy_facebook, [location])
+                    t.start()
+
                 resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
                 resp.status_code = 201
                 return resp
