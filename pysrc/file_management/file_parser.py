@@ -14,6 +14,7 @@ __author__ = 'alex'
 
 def file_parser(filename):
     """ for a given entry, finds all of the info we want to display """
+    # todo: clean up all these horrible exceptions
     f = open(filename, 'r')
     str = f.read()
     str = str.decode('utf-8')
@@ -189,12 +190,12 @@ def editEntry(data, old_entry, g):
         return "This doesn't exist"
 
 
-def createEntry(data, g, image=None, video=None, audio=None):
+def create_entry(data, g, image=None, video=None, audio=None):
     entry = ''
-    if not data['name'] == None:    #is it an article
+    if not data['name'] == None:                # is it an article?
         title = data['name']
         slug = title
-    else:
+    else:                                       # otherwise we make a slug from post content
         slug = (data['content'].split('.')[0])
         title = None
 
