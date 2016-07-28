@@ -7,7 +7,7 @@
         style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
-    <div class="container row">
+    <div class="container">
         <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             <div class="site-heading">
                 <h1>Hi</h1>
@@ -46,10 +46,10 @@
             </div>
 
             <div class="reply-footer">
-                <p>Published <a class="" rel="in-reply-to"  href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
+                <p>Published <a class="" rel="u-in-reply-to in-reply-to"  href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
             </div>
             {% else %}
-            <a class="" rel="in-reply-to" href="{{reply.url}}">{{reply.url}}</a>
+            <a class="" rel="u-in-reply-to in-reply-to" href="{{reply.url}}">{{reply.url}}</a>
             {% endif %}
             <hr>
         </div> <!-- REPLY END -->
