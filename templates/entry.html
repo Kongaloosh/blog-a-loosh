@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+
 {%block content%}
 <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
 
@@ -28,6 +29,7 @@
 
 <article>
     <div class="row">
+
         {% if reply_to %}
         <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center"> <!-- REPLY DECORATOR END -->
             <div class="text-center">
@@ -60,10 +62,14 @@
         <a href="https://brid.gy/publish/instagram"></a>
         <a href="https://brid.gy/publish/twitter"></a>
         <a href="https://brid.gy/publish/flickr"></a>
-        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-            {% if session.logged_in %}
+
+        {% if session.logged_in %}
+        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
-            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             {% if entry.in_reply_to is sequence %}
             {% for site in entry.in_reply_to %}
             {% if site.photo is defined %}
