@@ -211,9 +211,11 @@ def recent_uploads():
                         </a>
                     </div>
                     <div class="col-md-11 col-lg-11 col-sm-11">
-                        <p style="font-size:8pt;">
+                        <a onclick="insertAtCaret('text_input','%s');return false;" >
+                            <p style="font-size:8pt;">
                             %s
-                        </p>
+                            </p>
+                        </a>
                     </div>
                 </div>
 
@@ -227,7 +229,7 @@ def recent_uploads():
         for file in os.listdir(directory):
             if file.endswith((".jpg", ".png", ".gif")):
                 path = (directory + "/" + file)
-                preview += IMAGE_TEMPLATE % (path, path, path)
+                preview += IMAGE_TEMPLATE % (path, path, path, path)
 
         return preview
     else:

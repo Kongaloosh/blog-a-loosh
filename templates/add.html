@@ -34,11 +34,10 @@
         <br>
         <hr>
         <br>
-        <textarea style="width: 100%" rows=5" name="content" form_id="input">note</textarea>
+        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">note</textarea>
         <br>
         <br>
         <br>
-        <div id="photo_holder"></div>
         <hr>
         <br>
         Summary:<br>
@@ -62,14 +61,15 @@
         Geo:<br>
         <textarea style="width: 100%" type="text" name="location" id="geo_coord"></textarea>
         <br>
-
     </form>
+
     <button onclick="getLocation()">Add Location</button>
     <input id="submit" type="submit" value="Submit">
-    </div>
-   <div class="row">
-        <br>
-        <button onclick="getRecentPhotos()">Show Recent Photos</button>
+        <div class="row">
+            <br>
+            <div id="photo_holder"></div>
+            <button onclick="getRecentPhotos()">Show Recent Photos</button>
+        </div>
     </div>
 </div>
 <script>
@@ -103,6 +103,40 @@
         xhttp.open("GET", "/recent_uploads", true);
         xhttp.send();
     }
+
+    function insertAtCaret(areaId,text) {
+    var txtarea = document.getElementById(areaId);
+    var scrollPos = txtarea.scrollTop;
+    var strPos = 0;
+    var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
+        "ff" : (document.selection ? "ie" : false ) );
+    if (br == "ie") {
+        txtarea.focus();
+        var range = document.selection.createRange();
+        range.moveStart ('character', -txtarea.value.length);
+        strPos = range.text.length;
+    }
+    else if (br == "ff") strPos = txtarea.selectionStart;
+
+    var front = (txtarea.value).substring(0,strPos);
+    var back = (txtarea.value).substring(strPos,txtarea.value.length);
+    txtarea.value=front+text+back;
+    strPos = strPos + text.length;
+    if (br == "ie") {
+        txtarea.focus();
+        var range = document.selection.createRange();
+        range.moveStart ('character', -txtarea.value.length);
+        range.moveStart ('character', strPos);
+        range.moveEnd ('character', 0);
+        range.select();
+    }
+    else if (br == "ff") {
+        txtarea.selectionStart = strPos;
+        txtarea.selectionEnd = strPos;
+        txtarea.focus();
+    }
+    txtarea.scrollTop = scrollPos;
+}
 
 </script>
 
