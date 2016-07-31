@@ -20,9 +20,13 @@
 <!-- START ENTRIES -->
 <div class="post-preview hentry h-entry">
     {% if session.logged_in %}
-    <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
+        <div class="row">
+            <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
+        </div>
     {% endif %}
+    
     {% if entry.title != 'None' %}
+
     <h2 class="post-title p-name">
         <a href="/e{{entry.url}}">{{ entry.title }}</a>
     </h2>
