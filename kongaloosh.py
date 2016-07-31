@@ -180,9 +180,6 @@ def bulk_upload():
     if request.method == 'GET':
         return render_template('bulk_photo_uploader.html')
     elif request.method == 'POST':
-        print(request.files.getlist('file')[0])
-        print(type(request.files.getlist('file')))
-        print(request.files.getlist('file')[0].filename)
         date = datetime.now()
 
         for uploaded_file in request.files.getlist('file'):
@@ -195,6 +192,24 @@ def bulk_upload():
                 )
             )
         return redirect('/')
+    else:
+        return redirect('/404'), 404
+
+
+@app.route('/recent_uploads', methods=['GET', 'POST'])
+def recent_uploads():
+    """
+    :returns a formatted list of all the images in the current day's directory
+    """
+    if request.method == 'GET':
+        now = datetime.now()
+        preview = ""
+
+        file_list = []
+        for file in os.listdir("data/{0}/{1}/{2}".format(now.year, now.month, now.day)):
+            if file.endswith((".jpg",".png",".gif")):
+                file_list.append(file)
+        return ' '.join(file_list)
     else:
         return redirect('/404'), 404
 
