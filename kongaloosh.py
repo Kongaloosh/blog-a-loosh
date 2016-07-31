@@ -202,14 +202,34 @@ def recent_uploads():
     :returns a formatted list of all the images in the current day's directory
     """
     if request.method == 'GET':
+        IMAGE_TEMPLATE = \
+            '''
+                <div class="row">
+                    <div class="col-md-1 col-lg-1 col-sm-1">
+                        <a class="fancybox" rel="group"  href="%s">
+                            <img src="%s" class="img-responsive img-thumbnail" style="width:100">
+                        </a>
+                    </div>
+                    <div class="col-md-11 col-lg-11 col-sm-11">
+                        <p style="font-size:8pt;">
+                            %s
+                        </p>
+                    </div>
+                </div>
+
+            '''
+
         now = datetime.now()
+        directory = "data/{0}/{1}/{2}".format(now.year, now.month, now.day)
         preview = ""
 
         file_list = []
-        for file in os.listdir("data/{0}/{1}/{2}".format(now.year, now.month, now.day)):
-            if file.endswith((".jpg",".png",".gif")):
-                file_list.append(file)
-        return ' '.join(file_list)
+        for file in os.listdir(directory):
+            if file.endswith((".jpg", ".png", ".gif")):
+                path = (directory + "/" + file)
+                preview += IMAGE_TEMPLATE % (path, path, path)
+
+        return preview
     else:
         return redirect('/404'), 404
 
