@@ -20,8 +20,8 @@
     </div>
 </header>
 {% if session.logged_in %}
-<div class="container row">
-    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class="container row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+    <div class="input">
     <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
         Title:<br>
         <input type="text" name="name">
@@ -32,19 +32,23 @@
         Tags:<br>
         <input type="text" name="category">
         <br>
+        <hr>
         <br>
-        <textarea style="width: 100%" rows="5" name="content" form_id="input">note</textarea>
+        <textarea style="width: 100%" rows=5" name="content" form_id="input">note</textarea>
         <br>
         <br>
-        <textarea style="width: 100%" rows="5" name="social_content" form_id="">tweet preview</textarea>
+        <br>
+        <div id="photo_holder"></div>
+        <hr>
         <br>
         Summary:<br>
-        <input type="text" name="summary">
+        <input type="text" style="width:100%" name="summary">
         <br>
         <input type="checkbox" name="facebook" value="facebook">facebook
         <br>
         <input type="checkbox" name="twitter" value="twitter">twitter
         <br>
+        <hr>
         <br>
         Photo:<br>
         <input type="file" name="photo" accept="image/*">
@@ -62,6 +66,10 @@
     </form>
     <button onclick="getLocation()">Add Location</button>
     <input id="submit" type="submit" value="Submit">
+    </div>
+   <div class="row">
+        <br>
+        <button onclick="getRecentPhotos()">Show Recent Photos</button>
     </div>
 </div>
 <script>
@@ -85,7 +93,19 @@
       form.submit();
     });
 
+    function getRecentPhotos() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                document.getElementById("photo_holder").innerHTML = xhttp.responseText;
+            }
+        };
+        xhttp.open("GET", "/recent_uploads", true);
+        xhttp.send();
+    }
+
 </script>
+
 {% else %}
 <div class="row">
     <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
