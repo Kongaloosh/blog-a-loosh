@@ -175,6 +175,30 @@ def add():
         return redirect('/404'), 404
 
 
+@app.route('/bulk_upload', methods=['GET', 'POST'])
+def bulk_upload():
+    if request.method == 'GET':
+        return render_template('bulk_photo_uploader.html')
+    elif request.method == 'POST':
+        print(request.files.getlist('file')[0])
+        print(type(request.files.getlist('file')))
+        print(request.files.getlist('file')[0].filename)
+        date = datetime.now()
+
+        for uploaded_file in request.files.getlist('file'):
+            uploaded_file.save(
+                "data/{0}/{1}/{2}/{3}".format(
+                date.year,
+                date.month,
+                date.day,
+                uploaded_file.filename
+                )
+            )
+        return redirect('/')
+    else:
+        return redirect('/404'), 404
+
+
 def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
     r = send_mention(
@@ -252,9 +276,7 @@ def edit(year, month, day, name):
 def image_fetcher_depricated(year, month, day, name):
     """ do not use---old image fetcher """
     entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
-    print(entry)
     img = open(entry)
-    print(img)
     return send_file(img)
 
 
@@ -284,7 +306,6 @@ def profile(year, month, day, name):
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
-    app.logger.info(entry['in_reply_to'])
     for i in entry['in_reply_to']:                          # for all the replies we have...
         if type(i) == dict:           # which are not images on our site...
             reply_to.append(i)
