@@ -52,7 +52,6 @@ class AlbumPreprocessor(Preprocessor):
                 for image in images:                    # for each image in the album
                     alt = re.search("(?<=\[{1})(.)*(?=\]{1})",image).group() # get the alt text
                     image_location = re.search("(?<=\({1})(.)*(?=\){1})",image).group()
-                    print(image_location)
                     generated_html += self.IMG_WRAP % (image_location, image_location, 100/(len(images)+.2))
 
                 # finally put code into div
