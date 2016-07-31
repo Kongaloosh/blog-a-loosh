@@ -18,7 +18,7 @@ class AlbumExtension(Extension):
 
 class AlbumPreprocessor(Preprocessor):
     ALBUM_GROUP_RE = re.compile(
-        r'''(@{3,})(?P<album>((.)|(\n))*)(@{3,})'''
+        r'''(@{3,})(?P<album>((.)|(\n))*?)(@{3,})'''
     )
 
     GROUP_WRAP = '''
@@ -43,18 +43,17 @@ class AlbumPreprocessor(Preprocessor):
         while 1:
             m = self.ALBUM_GROUP_RE.search(text)
             if m:                                    # if there is a match
-                print(m.group('album'))
 
                 album_collection = ""
-                images = m.group('album').replace(" ", "").split("-")
 
+                images = re.split("(?<=\){1})[ ,\n]*-*[ ,\n]*(?=\[{1})", m.group('album'))
                 # could probably just do it once for both and zip into tuple
                 generated_html = ""
                 for image in images:                    # for each image in the album
                     alt = re.search("(?<=\[{1})(.)*(?=\]{1})",image).group() # get the alt text
                     image_location = re.search("(?<=\({1})(.)*(?=\){1})",image).group()
-                    print(image_location, 100/len(images))
-                    generated_html += self.IMG_WRAP % (image_location, image_location, 100/len(images))
+                    print(image_location)
+                    generated_html += self.IMG_WRAP % (image_location, image_location, 100/(len(images)+.2))
 
                 # finally put code into div
                 generated_html = self.GROUP_WRAP % (generated_html)
