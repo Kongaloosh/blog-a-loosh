@@ -2,11 +2,12 @@ import pickle
 import re
 import os
 import sys
-import markdown2
+import markdown
 from slugify import slugify
 from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
+from pysrc.file_management.markdown_album_extension import AlbumExtension
 from geopy.geocoders import GoogleV3
 from geopy.exc import GeocoderQuotaExceeded, GeocoderQueryError
 __author__ = 'alex'
@@ -27,9 +28,10 @@ def file_parser(filename):
     except: pass
     try:
         e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        e['content'] = markdown2.markdown(e['content'], extras=['tables','fenced_code'])
+        e['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        print(e['content'])
         if e['content'] == None:
-            e['content'] = markdown2.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extras=['tables','fenced-code-blocks'])
+            e['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
     except: pass
     try:
         date = parse(re.search('(?<=published:)(.)*', str).group())
@@ -295,7 +297,7 @@ def entry_re_write(data):
     entry += "syndication:" + str(data['syndication']) + "\n"
     entry += "content:" + data['content']+ "\n"
     if not os.path.isfile('data/'+data['url']+".md"):
-        raise IOError('data/'+data[url]+'.md')                                      # if the file doesn't exist, this is being used wrong
+        raise IOError('data/'+data['url']+'.md')                                      # if the file doesn't exist, this is being used wrong
     file_writer = open('data/'+data['url']+".md", 'wb')
     file_writer.write(entry.encode('utf-8') )
     file_writer.close()
