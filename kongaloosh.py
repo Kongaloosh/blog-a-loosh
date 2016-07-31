@@ -5,6 +5,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
     render_template, flash, Response, send_file
 from contextlib import closing
 import os
+import math
 from datetime import datetime
 from jinja2 import Environment
 from dateutil.parser import parse
@@ -223,13 +224,48 @@ def recent_uploads():
 
         now = datetime.now()
         directory = "data/{0}/{1}/{2}".format(now.year, now.month, now.day)
-        preview = ""
 
         file_list = []
         for file in os.listdir(directory):
             if file.endswith((".jpg", ".png", ".gif")):
                 path = (directory + "/" + file)
-                preview += IMAGE_TEMPLATE % (path, path, path, path)
+                file_list.append(path)
+
+        preview = ""
+        print(len(file_list))
+        print(file_list)
+        j = 0
+        while (True):
+            row = ""
+            for i in range(0,4):            # for every row we want to make
+                image_index = (4 * j) + i
+                if image_index >= len(file_list):
+                    preview += \
+                        '''
+                        <div class="row">
+                            %s
+                        </div>
+                        ''' % (row)
+                    return preview
+
+                image_location = file_list[image_index]
+                print(image_location)
+                print(image_index)
+                text_box_insert = "[](%s)" % image_location
+                row += \
+                    '''
+                        <a onclick="insertAtCaret('text_input','%s');return false;">
+                            <img src="%s" class="img-responsive img-thumbnail" style="max-width:%d%%; max-height:200px">
+                        </a>
+                    ''' % (text_box_insert, image_location, 100/(4+0.2))
+            print(row)
+            preview += \
+                '''
+                <div class="row">
+                    %s
+                </div>
+                ''' % (row)
+            j += 1
 
         return preview
     else:
