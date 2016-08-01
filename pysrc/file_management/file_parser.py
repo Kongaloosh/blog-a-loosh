@@ -163,7 +163,7 @@ def editEntry(data, old_entry, g):
     entry += "location:" + str(data['location'])+ "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
-    entry += "syndication:" + str(data['syndication']) + "\n"
+    entry += "syndication:" + str(old_entry['syndication']) + "\n"
     entry += "content:" + data['content'] + "\n"
 
     total_path = old_entry['url']
