@@ -183,7 +183,7 @@ def bulk_upload():
     elif request.method == 'POST':
         date = datetime.now()
 
-        file_path = "data/{0}/{1}/{2}".format(
+        file_path = "data/{0}/{1}/{2}/".format(
             date.year,
             date.month,
             date.day
@@ -194,7 +194,7 @@ def bulk_upload():
 
         for uploaded_file in request.files.getlist('file'):
             uploaded_file.save(
-                file_path + "/{3}".format(
+                file_path + "{0}".format(
                     uploaded_file.filename
                 )
             )
