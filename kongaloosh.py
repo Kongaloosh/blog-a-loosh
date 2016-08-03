@@ -238,8 +238,6 @@ def recent_uploads():
                 file_list.append(path)
 
         preview = ""
-        print(len(file_list))
-        print(file_list)
         j = 0
         while (True):
             row = ""
@@ -255,8 +253,6 @@ def recent_uploads():
                     return preview
 
                 image_location = file_list[image_index]
-                print(image_location)
-                print(image_index)
                 text_box_insert = "[](%s)" % image_location
                 row += \
                     '''
@@ -264,7 +260,6 @@ def recent_uploads():
                             <img src="%s" class="img-responsive img-thumbnail" style="max-width:%d%%; max-height:200px">
                         </a>
                     ''' % (text_box_insert, image_location, 100/(4+0.2))
-            print(row)
             preview += \
                 '''
                 <div class="row">
