@@ -165,11 +165,11 @@ def add():
             send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
 
         if request.form.get('twitter'):
-            t = Timer(10, bridgy_twitter, [location])
+            t = Timer(30, bridgy_twitter, [location])
             t.start()
 
         if request.form.get('facebook'):
-            t = Timer(20, bridgy_facebook, [location])
+            t = Timer(30, bridgy_facebook, [location])
             t.start()
         return redirect(location)
     else:
@@ -183,13 +183,19 @@ def bulk_upload():
     elif request.method == 'POST':
         date = datetime.now()
 
+        file_path = "data/{0}/{1}/{2}".format(
+            date.year,
+            date.month,
+            date.day
+        )
+
+        if not os.path.exists(file_path):
+            os.makedirs(os.path.dirname(file_path))
+
         for uploaded_file in request.files.getlist('file'):
             uploaded_file.save(
-                "data/{0}/{1}/{2}/{3}".format(
-                date.year,
-                date.month,
-                date.day,
-                uploaded_file.filename
+                file_path + "/{3}".format(
+                    uploaded_file.filename
                 )
             )
         return redirect('/')
@@ -279,7 +285,6 @@ def bridgy_facebook(location):
         'https://brid.gy/publish/facebook',
         endpoint='https://brid.gy/publish/webmention'
     )
-    pickle.dump(r, open('blorp.pkl','w'))
     syndication = r.json()
     data = get_bare_file('data/' + location.split('/e/')[1]+".md")
     if data['syndication'] == 'None':
