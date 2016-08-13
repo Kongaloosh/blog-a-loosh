@@ -29,9 +29,11 @@ class AlbumPreprocessor(Preprocessor):
     IMG_WRAP = \
         '''
         <a class="fancybox" rel="group"  href="%s">
-            <img src="%s" class="img-responsive img-thumbnail" style="width:%d%%">
+            <img src="%s" class="img-responsive img-thumbnail" style="max-height:;width:%d%%">
         </a>
         '''
+
+    SITE_INSERT = "http://kongaloosh.com/"
 
     def __init__(self, md):
         super(AlbumPreprocessor, self).__init__(md)
@@ -40,7 +42,7 @@ class AlbumPreprocessor(Preprocessor):
         """ Match and store Fenced Code Blocks in the HtmlStash. """
 
         text = "\n".join(lines)
-        while 1:
+        while True:
             m = self.ALBUM_GROUP_RE.search(text)
             if m:                                    # if there is a match
 
@@ -51,7 +53,7 @@ class AlbumPreprocessor(Preprocessor):
                 generated_html = ""
                 for image in images:                    # for each image in the album
                     alt = re.search("(?<=\[{1})(.)*(?=\]{1})",image).group() # get the alt text
-                    image_location = re.search("(?<=\({1})(.)*(?=\){1})",image).group()
+                    image_location = self.SITE_INSERT + re.search("(?<=\({1})(.)*(?=\){1})",image).group()
                     generated_html += self.IMG_WRAP % (image_location, image_location, 100/(len(images)+.2))
 
                 # finally put code into div
