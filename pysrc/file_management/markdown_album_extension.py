@@ -29,7 +29,7 @@ class AlbumPreprocessor(Preprocessor):
     IMG_WRAP = \
         '''
         <a class="fancybox" rel="group"  href="%s">
-            <img src="%s" class="img-responsive img-thumbnail" style="max-height:;width:%d%%">
+            <img src="%s" class="img-responsive img-thumbnail" style="max-height:60%%;max-width:%d%%">
         </a>
         '''
 
