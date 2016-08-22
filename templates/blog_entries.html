@@ -62,8 +62,9 @@
         <h3 class="post-subtitle p-summary">
             {{entry.summary}}
         </h3>
+        {% else %}
+        <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
-        <p class="e-content">{{entry.content | safe}}</p>
         <div class="entry-footer clearfix">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
                 <i class="fa fa-tags"></i>
