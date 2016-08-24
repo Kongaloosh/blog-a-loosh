@@ -29,7 +29,6 @@ def file_parser(filename):
     try:
         e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
         e['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
-        print(e['content'])
         if e['content'] == None:
             e['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
     except: pass
