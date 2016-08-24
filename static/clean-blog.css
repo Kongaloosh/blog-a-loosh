@@ -145,14 +145,15 @@ hr.small {
 .intro-header .site-heading,
 .intro-header .post-heading,
 .intro-header .page-heading {
-  padding: 100px 0 50px;
+  padding: 10px 0 10px;
   color: white;
+  height: 400px;
+
 }
 @media only screen and (min-width: 768px) {
   .intro-header .site-heading,
   .intro-header .post-heading,
   .intro-header .page-heading {
-    padding: 150px 0;
   }
 }
 .intro-header .site-heading,
@@ -393,3 +394,19 @@ img::-moz-selection {
 body {
   webkit-tap-highlight-color: #0085a1;
 }
+
+.site-heading {
+  margin-top: 55px;
+  margin-bottom: 50px;
+  background-color:rgba(0, 0, 0, 0.7);
+  padding: 10%;
+}
+
+.profile-image-holder{
+  height: 100%;
+  max-width: 100%;
+  margin: 25%;
+  display: table;
+  vertical-align: middle;
+}
+
