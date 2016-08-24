@@ -72,7 +72,7 @@ def show_entries():
     except IndexError:
         entries=None
 
-    before = 0
+    before = 1
 
     for entry in entries:
         for i in entry['syndication'].split(','):
@@ -131,10 +131,7 @@ def pagination(number):
     except IndexError:
         entries = None
 
-    try:
-        before = int(number)+1
-    except IndexError:
-        before = 0
+    before = int(number)+1
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
