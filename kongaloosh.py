@@ -72,10 +72,7 @@ def show_entries():
     except IndexError:
         entries=None
 
-    try:
-        before = entries[len(entries)-1]['published']
-    except IndexError:
-        before = 0
+    before = 0
 
     for entry in entries:
         for i in entry['syndication'].split(','):
@@ -107,17 +104,40 @@ def show_entries_before(datetime):
             entries.append(file_parser(row+".md"))
 
     try:
-        entries=entries[:10]
+        entries = entries[:10]
     except IndexError:
-        entries=None
+        entries = None
+
+    return render_template('blog_entries.html', entries=entries, before=before)
+
+
+@app.route('/page/<number>')
+def pagination(number):
+    entries = []
+    cur = g.db.execute(
+        """
+        SELECT entries.location FROM entries
+        ORDER BY entries.published DESC
+        """.format(datetime=datetime)
+    )
+
+    for (row,) in cur.fetchall():
+        if os.path.exists(row+".md"):
+            entries.append(file_parser(row+".md"))
 
     try:
-        before = entries[len(entries)-1]['published']
+        start = int(number) * 10
+        entries = entries[start:start+10]
+    except IndexError:
+        entries = None
+
+    try:
+        before = int(number)+1
     except IndexError:
         before = 0
 
-
     return render_template('blog_entries.html', entries=entries, before=before)
+
 
 
 @app.route('/404')
