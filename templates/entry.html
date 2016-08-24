@@ -28,10 +28,10 @@
 {% endif %}
 
 <article>
-    <div class="row">
+    <div class="container">
 
         {% if reply_to %}
-        <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 align-center"> <!-- REPLY DECORATOR END -->
+        <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-xs-offset-1 col-md-10 col-xs-offset-1 align-center"> <!-- REPLY DECORATOR END -->
             <div class="text-center">
                 <h3><i class="fa fa-share"></i></h3>
                 <strong>In response to</strong>
@@ -41,7 +41,7 @@
         {% endif %}
 
         {% for reply in reply_to %}
-        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 reply"> <!-- REPLY -->
+        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1 reply"> <!-- REPLY -->
             {% if reply.content %}
             <div class="reply-header text-center">
                 {{reply.content | safe}}
@@ -69,7 +69,7 @@
         </div>
         {% endif %}
 
-        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
             {% if entry.in_reply_to is sequence %}
             {% for site in entry.in_reply_to %}
             {% if site.photo is defined %}
