@@ -70,7 +70,7 @@
         {% else %}
         <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
-        <div class="entry-footer clearfix">                         <!-- Footer -->
+        <div class="entry-footer clearfix" style="font-size:15px; font-size:15px; color: grey">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
                 <i class="fa fa-tags"></i>
                 {% for c in entry.category %}
@@ -83,12 +83,14 @@
     </div>
 
     <div class="row">
-        <div class="col-md-9" style="overflow-x: scroll;">
+        <div class="col-md-9" style="overflow-x: scroll; font-size:15px; color: grey">
             Posted on
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
             {% if entry.location != 'None' %} <!-- If there's a location -->
-            in
-            <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+                {{entry.location}}
+                {{entry.location != 'None'}}
+                in
+                <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
             {% endif %}
 
         </div> <!-- END POST DETAILS -->
