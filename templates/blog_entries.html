@@ -59,9 +59,14 @@
              src="/{{entry.photo}}">
         {% endif %}
         {% if entry.summary != 'None' %}
-        <i class="post-subtitle p-summary">
-            {{entry.summary}}
-        </i>
+        <div class="post-subtitle p-summary">
+                <p>
+                <i>
+                {{entry.summary}}
+                </i>
+            </p>
+        </div>
+
         {% else %}
         <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
