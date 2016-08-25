@@ -33,9 +33,9 @@
     {% endif %}
 
     {% if entry.in_reply_to != 'None' and entry.in_reply_to is string %}
-    <h3 class="post-subtitle u-in-reply-to">
+    <h class="post-subtitle u-in-reply-to">
         {{entry.in_reply_to}}
-    </h3>
+    </h>
     {% endif%}
 
     {% if entry.in_reply_to is sequence %}
@@ -59,9 +59,9 @@
              src="/{{entry.photo}}">
         {% endif %}
         {% if entry.summary != 'None' %}
-        <h3 class="post-subtitle p-summary">
+        <i class="post-subtitle p-summary">
             {{entry.summary}}
-        </h3>
+        </i>
         {% else %}
         <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
