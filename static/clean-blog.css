@@ -145,7 +145,7 @@ hr.small {
 .intro-header .site-heading,
 .intro-header .post-heading,
 .intro-header .page-heading {
-  padding: 10px 0 10px;
+  padding: 30px;
   color: white;
   height: 400px;
 
@@ -400,13 +400,20 @@ body {
   margin-bottom: 50px;
   background-color:rgba(0, 0, 0, 0.7);
   padding: 10%;
+  padding-top: 60px;
 }
 
 .profile-image-holder{
-  height: 100%;
-  max-width: 100%;
-  margin: 25%;
-  display: table;
-  vertical-align: middle;
+    float: left;
+  }
+
+.site-heading a{
+  color: #337ab7;
+  /*background-color: #404040;*/
+  cursor: not-allowed;
+}
+
+.site-heading p{
+    font-size:18
 }
 
