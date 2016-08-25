@@ -219,7 +219,7 @@ def create_entry(data, g, image=None, video=None, audio=None):
         month = str(data['published'].month),
         day = str(data['published'].day),
         slug = str(slug)) + "\n"
-    entry += "location:" + str(data['location'])+ "\n"
+    entry += "location:" + str(data['location']) + "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"

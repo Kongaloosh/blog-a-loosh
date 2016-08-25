@@ -86,9 +86,7 @@
         <div class="col-md-9" style="overflow-x: scroll; font-size:15px; color: grey">
             Posted on
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-            {% if entry.location != 'None' %} <!-- If there's a location -->
-                {{entry.location}}
-                {{entry.location != 'None'}}
+            {% if entry.location != 'None'%} <!-- If there's a location -->
                 in
                 <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
             {% endif %}
