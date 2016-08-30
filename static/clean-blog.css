@@ -414,6 +414,14 @@ body {
 }
 
 .site-heading p{
-    font-size:18
+    font-size:18pt;
 }
 
+.entry-footer a,
+.entry-footer p,
+.entry-footer i,
+.entry-footer span{
+  font-size:10pt;
+  color: grey;
+  margin-top:0pt;
+}
