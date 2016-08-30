@@ -70,7 +70,7 @@
         {% else %}
         <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
-        <div class="entry-footer clearfix" style="font-size:15px; font-size:15px; color: grey">                         <!-- Footer -->
+        <div class="entry-footer clearfix">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
                 <i class="fa fa-tags"></i>
                 {% for c in entry.category %}
@@ -82,30 +82,32 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-9" style="overflow-x: scroll; font-size:15px; color: grey">
-            Posted on
+    <div class="entry-footer row">
+        <div class="text-left col-lg-9 col-md-9 col-sm-9 col-xs-9">
+            <p>Posted on
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-            {% if entry.location != 'None'%} <!-- If there's a location -->
+            {% if entry.location != 'None'%} <!-- If there's a location -->9
                 in
                 <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
             {% endif %}
-
+            </p>
         </div> <!-- END POST DETAILS -->
 
-        <div class="text-right col-md-3">
-            {% if entry.in_reply_to != 'None' %}
-            <span>{{entry.in_reply_to | length}}</span>
-            <i class="fa fa-reply"></i>
-            {% endif %}
-            <span data-webmention-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
-            <i class="fa fa-comments"></i>
-            <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+        <div class="text-right col-lg-3 col-md-3 col-sm-3 col-xs-3">
+            <p>
+                {% if entry.in_reply_to != 'None' %}
+                <span>{{entry.in_reply_to | length}}</span>
+                <i class="fa fa-reply"></i>
+                {% endif %}
+                <span data-webmention-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
+                <i class="fa fa-comments"></i>
+                <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+            </p>
         </div> <!-- END PERMALINK -->
     </div> <!-- END AUTHORSHIP -->
 
     {% if entry.twitter %}
-    <div class="row">
+    <div class="entry-footer row">
         <div class="actions col-md-9 pull-left">
             <indie-action do="like" with="http://kongaloosh.com/e{{entry.url}}">
                 <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
