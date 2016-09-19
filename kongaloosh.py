@@ -551,6 +551,9 @@ def handle_micropub():
                         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
 
+                if data['syndication']:
+                    data['syndication'] += ","
+
                 if not data['published']:                       # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
