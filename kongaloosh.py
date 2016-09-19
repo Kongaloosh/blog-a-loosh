@@ -26,6 +26,7 @@ DEBUG = True
 SECRET_KEY = open('config/development_key', 'rb').read().rstrip('\n')
 USERNAME = open('config/site_authentication/username', 'rb').read().rstrip('\n')
 PASSWORD = open('config/site_authentication/password', 'rb').read().rstrip('\n')
+DOMAIN_NAME = ('config/domain_name', 'rb').read().rstrip('\n')
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -179,7 +180,7 @@ def add():
         location = create_entry(data, image=data['photo'], g=g)
 
         if data['in-reply-to']:
-            send_mention('http://kongaloosh.com/'+location, data['in-reply-to'])
+            send_mention('http://' + DOMAIN_NAME + '/'+location, data['in-reply-to'])
 
         if request.form.get('twitter'):
             t = Timer(30, bridgy_twitter, [location])
@@ -293,7 +294,7 @@ def recent_uploads():
 def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
     r = send_mention(
-        'http://kongaloosh.com'+location,
+        'http://' + DOMAIN_NAME + location,
         'https://brid.gy/publish/facebook',
         endpoint='https://brid.gy/publish/webmention'
     )
@@ -309,7 +310,7 @@ def bridgy_facebook(location):
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
     r = send_mention(
-        'http://kongaloosh.com'+location,
+        'http://' + DOMAIN_NAME + location,
         'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
@@ -392,7 +393,7 @@ def profile(year, month, day, name):
     if os.path.exists(file_name+".mp3"):
         entry['audio'] = file_name+".mp3" # get the actual file
 
-    mentions = get_mentions('http://kongaloosh.com/e/{year}/{month}/{day}/{name}'.
+    mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
@@ -589,7 +590,7 @@ def handle_micropub():
                     t = Timer(20, bridgy_facebook, [location])
                     t.start()
 
-                resp = Response(status="created", headers={'Location':'http://kongaloosh.com/'+location})
+                resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
                 resp.status_code = 201
                 return resp
             else:
