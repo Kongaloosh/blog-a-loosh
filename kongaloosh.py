@@ -613,5 +613,14 @@ def handle_micropub():
             return resp
         return 'not implemented', 501
 
+@app.route('/inbox', methods=['GET','POST'])
+def handle_inbox():
+    if request.method == 'GET':
+        pass
+    elif request.method == 'POST':
+        pass
+    else:
+        return 'not implemented', 501
+
 if __name__ == "__main__":
     app.run(debug=True)
