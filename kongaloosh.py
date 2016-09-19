@@ -26,7 +26,7 @@ DEBUG = True
 SECRET_KEY = open('config/development_key', 'rb').read().rstrip('\n')
 USERNAME = open('config/site_authentication/username', 'rb').read().rstrip('\n')
 PASSWORD = open('config/site_authentication/password', 'rb').read().rstrip('\n')
-DOMAIN_NAME = ('config/domain_name', 'rb').read().rstrip('\n')
+DOMAIN_NAME = open('config/domain_name', 'rb').read().rstrip('\n')
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -616,11 +616,15 @@ def handle_micropub():
 @app.route('/inbox', methods=['GET','POST'])
 def handle_inbox():
     if request.method == 'GET':
-        pass
+        inbox_location = "inbox/"
+        entries = [f for f in os.listdir(inbox_location) if os.path.isfile(os.path.join(inbox_location, f))]
+        return render_template('inbox.html', entries=entries)
     elif request.method == 'POST':
         pass
     else:
         return 'not implemented', 501
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
