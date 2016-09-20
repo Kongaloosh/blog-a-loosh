@@ -18,6 +18,8 @@ from pysrc.webmention.mentioner import send_mention
 from rdflib import Graph, plugin
 import pickle
 from threading import Timer
+import requests
+import json
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -89,30 +91,6 @@ def show_entries():
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
-# @app.route('/before/<datetime>')
-# def show_entries_before(datetime):
-#     """The driver for linear navigation."""
-#     entries = []
-#     cur = g.db.execute(
-#         """
-#         SELECT entries.location FROM entries
-#         WHERE date('{datetime}') > entries.published
-#         ORDER BY entries.published DESC
-#         """.format(datetime=datetime)
-#     )
-#
-#     for (row,) in cur.fetchall():
-#         if os.path.exists(row+".md"):
-#             entries.append(file_parser(row+".md"))
-#
-#     try:
-#         entries = entries[:10]
-#     except IndexError:
-#         entries = None
-#
-#     return render_template('blog_entries.html', entries=entries, before=before)
-
-
 @app.route('/page/<number>')
 def pagination(number):
     entries = []
@@ -136,7 +114,6 @@ def pagination(number):
     before = int(number)+1
 
     return render_template('blog_entries.html', entries=entries, before=before)
-
 
 
 @app.route('/404')
@@ -621,20 +598,32 @@ def handle_inbox():
         inbox_location = "inbox/"
         entries = [f for f in os.listdir(inbox_location) if os.path.isfile(os.path.join(inbox_location, f))]
         return render_template('inbox.html', entries=entries)
-        #todo: approval queue
     elif request.method == 'POST':
         # check content is json-ld
-            app.logger.info(request.data)
-            g = Graph().parse(data=request.data, format='json-ld')
 
-            # Check Signature
-            sender = [row for row in g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#actor> ?s .}')][0]
-            if sender == 'http://rhiaro.co.uk':
-                notification = open('inbox/test.json','w+')
-                notification.write(g.serialize(format='json-ld', indent=4))
-                return "Waiting for approval", 202
-            else: #not whitelisted
-                return "you are not permitted to make submissions", 403
+            data = json.loads(request.data)
+            app.logger.info(data)
+            try:
+                sender = data['actor']['@id']
+            except KeyError:
+                return "could not validate notification sender: no actor id", 403
+
+            if sender == 'http://rhiaro.co.uk':             # check if the sender is whitelisted
+                # todo: make better names for notifications
+                notification = open('inbox/' + datetime.now() + '.json','w+')
+                notification.write(request.data)
+                return "added to inbox", 202
+            else:                                           # if the sender isn't whitelisted
+                try:
+                    validate = requests.get(sender)
+                    if validate.status_code - 200 < 100:    # if the sender is real
+                        notification = open('inbox/approval_' + datetime.now() + '.json','w+')
+                        notification.write(request.data)
+                        return "queued", 202
+                    else:
+                        return "forbidden", 403
+                except requests.ConnectionError:
+                    return "forbidden", 403
     else:
         return "this is not implemented", 501
 
