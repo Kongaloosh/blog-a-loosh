@@ -158,7 +158,7 @@ def add():
         location = create_entry(data, image=data['photo'], g=g)
 
         if data['in-reply-to']:
-            send_mention('http://' + DOMAIN_NAME + '/'+location, data['in-reply-to'])
+            send_mention('http://' + DOMAIN_NAME + '/e/'+location, data['in-reply-to'])
 
         if request.form.get('twitter'):
             t = Timer(30, bridgy_twitter, [location])
@@ -272,7 +272,7 @@ def recent_uploads():
 def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
     r = send_mention(
-        'http://' + DOMAIN_NAME + location,
+        'http://' + DOMAIN_NAME + '/e/' + location,
         'https://brid.gy/publish/facebook',
         endpoint='https://brid.gy/publish/webmention'
     )
@@ -288,11 +288,10 @@ def bridgy_facebook(location):
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
     r = send_mention(
-        'http://' + DOMAIN_NAME + location,
+        'http://' + DOMAIN_NAME +'/e/' + location,
         'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
-    pickle.dump(r, open('blorp.pkl','w'))
     syndication = r.json()
     data = get_bare_file('data/' + location.split('/e/')[1]+".md")
     if data['syndication'] == 'None':
@@ -330,11 +329,13 @@ def edit(year, month, day, name):
                 data[key] = None
 
         if request.form.get('twitter'):
-            data['syndication'] = tweeter.main(data, photo=None) + ","
-        if request.form.get('instagram'):
-            pass #todo: add posse to instagram
-        if request.form.get('tumblr'):
-            pass #todo: add posse to tumblr
+            t = Timer(30, bridgy_twitter, [data['location']])
+            t.start()
+
+        if request.form.get('facebook'):
+            t = Timer(30, bridgy_facebook, [data['location']])
+            t.start()
+
         file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
         entry = get_bare_file(file_name+".md")
         location = editEntry(data, old_entry=entry, g=g)
