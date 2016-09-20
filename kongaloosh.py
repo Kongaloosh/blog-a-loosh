@@ -15,6 +15,8 @@ from pysrc.file_management.file_parser import editEntry, create_entry, file_pars
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
+from rdflib import Graph, plugin
+from rdflib.serializer import Serializer
 import pickle
 from threading import Timer
 
@@ -620,11 +622,25 @@ def handle_inbox():
         entries = [f for f in os.listdir(inbox_location) if os.path.isfile(os.path.join(inbox_location, f))]
         return render_template('inbox.html', entries=entries)
     elif request.method == 'POST':
-        pass
+        # check content is json-ld
+        #   Security Concerns:
+            g = Graph().parse(data=request.content, format='json-ld')
+            # Check Signature
+            qres = g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#actor> ?s .}')
+
+            # Retrieve and Verify From Domain
+
+            # Check Whitelist
     else:
         return 'not implemented', 501
 
-
+@app.route('/i/<name>', methods=['GET'])
+def show_inbox_item(name):
+    if request.method == 'GET':
+        inbox_data = open('inbox/'+name).read()
+        g = Graph().parse(data=inbox_data, format='json-ld')
+        entries = [row for row in g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#content> ?s .}')][0]
+        return render_template('inbox.html', entries=entries)
 
 if __name__ == "__main__":
     app.run(debug=True)
