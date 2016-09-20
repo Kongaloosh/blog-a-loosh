@@ -90,28 +90,28 @@ def show_entries():
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
-@app.route('/before/<datetime>')
-def show_entries_before(datetime):
-    """The driver for linear navigation."""
-    entries = []
-    cur = g.db.execute(
-        """
-        SELECT entries.location FROM entries
-        WHERE date('{datetime}') > entries.published
-        ORDER BY entries.published DESC
-        """.format(datetime=datetime)
-    )
-
-    for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
-
-    try:
-        entries = entries[:10]
-    except IndexError:
-        entries = None
-
-    return render_template('blog_entries.html', entries=entries, before=before)
+# @app.route('/before/<datetime>')
+# def show_entries_before(datetime):
+#     """The driver for linear navigation."""
+#     entries = []
+#     cur = g.db.execute(
+#         """
+#         SELECT entries.location FROM entries
+#         WHERE date('{datetime}') > entries.published
+#         ORDER BY entries.published DESC
+#         """.format(datetime=datetime)
+#     )
+#
+#     for (row,) in cur.fetchall():
+#         if os.path.exists(row+".md"):
+#             entries.append(file_parser(row+".md"))
+#
+#     try:
+#         entries = entries[:10]
+#     except IndexError:
+#         entries = None
+#
+#     return render_template('blog_entries.html', entries=entries, before=before)
 
 
 @app.route('/page/<number>')
@@ -636,6 +636,10 @@ def handle_inbox():
                 return 403
     else:
         return 'not implemented', 501
+
+@app.route('/inbox/send/', methods=['GET','POST'])
+def notifier():
+    return 501
 
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
