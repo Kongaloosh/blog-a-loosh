@@ -16,7 +16,6 @@ from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
 from rdflib import Graph, plugin
-from rdflib.serializer import Serializer
 import pickle
 from threading import Timer
 
@@ -615,7 +614,8 @@ def handle_micropub():
             return resp
         return 'not implemented', 501
 
-@app.route('/inbox', methods=['GET','POST'])
+
+@app.route('/inbox', methods=['GET', 'POST'])
 def handle_inbox():
     if request.method == 'GET':
         inbox_location = "inbox/"
@@ -624,22 +624,25 @@ def handle_inbox():
         #todo: approval queue
     elif request.method == 'POST':
         # check content is json-ld
-        #   Security Concerns:
-            g = Graph().parse(data=request.text, format='json-ld')
-            # Check Signature
-            sender = [row for row in  g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#actor> ?s .}')][0]
-            if sender == 'http://rhiaro.co.uk':
-                notification = open('http://www.w3.org/ns/activitystreams#name','w+')
-                notification.write(request.text)
-                return 202
-            else: #not whitelisted
-                return 403
-    else:
-        return 'not implemented', 501
+            app.logger.info(request.data)
+            g = Graph().parse(data=request.data, format='json-ld')
 
-@app.route('/inbox/send/', methods=['GET','POST'])
+            # Check Signature
+            sender = [row for row in g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#actor> ?s .}')][0]
+            if sender == 'http://rhiaro.co.uk':
+                notification = open('inbox/test.json','w+')
+                notification.write(g.serialize(format='json-ld', indent=4))
+                return "Waiting for approval", 202
+            else: #not whitelisted
+                return "you are not permitted to make submissions", 403
+    else:
+        return "this is not implemented", 501
+
+
+@app.route('/inbox/send/', methods=['GET', 'POST'])
 def notifier():
     return 501
+
 
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
