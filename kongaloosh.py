@@ -621,20 +621,23 @@ def handle_inbox():
         inbox_location = "inbox/"
         entries = [f for f in os.listdir(inbox_location) if os.path.isfile(os.path.join(inbox_location, f))]
         return render_template('inbox.html', entries=entries)
+        #todo: approval queue
     elif request.method == 'POST':
         # check content is json-ld
         #   Security Concerns:
-            g = Graph().parse(data=request.content, format='json-ld')
+            g = Graph().parse(data=request.text, format='json-ld')
             # Check Signature
-            qres = g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#actor> ?s .}')
-
-            # Retrieve and Verify From Domain
-
-            # Check Whitelist
+            sender = [row for row in  g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#actor> ?s .}')][0]
+            if sender == 'http://rhiaro.co.uk':
+                notification = open('http://www.w3.org/ns/activitystreams#name','w+')
+                notification.write(request.text)
+                return 202
+            else: #not whitelisted
+                return 403
     else:
         return 'not implemented', 501
 
-@app.route('/i/<name>', methods=['GET'])
+@app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
     if request.method == 'GET':
         inbox_data = open('inbox/'+name).read()
