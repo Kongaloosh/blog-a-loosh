@@ -5,8 +5,21 @@
     <title></title>
 </head>
 <body>
-{% for entry in entries %}
-    <a href="/inbox/{{entry}}">{{entry}}</a>
-{% endfor %}
+
+{% if session.logged_in %}
+<ul>
+    {% for notification in for_approval %}
+    <li><a href="/inbox/{{notification}}">{{notification}}</a></li>
+    {% endfor %}
+</ul>
+
+{% endif %}
+
+<ul>
+    {% for entry in entries %}
+    <li><a href="/inbox/{{entry}}">{{entry}}</a></li>
+    {% endfor %}
+</ul>
+
 </body>
 </html>

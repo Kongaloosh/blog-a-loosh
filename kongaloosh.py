@@ -596,8 +596,16 @@ def handle_micropub():
 def handle_inbox():
     if request.method == 'GET':
         inbox_location = "inbox/"
-        entries = [f for f in os.listdir(inbox_location) if os.path.isfile(os.path.join(inbox_location, f))]
-        return render_template('inbox.html', entries=entries)
+        entries = [
+            f for f in os.listdir(inbox_location)
+            if os.path.isfile(os.path.join(inbox_location, f))
+            and f.endswith('.json')]
+
+        for_approval = [entry for entry in entries if entry.startswith("approval_")]
+        entries = [entry for entry in entries if not entry.startswith("approval_")]
+
+        return render_template('inbox.html', entries=entries, for_approval=for_approval)
+
     elif request.method == 'POST':
         # check content is json-ld
 
