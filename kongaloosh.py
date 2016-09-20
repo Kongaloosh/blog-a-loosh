@@ -618,18 +618,21 @@ def handle_inbox():
             try:
                 sender = data['actor']['@id']
             except KeyError:
-                return "could not validate notification sender: no actor id", 403
+		try:
+		    sender = data['actor']['id']
+                except KeyError:
+		    return "could not validate notification sender: no actor id", 403
 
-            if sender == 'http://rhiaro.co.uk':             # check if the sender is whitelisted
+            if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
                 # todo: make better names for notifications
-                notification = open('inbox/' + datetime.now() + '.json','w+')
+                notification = open('inbox/' + str(datetime.now()) + '.json','w+')
                 notification.write(request.data)
                 return "added to inbox", 202
             else:                                           # if the sender isn't whitelisted
                 try:
                     validate = requests.get(sender)
                     if validate.status_code - 200 < 100:    # if the sender is real
-                        notification = open('inbox/approval_' + datetime.now() + '.json','w+')
+                        notification = open('inbox/approval_' + str(datetime.now()) + '.json','w+')
                         notification.write(request.data)
                         return "queued", 202
                     else:
@@ -650,7 +653,11 @@ def show_inbox_item(name):
     if request.method == 'GET':
         entry = json.loads(open('inbox/'+name).read())
         app.logger.info(entry)
-        return render_template('inbox_notification.html', entry=entry, sender=entry['actor']['@id'])
+	try:
+	    sender = entry['actor']['@id']
+	except KeyError:
+	    sender = entry['actor']['id']
+        return render_template('inbox_notification.html', entry=entry, sender=sender)
 
 if __name__ == "__main__":
     app.run(debug=True)
