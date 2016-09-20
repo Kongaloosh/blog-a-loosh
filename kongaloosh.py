@@ -292,7 +292,9 @@ def bridgy_twitter(location):
         'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
+    location = 'http://' + DOMAIN_NAME +'/e/' + location
     syndication = r.json()
+    app.logger.info(syndication)
     data = get_bare_file('data/' + location.split('/e/')[1]+".md")
     if data['syndication'] == 'None':
         data['syndication'] = syndication['url']+","
@@ -328,14 +330,15 @@ def edit(year, month, day, name):
             if data[key] == "":
                 data[key] = None
 
+        location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+
         if request.form.get('twitter'):
-            t = Timer(30, bridgy_twitter, [data['location']])
+            t = Timer(30, bridgy_twitter, [location])
             t.start()
 
         if request.form.get('facebook'):
-            t = Timer(30, bridgy_facebook, [data['location']])
+            t = Timer(30, bridgy_facebook, [location])
             t.start()
-
         file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
         entry = get_bare_file(file_name+".md")
         location = editEntry(data, old_entry=entry, g=g)
