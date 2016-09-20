@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+<h1>{{entry.name}}</h1>
+<p>{{entry.content}}</p>
+<p>From: <a href="{{sender}}">{{sender}}</a> on {{entry.published}}.</p>
+{% if entry.inReplyTo %}
+<p>In response to <a href="{{entry.inReplyTo}}">this post here.</a></p>
+{% endif %}
+
+
+</body>
+</html>

@@ -644,10 +644,9 @@ def notifier():
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
     if request.method == 'GET':
-        inbox_data = open('inbox/'+name).read()
-        g = Graph().parse(data=inbox_data, format='json-ld')
-        entries = [row for row in g.query('select ?s where { [] <http://www.w3.org/ns/activitystreams#content> ?s .}')][0]
-        return render_template('inbox.html', entries=entries)
+        entry = json.loads(open('inbox/'+name).read())
+        app.logger.info(entry)
+        return render_template('inbox_notification.html', entry=entry, sender=entry['actor']['@id'])
 
 if __name__ == "__main__":
     app.run(debug=True)
