@@ -1,18 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-
-<h1>{{entry.name}}</h1>
-<p>{{entry.content}}</p>
-<p>From: <a href="{{sender}}">{{sender}}</a> on {{entry.published}}.</p>
-{% if entry.inReplyTo %}
-<p>In response to <a href="{{entry.inReplyTo}}">this post here.</a></p>
-{% endif %}
+{% extends "layout.html"%}
+{% block content %}
+<link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
 
 
-</body>
-</html>
+<header class="intro-header"
+        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+        background-size:cover;
+">
+    <div class="container">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="site-heading">
+                <h1>{{entry.name}}</h1>
+                <hr class="small">
+                {% if entry.summary %}
+                <span class="subheading">{{entry.summary}}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
+        <p>{{entry.content}}</p>
+        <p>From: <a href="{{sender}}">{{sender}}</a> on {{entry.published}}.</p>
+        {% if entry.inReplyTo %}
+        <p>In response to <a href="{{entry.inReplyTo}}">this post here.</a></p>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
