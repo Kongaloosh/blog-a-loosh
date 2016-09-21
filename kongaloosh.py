@@ -608,6 +608,13 @@ def handle_inbox():
         for_approval = [entry for entry in entries if entry.startswith("approval_")]
         entries = [entry for entry in entries if not entry.startswith("approval_")]
 
+        if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
+            inbox_items = {}
+            inbox_items['@context'] = "https://www.w3.org/ns/ldp"
+            inbox_items['@id'] = "http://" + DOMAIN_NAME + "/inbox"
+            inbox_items['contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries]
+            return json.dumps(inbox_items)
+
         return render_template('inbox.html', entries=entries, for_approval=for_approval)
 
     elif request.method == 'POST':
@@ -618,10 +625,10 @@ def handle_inbox():
             try:
                 sender = data['actor']['@id']
             except KeyError:
-		try:
-		    sender = data['actor']['id']
+                try:
+                    sender = data['actor']['id']
                 except KeyError:
-		    return "could not validate notification sender: no actor id", 403
+                    return "could not validate notification sender: no actor id", 403
 
             if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
                 # todo: make better names for notifications
@@ -653,10 +660,10 @@ def show_inbox_item(name):
     if request.method == 'GET':
         entry = json.loads(open('inbox/'+name).read())
         app.logger.info(entry)
-	try:
-	    sender = entry['actor']['@id']
-	except KeyError:
-	    sender = entry['actor']['id']
+        try:
+            sender = entry['actor']['@id']
+        except KeyError:
+            sender = entry['actor']['id']
         return render_template('inbox_notification.html', entry=entry, sender=sender)
 
 if __name__ == "__main__":
