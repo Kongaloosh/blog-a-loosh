@@ -660,11 +660,15 @@ def notifier():
 def show_inbox_item(name):
     if request.method == 'GET':
         entry = json.loads(open('inbox/'+name).read())
-        app.logger.info(entry)
+
+        if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
+            return json.dumps(entry)
+
         try:
             sender = entry['actor']['@id']
         except KeyError:
             sender = entry['actor']['id']
+
         return render_template('inbox_notification.html', entry=entry, sender=sender)
 
 if __name__ == "__main__":
