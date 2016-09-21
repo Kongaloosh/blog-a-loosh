@@ -20,6 +20,7 @@ import pickle
 from threading import Timer
 import requests
 import json
+from slugify import slugify
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -632,14 +633,14 @@ def handle_inbox():
 
             if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
                 # todo: make better names for notifications
-                notification = open('inbox/' + str(datetime.now()) + '.json','w+')
+                notification = open('inbox/' + slugify(str(datetime.now())) + '.json','w+')
                 notification.write(request.data)
                 return "added to inbox", 202
             else:                                           # if the sender isn't whitelisted
                 try:
                     validate = requests.get(sender)
                     if validate.status_code - 200 < 100:    # if the sender is real
-                        notification = open('inbox/approval_' + str(datetime.now()) + '.json','w+')
+                        notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
                         notification.write(request.data)
                         return "queued", 202
                     else:
