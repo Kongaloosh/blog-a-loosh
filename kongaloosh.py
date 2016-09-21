@@ -671,5 +671,16 @@ def show_inbox_item(name):
 
         return render_template('inbox_notification.html', entry=entry, sender=sender)
 
+
+@app.route('/drafts', methods=['GET'])
+def show_drafts():
+    pass
+
+
+@app.route('/drafts/<name>', methods=['GET','POST'])
+def show_draft(name):
+    pass
+
+
 if __name__ == "__main__":
     app.run(debug=True)
