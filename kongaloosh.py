@@ -682,5 +682,9 @@ def show_draft(name):
     pass
 
 
+@app.route('/notification', methods=['GET','POST'])
+def notifier():
+    pass
+
 if __name__ == "__main__":
     app.run(debug=True)
