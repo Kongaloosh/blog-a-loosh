@@ -679,10 +679,10 @@ def show_inbox_item(name):
 def show_drafts():
     drafts_location = "drafts/"
     entries = [
-            f for f in os.listdir(drafts_location)
+            drafts_location + f for f in os.listdir(drafts_location)
             if os.path.isfile(os.path.join(drafts_location, f))
             and f.endswith('.md')]
-
+    entries = [get_bare_file(entry) for entry in entries]
     return render_template("drafts_list.html", entries=entries)
 
 
@@ -690,7 +690,7 @@ def show_drafts():
 def show_draft(name):
     draft_location = 'drafts/' + name + ".md"
     entry = get_bare_file(draft_location)
-
+    app.logger.info(entry)
     return render_template('edit_entry.html', entry=entry)
 
 
