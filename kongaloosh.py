@@ -11,7 +11,7 @@ from jinja2 import Environment
 from dateutil.parser import parse
 from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
-from pysrc.file_management.file_parser import editEntry, create_entry, file_parser, get_bare_file, entry_re_write
+from pysrc.file_management.file_parser import editEntry, create_entry, file_parser, get_bare_file, entry_re_write, activity_stream_parser
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
@@ -365,8 +365,11 @@ def image_fetcher(year, month, day, name):
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
     """ Get a specific article """
-    # try:
+
     file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+    if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
+        return action_stream_parser(file_name+".md")
+
     entry = file_parser(file_name+".md")
 
     if os.path.exists(file_name+".jpg"):
@@ -674,17 +677,27 @@ def show_inbox_item(name):
 
 @app.route('/drafts', methods=['GET'])
 def show_drafts():
-    pass
+    drafts_location = "drafts/"
+    entries = [
+            f for f in os.listdir(drafts_location)
+            if os.path.isfile(os.path.join(drafts_location, f))
+            and f.endswith('.md')]
+
+    return render_template("drafts_list.html", entries=entries)
 
 
 @app.route('/drafts/<name>', methods=['GET','POST'])
 def show_draft(name):
-    pass
+    draft_location = 'drafts/' + name + ".md"
+    entry = get_bare_file(draft_location)
+
+    return render_template('edit_entry.html', entry=entry)
 
 
 @app.route('/notification', methods=['GET','POST'])
-def notifier():
+def notification():
     pass
+
 
 if __name__ == "__main__":
     app.run(debug=True)
