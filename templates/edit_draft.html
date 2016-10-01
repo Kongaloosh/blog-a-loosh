@@ -49,7 +49,8 @@
             <textarea type="text" name="location" id="geo_coord" cols="50">{{entry.location}}</textarea>
             <br>
 
-            <input type="submit" value="Submit" name="Submit">
+            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save">
+            <input formaction="/add" type="submit" value="Submit" name="Submit">
         </form>
         <button onclick="getLocation()">Add Location</button>
     </div>

@@ -133,41 +133,70 @@ def add():
     """ The form for user-submission """
     if request.method == 'GET':
         return render_template('add.html')
-    elif request.method == 'POST':
-        data = {}
-        for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-            data[key] = None
 
-        for title in request.form:
-            data[title] = request.form[title]
-
-        for title in request.files:
-            data[title] = request.files[title].read()
-
-        try:
-            photo = request.files['photo']
-        except:
-            photo = None
-
-        for key in data:
-            if data[key] == "":
+    elif request.method == 'POST':              # if we're adding a new post
+        app.logger.info(request.form)
+        if "Submit" in request.form:            # if we're publishing it now
+            data = {}
+            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
                 data[key] = None
 
-        data['published'] = datetime.now()
+            for title in request.form:
+                data[title] = request.form[title]
 
-        location = create_entry(data, image=data['photo'], g=g)
+            for title in request.files:
+                data[title] = request.files[title].read()
 
-        if data['in-reply-to']:
-            send_mention('http://' + DOMAIN_NAME + '/e/'+location, data['in-reply-to'])
+            try:
+                photo = request.files['photo']
+            except KeyError:
+                photo = None
 
-        if request.form.get('twitter'):
-            t = Timer(30, bridgy_twitter, [location])
-            t.start()
+            for key in data:
+                if data[key] == "":
+                    data[key] = None
 
-        if request.form.get('facebook'):
-            t = Timer(30, bridgy_facebook, [location])
-            t.start()
+            data['published'] = datetime.now()
+
+            location = create_entry(data, image=data['photo'], g=g)
+
+            if data['in-reply-to']:
+                send_mention('http://' + DOMAIN_NAME + '/e/'+location, data['in-reply-to'])
+
+            if request.form.get('twitter'):
+                t = Timer(30, bridgy_twitter, [location])
+                t.start()
+
+            if request.form.get('facebook'):
+                t = Timer(30, bridgy_facebook, [location])
+                t.start()
+
+        if "Save" in request.form:
+            data = {}
+            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                data[key] = None
+
+            for title in request.form:
+                data[title] = request.form[title]
+
+            for title in request.files:
+                data[title] = request.files[title].read()
+
+            try:
+                photo = request.files['photo']
+            except KeyError:
+                photo = None
+
+            for key in data:
+                if data[key] == "":
+                    data[key] = None
+
+            data['published'] = datetime.now()
+
+            location = create_entry(data, image=data['photo'], g=g, draft=True)
+            app.logger.info(location)
         return redirect(location)
     else:
         return redirect('/404'), 404
@@ -317,33 +346,38 @@ def edit(year, month, day, name):
 
     elif request.method == "POST":
         data = {}
-        for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                    'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-            data[key] = None
+        app.logger.info(request.form)
 
-        for title in request.form:
-            data[title] = request.form[title]
-
-        for title in request.files:
-            data[title] = request.files[title].read()
-
-        for key in data:
-            if data[key] == "":
+        if "Submit" in request.form:
+            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
                 data[key] = None
 
-        location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+            for title in request.form:
+                data[title] = request.form[title]
 
-        if request.form.get('twitter'):
-            t = Timer(30, bridgy_twitter, [location])
-            t.start()
+            for title in request.files:
+                data[title] = request.files[title].read()
 
-        if request.form.get('facebook'):
-            t = Timer(30, bridgy_facebook, [location])
-            t.start()
-        file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-        entry = get_bare_file(file_name+".md")
-        location = editEntry(data, old_entry=entry, g=g)
-        return redirect(location)
+            for key in data:
+                if data[key] == "":
+                    data[key] = None
+
+            location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+
+            if request.form.get('twitter'):
+                t = Timer(30, bridgy_twitter, [location])
+                t.start()
+
+            if request.form.get('facebook'):
+                t = Timer(30, bridgy_facebook, [location])
+                t.start()
+            file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+            entry = get_bare_file(file_name+".md")
+
+            location = editEntry(data, old_entry=entry, g=g)
+            return redirect(location)
+        return redirect("/")
 
 
 @app.route('/data/<year>/<month>/<day>/image/<name>')
@@ -677,21 +711,40 @@ def show_inbox_item(name):
 
 @app.route('/drafts', methods=['GET'])
 def show_drafts():
-    drafts_location = "drafts/"
-    entries = [
-            drafts_location + f for f in os.listdir(drafts_location)
-            if os.path.isfile(os.path.join(drafts_location, f))
-            and f.endswith('.md')]
-    entries = [get_bare_file(entry) for entry in entries]
-    return render_template("drafts_list.html", entries=entries)
-
+    if request.method == 'GET':
+        drafts_location = "drafts/"
+        entries = [
+                drafts_location + f for f in os.listdir(drafts_location)
+                if os.path.isfile(os.path.join(drafts_location, f))
+                and f.endswith('.md')]
+        entries = [get_bare_file(entry) for entry in entries]
+        return render_template("drafts_list.html", entries=entries)
 
 @app.route('/drafts/<name>', methods=['GET','POST'])
 def show_draft(name):
-    draft_location = 'drafts/' + name + ".md"
-    entry = get_bare_file(draft_location)
-    app.logger.info(entry)
-    return render_template('edit_entry.html', entry=entry)
+    if request.method == 'GET':
+        draft_location = 'drafts/' + name + ".md"
+        entry = get_bare_file(draft_location)
+        app.logger .info(entry)
+        return render_template('edit_drafts.html', entry=entry)
+    if request.method == 'POST':
+        data = {}
+        if "Save" in request.form:
+            app.logger.info("save")
+            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                data[key] = None
+
+            for title in request.form:
+                data[title] = request.form[title]
+
+            for title in request.files:
+                data[title] = request.files[title].read()
+
+            file_name = "drafts/{0}".format(name)
+            entry = get_bare_file(file_name+".md")
+            location = editEntry(data, old_entry=entry, g=g)
+            return redirect("/drafts")
 
 
 @app.route('/notification', methods=['GET','POST'])

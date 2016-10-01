@@ -8,8 +8,7 @@ from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from pysrc.file_management.markdown_album_extension import AlbumExtension
-from geopy.geocoders import GoogleV3
-from geopy.exc import GeocoderQuotaExceeded, GeocoderQueryError
+
 __author__ = 'alex'
 
 
