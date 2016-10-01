@@ -726,7 +726,7 @@ def show_draft(name):
         draft_location = 'drafts/' + name + ".md"
         entry = get_bare_file(draft_location)
         app.logger .info(entry)
-        return render_template('edit_drafts.html', entry=entry)
+        return render_template('edit_draft.html', entry=entry)
     if request.method == 'POST':
         data = {}
         if "Save" in request.form:

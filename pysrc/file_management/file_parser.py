@@ -124,7 +124,6 @@ def get_bare_file(filename):
 
 
 def editEntry(data, old_entry, g):
-    # todo: delete unwanted categories
     entry = ''
     title = data['name']
     slug = old_entry['slug']
@@ -145,11 +144,13 @@ def editEntry(data, old_entry, g):
     entry += "content:" + data['content'] + "\n"
 
     total_path = old_entry['url']
+
+    print(os.path.isfile('data' + total_path + '.md'),os.path.isfile('drafts' + total_path + '.md'))
+
     if os.path.isfile('data' + total_path + '.md'):
         file_writer = open('data' + total_path + ".md", 'wb')
         file_writer.write(entry.encode('utf-8'))
         file_writer.close()
-
         if data['category']:
             for c in data['category'].split(','):
                 if c is not 'None':
@@ -165,10 +166,14 @@ def editEntry(data, old_entry, g):
                         g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                                      [old_entry['slug'], old_entry['published'], c])
                         g.db.commit()
-        if data['entry'].startswith('/2'):
-            return '/e' + old_entry['url']
-        else:
-            return '/drafts'
+
+        return '/e' + old_entry['url']
+    elif os.path.isfile('drafts' + total_path + '.md'):                 # if this is a draft
+        file_writer = open('drafts' + total_path + ".md", 'wb')
+        file_writer.write(entry.encode('utf-8'))
+        file_writer.close()
+
+        return '/drafts' + old_entry['url']
     else:
         return "This doesn't exist"
 
