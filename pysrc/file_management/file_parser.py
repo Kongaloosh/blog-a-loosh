@@ -74,26 +74,6 @@ def file_parser(filename):
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
 
-    # try:
-    #     if e['location'] != 'None':
-    #         geolocator = GoogleV3(api_key='AIzaSyB28OwVWQ-OBIlQGRHzFy5-_EMx0wTN9IM')
-    #         geolocator.reverse("40.752067, -73.977578")
-    #         try:
-    #             location = geolocator.reverse(e['location'].split(':')[1])[0]
-    #         except IndexError:
-    #             location = geolocator.reverse(e['location'])
-    #         geo = ''
-    #         for i in location.raw['address_components']:
-    #             try:
-    #                 # app.logger.info("home-star")
-    #                 if 'locality' in i['types'] or 'country' in i['types']:
-    #                     geo += (i['long_name'] + ' ')
-    #             except KeyError:
-    #                 pass
-    #         e['location'] = geo
-    # except (GeocoderQuotaExceeded, GeocoderQueryError):
-    #     pass
-
     return e
 
 
@@ -186,12 +166,15 @@ def editEntry(data, old_entry, g):
                         g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                                      [old_entry['slug'], old_entry['published'], c])
                         g.db.commit()
-        return '/e' + old_entry['url']
+        if data['entry'].startswith('/2'):
+            return '/e' + old_entry['url']
+        else:
+            return '/drafts'
     else:
         return "This doesn't exist"
 
 
-def create_entry(data, g, image=None, video=None, audio=None):
+def create_entry(data, g, image=None, video=None, audio=None, draft=False):
     entry = ''
     if not data['name'] == None:                # is it an article?
         title = data['name']
@@ -209,32 +192,47 @@ def create_entry(data, g, image=None, video=None, audio=None):
     entry += "summary:"+ str(data['summary']) + "\n"
     entry += "published:"+ str(data['published']) + "\n"
     entry += "category:" + str(data['category']) + "\n"
-    entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
-    entry += "u-uid:" + '/{year}/{month}/{day}/{slug}'.format(
-        year = str(data['published'].year),
-        month = str(data['published'].month),
-        day = str(data['published'].day),
-        slug = str(slug)) + "\n"
+
+    if draft:
+        entry += "url:"+'/{slug}'.format(
+            slug = str(slug)) + "\n"
+
+        entry += "u-uid:" + '/{slug}'.format(
+            slug = str(slug)) + "\n"
+
+        file_path = "drafts/"
+    else:
+        entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
+            year = str(data['published'].year),
+            month = str(data['published'].month),
+            day = str(data['published'].day),
+            slug = str(slug)) + "\n"
+
+        entry += "u-uid:" + '/{year}/{month}/{day}/{slug}'.format(
+            year = str(data['published'].year),
+            month = str(data['published'].month),
+            day = str(data['published'].day),
+            slug = str(slug)) + "\n"
+
+        file_path = "data/{year}/{month}/{day}/".format(
+            year = str(data['published'].year),
+            month = str(data['published'].month),
+            day = str(data['published'].day))
+
+        if not os.path.exists(file_path):
+            os.makedirs(os.path.dirname(file_path))
+
+    total_path = file_path+"{slug}".format(slug=slug)
+
     entry += "location:" + str(data['location']) + "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
     entry += "content:" + data['content']+ "\n"
 
-    time = data['published']
-    file_path = "data/{year}/{month}/{day}/".format(year=time.year, month=time.month, day=time.day)
-    if not os.path.exists(file_path):
-        os.makedirs(os.path.dirname(file_path))
-
-    total_path = file_path+"{slug}".format(slug=slug)
-
     if not os.path.isfile(total_path+'.md'):
         file_writer = open(total_path+".md", 'wb')
-        file_writer.write(entry.encode('utf-8') )
+        file_writer.write(entry.encode('utf-8'))
         file_writer.close()
         if image:
             file_writer = open(total_path+".jpg", 'wb')
@@ -251,31 +249,35 @@ def create_entry(data, g, image=None, video=None, audio=None):
             file_writer.write(image)
             file_writer.close()
 
-        g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
-                     [slug, data['published'], total_path]
-                     )
-        g.db.commit()
+        if not draft:
+            g.db.execute('insert into entries (slug, published, location) values (?, ?, ?)',
+                         [slug, data['published'], total_path]
+                         )
+            g.db.commit()
 
-        if data['category']:
-            for c in data['category'].split(','):
-                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                             [slug, data['published'], c])
-                g.db.commit()
+            if data['category']:
+                for c in data['category'].split(','):
+                    g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                                 [slug, data['published'], c])
+                    g.db.commit()
 
-        source = '/e/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug))
+        if not draft:
+            source = '/e/{year}/{month}/{day}/{slug}'.format(
+                year = str(data['published'].year),
+                month = str(data['published'].month),
+                day = str(data['published'].day),
+                slug = str(slug))
 
-        try:
-            for reply in data['in-reply-to']:
-                send_mention('http://kongaloosh.com' + source, reply)
-        except TypeError:
-            pass
-        return source
+            try:
+                for reply in data['in-reply-to']:
+                    send_mention('http://kongaloosh.com' + source, reply)
+            except TypeError:
+                pass
+            return source
+        else:
+            return "drafts/"+slug
     else:
-        return "this has already been made"
+        return "/already_made"
 
 
 def entry_re_write(data):
@@ -301,3 +303,82 @@ def entry_re_write(data):
     file_writer.write(entry.encode('utf-8') )
     file_writer.close()
 
+
+def activity_stream_parser(filename):
+    f = open(filename, 'r')
+    str = f.read()
+    str = str.decode('utf-8')
+    e = {}
+    e['actor'] = {}
+    e['actor']['image']
+    e['actor']['@id'] = 'http://kongaloosh.com'
+    e['actor']['type'] = 'person'
+    e['actor']['name'] = 'Alex Kearney'
+    e['actor']['image']['type'] = 'Link'
+    e['actor']['image']['href'] = 'http://kongaloosh.com/static/img/profile.jpg'
+    e['actor']['image']['mediaType'] = 'image/jpeg'
+    e['@context'] = "https://www.w3.org/ns/activitystreams"
+
+    try:
+        e['object']['nm'] = re.search('(?<=title:)(.)*', str).group()
+    except KeyError:
+        pass
+
+    try:
+        e['object']['summary'] = re.search('(?<=summary:)(.)*', str).group()
+    except KeyError:
+        pass
+
+    try:
+        e['object']['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
+        e['object']['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        if e['object']['content'] is None:
+            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+    except KeyError:
+        pass
+
+    try:
+        date = parse(re.search('(?<=published:)(.)*', str).group())
+        e['published'] = date.date()
+    except KeyError:
+        pass
+
+    try:
+        e['category'] = re.search('(?<=category:)(.)*', str).group().split(',')
+    except KeyError:
+        pass
+
+    try:
+        e['object']['id'] = re.search('(?<=url:)(.)*', str).group()
+    except KeyError:
+        pass
+
+    try:
+        e['object']['location'] = re.search('(?<=location:)(.)*', str).group()
+    except KeyError:
+        pass
+
+    try:
+        e['object']['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
+    except KeyError:
+        pass
+
+    try:
+        replies = re.search('(?<=in-reply-to:)(.)*', str).group()
+        if replies != 'None':
+            e['object']['inReplyTo'] = []
+            replies = replies.split(',')
+        else:
+            e['object']['inReplyTo'] = replies
+        for site in replies:
+            if site.startswith('http'):         # if it's an external site, we simply add it
+                e['object']['inReplyTo'].append(site)
+            elif site.startswith('/'):          # if it's a local id, we append it with the site's url
+                e['object']['inReplyTo'].append(file_parser('data'+site+'.md'))
+    except KeyError:
+        pass
+
+    if os.path.exists(filename.split('.md')[0]+".jpg"):
+        e['object']['image']['mediaType'] = 'image/jpeg'
+        e['object']['image']['href'] = "http://kongaloosh.com/data/" + filename.split('.md')[0]+".jpg"
+        e['object']['image']['type'] = "Link"
