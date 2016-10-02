@@ -180,11 +180,14 @@ def editEntry(data, old_entry, g):
 
 def create_entry(data, g, image=None, video=None, audio=None, draft=False):
     entry = ''
-    if not data['name'] == None:                # is it an article?
+    print(data['name'], type(data['name']))
+    if data['name']:                # is it an article?
         title = data['name']
         slug = title
+        print("eyyyyy",slug)
     else:                                       # otherwise we make a slug from post content
         slug = (data['content'].split('.')[0])
+        print("BLAH",slug)
         title = None
 
     slug = slugify(slug)
@@ -193,35 +196,35 @@ def create_entry(data, g, image=None, video=None, audio=None, draft=False):
              "title:{title}\n" \
              "slug:{slug}\n".format(title=title, slug=slug)
 
-    entry += "summary:"+ str(data['summary']) + "\n"
-    entry += "published:"+ str(data['published']) + "\n"
+    entry += "summary:" + str(data['summary']) + "\n"
+    entry += "published:" + str(data['published']) + "\n"
     entry += "category:" + str(data['category']) + "\n"
 
     if draft:
         entry += "url:"+'/{slug}'.format(
-            slug = str(slug)) + "\n"
+            slug=str(slug)) + "\n"
 
         entry += "u-uid:" + '/{slug}'.format(
-            slug = str(slug)) + "\n"
+            slug=str(slug)) + "\n"
 
         file_path = "drafts/"
     else:
         entry += "url:"+'/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug)) + "\n"
+            year=str(data['published'].year),
+            month=str(data['published'].month),
+            day=str(data['published'].day),
+            slug=str(slug)) + "\n"
 
         entry += "u-uid:" + '/{year}/{month}/{day}/{slug}'.format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day),
-            slug = str(slug)) + "\n"
+            year=str(data['published'].year),
+            month=str(data['published'].month),
+            day=str(data['published'].day),
+            slug=str(slug)) + "\n"
 
         file_path = "data/{year}/{month}/{day}/".format(
-            year = str(data['published'].year),
-            month = str(data['published'].month),
-            day = str(data['published'].day))
+            year=str(data['published'].year),
+            month=str(data['published'].month),
+            day=str(data['published'].day))
 
         if not os.path.exists(file_path):
             os.makedirs(os.path.dirname(file_path))
@@ -235,6 +238,7 @@ def create_entry(data, g, image=None, video=None, audio=None, draft=False):
     entry += "content:" + data['content']+ "\n"
 
     if not os.path.isfile(total_path+'.md'):
+        print(total_path+".md")
         file_writer = open(total_path+".md", 'wb')
         file_writer.write(entry.encode('utf-8'))
         file_writer.close()

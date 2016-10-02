@@ -149,9 +149,9 @@ def add():
                 data[title] = request.files[title].read()
 
             try:
-                photo = request.files['photo']
+                data['photo'] = request.files['photo']
             except KeyError:
-                photo = None
+                data['photo'] = None
 
             for key in data:
                 if data[key] == "":
@@ -193,10 +193,8 @@ def add():
                 if data[key] == "":
                     data[key] = None
 
-            data['published'] = datetime.now()
-
             location = create_entry(data, image=data['photo'], g=g, draft=True)
-            app.logger.info(location)
+
         return redirect(location)
     else:
         return redirect('/404'), 404
@@ -725,12 +723,10 @@ def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".md"
         entry = get_bare_file(draft_location)
-        app.logger .info(entry)
         return render_template('edit_draft.html', entry=entry)
     if request.method == 'POST':
         data = {}
         if "Save" in request.form:
-            app.logger.info("save")
             for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
                         'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
                 data[key] = None
@@ -745,6 +741,45 @@ def show_draft(name):
             entry = get_bare_file(file_name+".md")
             location = editEntry(data, old_entry=entry, g=g)
             return redirect("/drafts")
+        if "Submit" in request.form:            # if we're publishing it now
+            data = {}
+            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                data[key] = None
+            for title in request.form:
+                if request.form[title] is not 'None':
+                    data[title] = request.form[title]
+
+            for key in data.keys():
+                if data[key] == "None":
+                    data[key] = None
+
+            for title in request.files:
+                data[title] = request.files[title].read()
+
+            try:
+                data['photo'] = request.files['photo']
+            except KeyError:
+                data['photo'] = None
+
+            data['published'] = datetime.now()
+
+            location = create_entry(data, image=data['photo'], g=g)
+            if data['in-reply-to']:
+                send_mention('http://' + DOMAIN_NAME + '/e'+location, data['in-reply-to'])
+
+            if request.form.get('twitter'):
+                t = Timer(30, bridgy_twitter, [location])
+                t.start()
+
+            if request.form.get('facebook'):
+                t = Timer(30, bridgy_facebook, [location])
+                t.start()
+
+            if os.path.isfile("drafts/"+name+".md"): # this won't always be the slug generated
+                os.remove("drafts/"+name+".md")
+
+            return redirect(location)
 
 
 @app.route('/notification', methods=['GET','POST'])
