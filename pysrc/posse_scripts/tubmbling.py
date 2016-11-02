@@ -2,12 +2,17 @@ __author__ = 'alex'
 import pytumblr
 import oauth2
 import urlparse
+import ConfigParser
 
-REQUEST_TOKEN_URL = 'http://www.tumblr.com/oauth/request_token'
-AUTHORIZATION_URL = 'http://www.tumblr.com/oauth/authorize'
-ACCESS_TOKEN_URL = 'http://www.tumblr.com/oauth/access_token'
-CONSUMER_KEY = 'irsyCC1SeBW25a7eJJHz2zjSf1wwaVw5zEFRmp8lZUDyCBanQ2'
-CONSUMER_SECRET = 'GoycBjtaHwnEqtH0Rt38MuBHXkK9PV0nhEVMSNVAYAmfbDXddq'
+config = ConfigParser.ConfigParser()
+config.read('config.ini')
+
+
+REQUEST_TOKEN_URL = config.get('Tumblr', 'REQUEST_TOKEN_URL')
+AUTHORIZATION_URL = config.get('Tumblr', 'AUTHORIZATION_URL')
+ACCESS_TOKEN_URL = config.get('Tumblr', 'ACCESS_TOKEN_URL')
+CONSUMER_KEY = config.get('Tumblr', 'CONSUMER_KEY')
+CONSUMER_SECRET = config.get('Tumblr', 'CONSUMER_SECRET')
 
 def main(text, data):
     consumer = oauth2.Consumer(CONSUMER_KEY, CONSUMER_SECRET)
