@@ -21,16 +21,23 @@ from threading import Timer
 import requests
 import json
 from slugify import slugify
+import ConfigParser
+
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
+config = ConfigParser.ConfigParser()
+config.read('config.ini')
+
 # configuration
-DATABASE = 'kongaloosh.db'
-DEBUG = True
-SECRET_KEY = open('config/development_key', 'rb').read().rstrip('\n')
-USERNAME = open('config/site_authentication/username', 'rb').read().rstrip('\n')
-PASSWORD = open('config/site_authentication/password', 'rb').read().rstrip('\n')
-DOMAIN_NAME = open('config/domain_name', 'rb').read().rstrip('\n')
+DATABASE = config.get('Global', 'Database')
+DEBUG = config.get('Global', 'Debug')
+SECRET_KEY = config.get('Global', 'DevKey')
+USERNAME = config.get('SiteAuthentication', 'Username')
+PASSWORD = config.get('SiteAuthentication', 'Password')
+DOMAIN_NAME = config.get('Global', 'DomainName')
+
+
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
