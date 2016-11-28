@@ -175,7 +175,7 @@ def editEntry(data, old_entry, g):
 
         return '/drafts' + old_entry['url']
     else:
-        return "This doesn't exist"
+        return "/404"
 
 
 def create_entry(data, g, image=None, video=None, audio=None, draft=False):

@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<header class="intro-header" style="background-image: url('{{ url_for('static', filename='img/home-bg.jpg') }}')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading">
+                    <div style="background: rgb(200, 54, 54);
+                     background: rgba(0, 0, 0, 0.5);
+                     padding: 3%;
+                     border-radius: 5px
+                     ">
+                        <h1>Well, this is embarassing.</h1>
+                        <hr class="small">
+                        <span class="subheading"><i class="fa fa-paper-plane"></i></span>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="=container">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 hentry">
+        <p>A post with that name already exists. Give your post a different name, or make sure this isn't a duplicate.</p>
+    </div>
+</div>
+{% endblock %}

@@ -117,9 +117,14 @@ def pagination(number):
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
-@app.route('/404')
-def four_oh_four():
+@app.errorhandler(404)
+def page_not_found(e):
     return render_template('page_not_found.html'), 404
+
+
+@app.errorhandler(500)
+def page_not_found(e):
+    return render_template('server_error.html'), 500
 
 
 @app.route('/stream')
@@ -785,6 +790,11 @@ def show_draft(name):
 @app.route('/notification', methods=['GET','POST'])
 def notification():
     pass
+
+
+@app.route('/already_made', methods=['GET'])
+def post_already_exists():
+    return render_template('already_exists.html')
 
 
 if __name__ == "__main__":
