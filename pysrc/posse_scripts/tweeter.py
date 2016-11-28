@@ -2,19 +2,18 @@
 __author__ = 'alex'
 import tweepy
 from slugify import slugify
+import ConfigParser
 
 def get_keys():
+    config = ConfigParser.ConfigParser()
+    config.read('config.ini')
+    
     cfg = {}
-    cfg['access_token'] = open('config/twitter/twitter_access_token','rb').read()
-    cfg['access_token_secret'] = open('config/twitter/twitter_access_token_secret','rb').read()
-    cfg['consumer_key'] = open('config/twitter/twitter_consumer_key','rb').read()
-    cfg['consumer_secret'] = open('config/twitter/twitter_consumer_secret','rb').read()
-    cfg = {
-        "consumer_key": "DVjfycLdIZzr0gzC442VfEmjd",
-        "consumer_secret": "PFvWgbQvvLVJb5lhJxDlWAIgXd7X5Yt7fh08nd69Hi2eRaI04q",
-        "access_token": "785209428-XTDjPkQ3a48Z32rXoT6st9SAqcAj1IoVEvQJxEvM",
-        "access_token_secret": "NX7iD7CEmLimGwWQjqzZ9xHwGLSasWVp8yt3dvg0DmCIg"
-    }
+    cfg['access_token'] = config.get('Twitter', 'AccessToken')
+    cfg['access_token_secret'] = config.get('Twitter', 'AccessTokenSecret')
+    cfg['consumer_key'] = config.get('Twitter', 'ConsumerKey')
+    cfg['consumer_secret'] = config.get('Twitter', 'ConsumerSecret')
+    
     return cfg
 
 def get_api(cfg):

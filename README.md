@@ -1,9 +1,11 @@
 # IndieAnndroid
 
 
-### What the heck is this?
+### What the heckbicuit is this?
 
 I built this as a little hacked-together example of a flask [indieweb site](http://indiewebcamp.com/). In short, the indieweb is about maintating control of your data and self-publishing on your own site. 
+
+I use this to power [kongaloosh.com](http://kongaloosh.com), my blog. I post my photos, updates, and anything else here and it gets whisked down the internet tubes to all the other social-media sites I use afterwards. This is my hub on the internet.
 
 ### What state is this project in?
 
@@ -12,10 +14,12 @@ Spaghetti.
 Right now, to varying degrees of effectiveness, it can:
   
   * recieve entries via a micropub endpoint using indieauth
-  * syndicate out to twitter
+  * syndicate out to twitter and facebook
   * post images
+  * post albums full of images
   * recieve webmentions using webmention.io
   * send webmentions
+  * recieve linked data notifications [NEW AND IMPROVED!]
 
 In short, it has most of the functionality of an indieweb site. 
 
