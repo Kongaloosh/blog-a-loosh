@@ -30,11 +30,11 @@ config = ConfigParser.ConfigParser()
 config.read('config.ini')
 
 # configuration
-DATABASE = config.get('Global', 'Database')
+DATABASE = 'kongaloosh.db'
 DEBUG = config.get('Global', 'Debug')
 SECRET_KEY = config.get('Global', 'DevKey')
-USERNAME = config.get('SiteAuthentication', 'Username')
-PASSWORD = config.get('SiteAuthentication', 'Password')
+USERNAME = 'anubis'
+PASSWORD = 'munchkin))'
 DOMAIN_NAME = config.get('Global', 'DomainName')
 
 
@@ -151,7 +151,7 @@ def add():
         if "Submit" in request.form:            # if we're publishing it now
             data = {}
             for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
+                        'slug', 'location', 'location_name', 'location_id', 'in-reply-to', 'repost-of', 'syndication'):
                 data[key] = None
 
             for title in request.form:
@@ -171,6 +171,22 @@ def add():
 
             data['published'] = datetime.now()
 
+            if data['location'] is not None and data['location'].startswith("geo:"):
+                try:
+                    (lat,long) = data['location'][4:].split(',')
+                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username=kongaloosh')
+                    place_name = geo_results.json()['geonames'][0]['name']
+                    if geo_results.json()['geonames'][0]['adminName2']:
+                        place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
+                    elif geo_results.json()['geonames'][0]['adminName1']:
+                        place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
+                    else:
+                        place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+                    data['location_name'] = place_name
+                    data['location_id'] = geo_results.json()['geonames'][0]['geonameId']
+                except IndexError:
+                    pass
+
             location = create_entry(data, image=data['photo'], g=g)
 
             if data['in-reply-to']:
@@ -183,6 +199,7 @@ def add():
             if request.form.get('facebook'):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
+
 
         if "Save" in request.form:
             data = {}
@@ -372,6 +389,23 @@ def edit(year, month, day, name):
             for key in data:
                 if data[key] == "":
                     data[key] = None
+
+            if data['location'].startswith("geo:"):
+                try:
+                    (lat,long) = data['location'][4:].split(',')
+                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username=kongaloosh')
+                    place_name = geo_results.json()['geonames'][0]['name']
+                    if geo_results.json()['geonames'][0]['adminName2']:
+                        place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
+                    elif geo_results.json()['geonames'][0]['adminName1']:
+                        place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
+                    else:
+                        place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+                    data['location_name'] = place_name
+                    data['location_id'] = geo_results.json()['geonames'][0]['geonameId']
+
+                except IndexError:
+                    pass
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
