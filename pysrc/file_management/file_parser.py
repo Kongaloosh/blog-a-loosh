@@ -55,7 +55,9 @@ def file_parser(filename):
     except: pass
     try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
     except: pass
-    try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
+    try: e['location_name'] = re.search('(?<=location_name:)(.)*', str).group()
+    except: pass
+    try: e['location_id'] = re.search('(?<=location_id:)(.)*', str).group()
     except: pass
     try:
         replies = re.search('(?<=in-reply-to:)(.)*', str).group()
@@ -116,7 +118,9 @@ def get_bare_file(filename):
     except: pass
     try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
     except: pass
-    try: e['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
+    try: e['location_name'] = re.search('(?<=location_name:)(.)*', str).group()
+    except: pass
+    try: e['location_id'] = re.search('(?<=location_id:)(.)*', str).group()
     except: pass
     try: e['in_reply_to'] = re.search('(?<=in-reply-to:)(.)*', str).group()
     except:pass
@@ -138,6 +142,8 @@ def editEntry(data, old_entry, g):
     entry += "url:"+ old_entry['url'] + "\n"
     entry += "u-uid:" + str(old_entry['uid']) + "\n"
     entry += "location:" + str(data['location'])+ "\n"
+    entry += "location_name:" + str(data['location_name']) + "\n"
+    entry += "location_id:" + str(data['location_id']) + "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(old_entry['syndication']) + "\n"
@@ -180,14 +186,11 @@ def editEntry(data, old_entry, g):
 
 def create_entry(data, g, image=None, video=None, audio=None, draft=False):
     entry = ''
-    print(data['name'], type(data['name']))
     if data['name']:                # is it an article?
         title = data['name']
         slug = title
-        print("eyyyyy",slug)
     else:                                       # otherwise we make a slug from post content
         slug = (data['content'].split('.')[0])
-        print("BLAH",slug)
         title = None
 
     slug = slugify(slug)
@@ -232,6 +235,8 @@ def create_entry(data, g, image=None, video=None, audio=None, draft=False):
     total_path = file_path+"{slug}".format(slug=slug)
 
     entry += "location:" + str(data['location']) + "\n"
+    entry += "location_name:" + str(data['location_name']) + "\n"
+    entry += "location_id:" + str(data['location_id']) + "\n"
     entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
@@ -367,7 +372,7 @@ def activity_stream_parser(filename):
         pass
 
     try:
-        e['object']['location_name'] = re.search('(?<=location-name:)(.)*', str).group()
+        e['object']['location_name'] = re.search('(?<=location_name:)(.)*', str).group()
     except KeyError:
         pass
 
