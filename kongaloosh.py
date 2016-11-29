@@ -30,13 +30,16 @@ config = ConfigParser.ConfigParser()
 config.read('config.ini')
 
 # configuration
-DATABASE = 'kongaloosh.db'
+DATABASE = config.get('Global', 'Database')
 DEBUG = config.get('Global', 'Debug')
 SECRET_KEY = config.get('Global', 'DevKey')
-USERNAME = 'anubis'
-PASSWORD = 'munchkin))'
+USERNAME = config.get('SiteAuthentication', "Username")
+PASSWORD = config.get('SiteAuthentication', 'password')
 DOMAIN_NAME = config.get('Global', 'DomainName')
+GEONAMES = config.get('GeoNamesUsername', 'Username')
+FULLNAME = config.get('PersonalInfo', 'FullName')
 
+print(DATABASE, USERNAME, PASSWORD, DOMAIN_NAME)
 
 # create our little application :)
 app = Flask(__name__)
@@ -174,7 +177,7 @@ def add():
             if data['location'] is not None and data['location'].startswith("geo:"):
                 try:
                     (lat,long) = data['location'][4:].split(',')
-                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username=kongaloosh')
+                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
                     place_name = geo_results.json()['geonames'][0]['name']
                     if geo_results.json()['geonames'][0]['adminName2']:
                         place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
@@ -199,7 +202,6 @@ def add():
             if request.form.get('facebook'):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
-
 
         if "Save" in request.form:
             data = {}
@@ -393,7 +395,7 @@ def edit(year, month, day, name):
             if data['location'].startswith("geo:"):
                 try:
                     (lat,long) = data['location'][4:].split(',')
-                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username=kongaloosh')
+                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
                     place_name = geo_results.json()['geonames'][0]['name']
                     if geo_results.json()['geonames'][0]['adminName2']:
                         place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
