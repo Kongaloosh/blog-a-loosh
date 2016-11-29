@@ -143,29 +143,38 @@ def add():
     if request.method == 'GET':
         return render_template('add.html')
 
-    elif request.method == 'POST':              # if we're adding a new post
+    elif request.method == 'POST':                  # if we're adding a new post
         app.logger.info(request.form)
-        if "Submit" in request.form:            # if we're publishing it now
-            data = {}
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'location_name', 'location_id', 'in-reply-to', 'repost-of', 'syndication'):
+        # an clean dictionary to represent the post; we do this to ensure consistency when reading files later.
+        data = {
+                'h': None,
+                'name': None,
+                'summary': None,
+                'content': None,
+                'published': None,
+                'updated': None,
+                'category': None,
+                'slug': None,
+                'location': None,
+                'location_name': None,
+                'location_id': None,
+                'in-reply-to': None,
+                'repost-of': None,
+                'syndication': None,
+                'photo': None
+            }
+
+        for title in request.form:                      # get all of the data from the form
+            data[title] = request.form[title]
+
+        for title in request.files:                     # get all the files and sub them in
+            data[title] = request.files[title].read()
+
+        for key in data:                                # strip out empty fields from form
+            if data[key] == "":
                 data[key] = None
 
-            for title in request.form:
-                data[title] = request.form[title]
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            try:
-                data['photo'] = request.files['photo']
-            except KeyError:
-                data['photo'] = None
-
-            for key in data:
-                if data[key] == "":
-                    data[key] = None
-
+        if "Submit" in request.form:                    # we're publishing it now; give it the present time
             data['published'] = datetime.now()
 
             if data['location'] is not None and data['location'].startswith("geo:"):
@@ -187,27 +196,7 @@ def add():
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
-        if "Save" in request.form:
-            data = {}
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
-
-            for title in request.form:
-                data[title] = request.form[title]
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            try:
-                photo = request.files['photo']
-            except KeyError:
-                photo = None
-
-            for key in data:
-                if data[key] == "":
-                    data[key] = None
-
+        if "Save" in request.form:              # if we're simply saving the post as a draft
             location = create_entry(data, image=data['photo'], g=g, draft=True)
 
         return redirect(location)
@@ -314,11 +303,13 @@ def recent_uploads():
 
 def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
+    # send the mention
     r = send_mention(
         'http://' + DOMAIN_NAME + '/e/' + location,
         'https://brid.gy/publish/facebook',
         endpoint='https://brid.gy/publish/webmention'
     )
+    # get the response from the send
     syndication = r.json()
     data = get_bare_file('data/' + location.split('/e/')[1]+".md")
     if data['syndication'] == 'None':
