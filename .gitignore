@@ -1,3 +1,5 @@
+config.ini
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -59,5 +61,7 @@ target/
 # data
 /data
 /venv
-*idea
 kongaloosh.db
+config.ini
+*.jpeg
+*.json
