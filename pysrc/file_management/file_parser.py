@@ -1,3 +1,4 @@
+import ConfigParser
 import pickle
 import re
 import os
@@ -11,6 +12,18 @@ from pysrc.file_management.markdown_album_extension import AlbumExtension
 
 __author__ = 'alex'
 
+config = ConfigParser.ConfigParser()
+config.read('config.ini')
+
+# configuration
+DATABASE = config.get('Global', 'Database')
+DEBUG = config.get('Global', 'Debug')
+SECRET_KEY = config.get('Global', 'DevKey')
+USERNAME = config.get('SiteAuthentication', "Username")
+PASSWORD = config.get('SiteAuthentication', 'password')
+DOMAIN_NAME = config.get('Global', 'DomainName')
+GEONAMES = config.get('GeoNamesUsername', 'Username')
+FULLNAME = config.get('PersonalInfo', 'FullName')
 
 def file_parser(filename):
     """ for a given entry, finds all of the info we want to display """
@@ -324,11 +337,11 @@ def activity_stream_parser(filename):
     e = {}
     e['actor'] = {}
     e['actor']['image']
-    e['actor']['@id'] = 'http://kongaloosh.com'
+    e['actor']['@id'] = DOMAIN_NAME
     e['actor']['type'] = 'person'
-    e['actor']['name'] = 'Alex Kearney'
+    e['actor']['name'] = FULLNAME
     e['actor']['image']['type'] = 'Link'
-    e['actor']['image']['href'] = 'http://kongaloosh.com/static/img/profile.jpg'
+    e['actor']['image']['href'] = 'http://' + DOMAIN_NAME +'/static/img/profile.jpg'
     e['actor']['image']['mediaType'] = 'image/jpeg'
     e['@context'] = "https://www.w3.org/ns/activitystreams"
 
@@ -393,5 +406,5 @@ def activity_stream_parser(filename):
 
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['object']['image']['mediaType'] = 'image/jpeg'
-        e['object']['image']['href'] = "http://kongaloosh.com/data/" + filename.split('.md')[0]+".jpg"
+        e['object']['image']['href'] = "http://"+DOMAIN_NAME+"/data/" + filename.split('.md')[0]+".jpg"
         e['object']['image']['type'] = "Link"
