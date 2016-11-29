@@ -175,20 +175,10 @@ def add():
             data['published'] = datetime.now()
 
             if data['location'] is not None and data['location'].startswith("geo:"):
-                try:
-                    (lat,long) = data['location'][4:].split(',')
-                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
-                    place_name = geo_results.json()['geonames'][0]['name']
-                    if geo_results.json()['geonames'][0]['adminName2']:
-                        place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
-                    elif geo_results.json()['geonames'][0]['adminName1']:
-                        place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
-                    else:
-                        place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+                if data['location'].startswith("geo:"):
+                    (place_name, geo_id) = resolve_placename(data['location'])
                     data['location_name'] = place_name
-                    data['location_id'] = geo_results.json()['geonames'][0]['geonameId']
-                except IndexError:
-                    pass
+                    data['location_id'] = geo_id
 
             location = create_entry(data, image=data['photo'], g=g)
 
@@ -362,6 +352,21 @@ def bridgy_twitter(location):
     entry_re_write(data)
 
 
+def resolve_placename(location):
+    try:
+        (lat,long) = 'location'[4:].split(',')
+        geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
+        place_name = geo_results.json()['geonames'][0]['name']
+        if geo_results.json()['geonames'][0]['adminName2']:
+            place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
+        elif geo_results.json()['geonames'][0]['adminName1']:
+            place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
+        else:
+            place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+        return place_name, geo_results.json()['geonames'][0]['geonameId']
+    except IndexError:
+        return None, None
+
 @app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
 def edit(year, month, day, name):
     """ The form for user-submission """
@@ -392,22 +397,10 @@ def edit(year, month, day, name):
                 if data[key] == "":
                     data[key] = None
 
-            if data['location'].startswith("geo:"):
-                try:
-                    (lat,long) = data['location'][4:].split(',')
-                    geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
-                    place_name = geo_results.json()['geonames'][0]['name']
-                    if geo_results.json()['geonames'][0]['adminName2']:
-                        place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
-                    elif geo_results.json()['geonames'][0]['adminName1']:
-                        place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
-                    else:
-                        place_name += ", " + geo_results.json()['geonames'][0]['countryName']
-                    data['location_name'] = place_name
-                    data['location_id'] = geo_results.json()['geonames'][0]['geonameId']
-
-                except IndexError:
-                    pass
+            if data['location'] is not None and data['location'].startswith("geo:"):
+                (place_name, geo_id) = resolve_placename(data['location'])
+                data['location_name'] = place_name
+                data['location_id'] = geo_id
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
