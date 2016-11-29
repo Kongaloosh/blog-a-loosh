@@ -88,7 +88,11 @@
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
             {% if entry.location != 'None'%} <!-- If there's a location -->9
                 in
-                <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+                {% if entry.location_name %}
+			<a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
+		{% else %}
+			<a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+		{% endif %}
             {% endif %}
             </p>
         </div> <!-- END POST DETAILS -->
