@@ -137,12 +137,6 @@ def page_not_found(e):
     return render_template('server_error.html'), 500
 
 
-@app.route('/stream')
-def show_entries_stream():
-    """ A simple stream that people can go to if they don't want the cover """
-    pass
-
-
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     """ The form for user-submission """
