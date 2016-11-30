@@ -153,6 +153,7 @@ def add():
 
             if data['location'] is not None and data['location'].startswith("geo:"):
                 if data['location'].startswith("geo:"):
+                    app.logger.info(data['location'])
                     (place_name, geo_id) = resolve_placename(data['location'])
                     data['location_name'] = place_name
                     data['location_id'] = geo_id
@@ -313,7 +314,7 @@ def bridgy_twitter(location):
 
 def resolve_placename(location):
     try:
-        (lat,long) = 'location'[4:].split(',')
+        (lat,long) = location[4:].split(',')
         geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
@@ -325,6 +326,7 @@ def resolve_placename(location):
         return place_name, geo_results.json()['geonames'][0]['geonameId']
     except IndexError:
         return None, None
+
 
 def post_from_request(request):
     data = {
@@ -366,7 +368,7 @@ def edit(year, month, day, name):
             entry = get_bare_file(file_name+".md")
             return render_template('edit_entry.html', entry=entry)
         except:
-            return render_template('page_not_found.html')
+            return redirect('/404')
 
     elif request.method == "POST":
         app.logger.info(request.form)
@@ -394,22 +396,6 @@ def edit(year, month, day, name):
             location = editEntry(data, old_entry=entry, g=g)
             return redirect(location)
         return redirect("/")
-
-
-@app.route('/data/<year>/<month>/<day>/image/<name>')
-def image_fetcher_depricated(year, month, day, name):
-    """ do not use---old image fetcher """
-    entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
-    img = open(entry)
-    return send_file(img)
-
-
-@app.route('/data/<year>/<month>/<day>/<name>')
-def image_fetcher(year, month, day, name):
-    """ Retruns a specific image """
-    entry = 'data/{year}/{month}/{day}/{name}'.format(year=year, month=month, day=day, type=type, name=name)
-    img = open(entry)
-    return send_file(img)
 
 
 @app.route('/e/<year>/<month>/<day>/<name>')
