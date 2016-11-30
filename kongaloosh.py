@@ -145,34 +145,8 @@ def add():
 
     elif request.method == 'POST':                  # if we're adding a new post
         app.logger.info(request.form)
-        # an clean dictionary to represent the post; we do this to ensure consistency when reading files later.
-        data = {
-                'h': None,
-                'name': None,
-                'summary': None,
-                'content': None,
-                'published': None,
-                'updated': None,
-                'category': None,
-                'slug': None,
-                'location': None,
-                'location_name': None,
-                'location_id': None,
-                'in-reply-to': None,
-                'repost-of': None,
-                'syndication': None,
-                'photo': None
-            }
 
-        for title in request.form:                      # get all of the data from the form
-            data[title] = request.form[title]
-
-        for title in request.files:                     # get all the files and sub them in
-            data[title] = request.files[title].read()
-
-        for key in data:                                # strip out empty fields from form
-            if data[key] == "":
-                data[key] = None
+        data = post_from_request(request)
 
         if "Submit" in request.form:                    # we're publishing it now; give it the present time
             data['published'] = datetime.now()
@@ -352,6 +326,37 @@ def resolve_placename(location):
     except IndexError:
         return None, None
 
+def post_from_request(request):
+    data = {
+                'h': None,
+                'name': None,
+                'summary': None,
+                'content': None,
+                'published': None,
+                'updated': None,
+                'category': None,
+                'slug': None,
+                'location': None,
+                'location_name': None,
+                'location_id': None,
+                'in-reply-to': None,
+                'repost-of': None,
+                'syndication': None,
+                'photo': None
+            }
+    for title in request.form:
+        data[title] = request.form[title]
+
+    for title in request.files:
+        data[title] = request.files[title].read()
+
+    for key in data:
+        if data[key] == "":
+            data[key] = None
+
+    return data
+
+
 @app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
 def edit(year, month, day, name):
     """ The form for user-submission """
@@ -364,23 +369,10 @@ def edit(year, month, day, name):
             return render_template('page_not_found.html')
 
     elif request.method == "POST":
-        data = {}
         app.logger.info(request.form)
 
         if "Submit" in request.form:
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
-
-            for title in request.form:
-                data[title] = request.form[title]
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            for key in data:
-                if data[key] == "":
-                    data[key] = None
+            data = post_from_request(request)
 
             if data['location'] is not None and data['location'].startswith("geo:"):
                 (place_name, geo_id) = resolve_placename(data['location'])
