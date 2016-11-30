@@ -69,7 +69,7 @@
         </div>
         {% endif %}
 
-        <div class="hentry h-entry col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
+        <div class="hentry h-entry col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
             {% if entry.in_reply_to is sequence %}
             {% for site in entry.in_reply_to %}
             {% if site.photo is defined %}
@@ -112,14 +112,20 @@
             <hr>
             <div class="row post-meta">
                 <div class="col-md-6 pull-left">
+                    <p>
                     Posted by on
                     <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-                    <!--{% if entry.location != 'None' %} &lt;!&ndash; If there's a location &ndash;&gt;-->
-                    <!--in-->
-                    <!--<a class="p-location"> {{entry.location | safe }} </a>-->
-                    <!--{% endif %}-->
                     by
                     <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
+                    {% if entry.location != 'None'%} <!-- If there's a location -->
+                        in
+                        {% if entry.location_name %}
+                            <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
+                        {% else %}
+                            <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+                        {% endif %}
+                    {% endif %}
+                    </p>
                 </div> <!-- END POST DETAILS -->
                 <div class="col-md-6 pull-right text-right">
                         <i class="fa fa-tags"></i>
