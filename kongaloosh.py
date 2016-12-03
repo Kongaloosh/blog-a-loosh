@@ -167,7 +167,8 @@ def add():
             location = create_json_entry(data, g=g)
 
             if data['in_reply_to']:
-                send_mention('http://' + DOMAIN_NAME + '/e/'+location, data['in_reply_to'])
+                send_mention('http://' + DOMAIN_NAME +location, data['in_reply_to'])
+
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])
@@ -293,33 +294,38 @@ def bridgy_facebook(location):
     # get the response from the send
     syndication = r.json()
     data = file_parser_json('data/' + location.split('/e/')[1]+".json")
-    if data['syndication'] == 'None':
-        data['syndication'] = syndication['url']+","
-    else:
-        data['syndication'] += syndication['url']+","
-    data['facebook'] = {'url': syndication['url']}
-    create_json_entry(data, g, update=True)
-
+    app.logger.info(syndication)
+    try:
+        if data['syndication']:
+            data['syndication'].append(syndication['url'])
+        else:
+            data['syndication'] = [syndication['url']]
+        data['facebook'] = {'url': syndication['url']}
+        create_json_entry(data, g, update=True)
+    except KeyError:
+        pass
 
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
+    location = 'http://' + DOMAIN_NAME +location
     r = send_mention(
-        'http://' + DOMAIN_NAME +'/e/' + location,
+        location,
         'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
-    location = 'http://' + DOMAIN_NAME +'/e/' + location
     syndication = r.json()
     app.logger.info(syndication)
     data = get_entry_content('data/' + location.split('/e/')[1]+".json")
-    if data['syndication'] == 'None':
-        data['syndication'] = syndication['url']+","
-    else:
-        data['syndication'] += syndication['url']+","
-    data['twitter'] = {'url': syndication['url'],
-                       'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
-    create_json_entry(data, g, update=True)
-
+    try:
+        if data['syndication']:
+            data['syndication'].append(syndication['url'])
+        else:
+            data['syndication'] = [syndication['url']]
+        data['twitter'] = {'url': syndication['url'],
+                           'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
+        create_json_entry(data, g, update=True)
+    except KeyError:
+        pass
 
 def resolve_placename(location):
     try:
@@ -393,6 +399,7 @@ def edit(year, month, day, name):
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
             if request.form.get('twitter'):
+
                 t = Timer(30, bridgy_twitter, [location])
                 t.start()
 
