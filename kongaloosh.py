@@ -96,17 +96,14 @@ def show_entries():
 
     try:
         for entry in entries:
-            # print(entry  entry['syndication']:
-                for i in entry['syndication'].split(','):
-                    if i.startswith('https://twitter.com/'):
-                        vals = i.split('/')
-                        twitter = {'id': vals[len(vals)-1], 'link': i}
-                        entry['twitter'] = twitter
-                        break
+            for i in entry['syndication'].split(','):
+                if i.startswith('https://twitter.com/'):
+                    vals = i.split('/')
+                    twitter = {'id': vals[len(vals)-1], 'link': i}
+                    entry['twitter'] = twitter
+                    break
     except AttributeError:
         pass
-
-    # print(entries)
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -376,7 +373,7 @@ def edit(year, month, day, name):
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name + ".json")
             return render_template('edit_entry.html', entry=entry)
-        except:
+        except IOError:
             return redirect('/404')
 
     elif request.method == "POST":
@@ -384,7 +381,6 @@ def edit(year, month, day, name):
 
         if "Submit" in request.form:
             data = post_from_request(request)
-            print(data)
             if data['location'] is not None and data['location'].startswith("geo:"):
                 (place_name, geo_id) = resolve_placename(data['location'])
                 data['location_name'] = place_name
@@ -401,7 +397,6 @@ def edit(year, month, day, name):
                 t.start()
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name+".json")
-            print(entry)
             update_json_entry(data, entry, g=g)
             return redirect("/e/"+location)
         return redirect("/")

@@ -33,6 +33,11 @@ def file_parser_json(filename):
         entry['published'] = parse(entry['published'])
     except ValueError:
         pass
+    try:
+        entry['category'] = ', '.join(entry['category'])
+    except KeyError:
+        pass
+
     return entry
 
 
@@ -100,11 +105,10 @@ def create_json_entry(data, g, draft=False, update=False,):
                          )
             g.db.commit()
 
-            if data['category']:
-                for c in data['category'].strip().split(','):
-                    g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                                 [slug, data['published'], c])
-                    g.db.commit()
+            for c in data['category']:
+                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                             [slug, data['published'], c])
+                g.db.commit()
 
             create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
         return data['url']
@@ -115,17 +119,17 @@ def create_json_entry(data, g, draft=False, update=False,):
 def update_json_entry(data, old_entry, g, draft=False):
     for key in ['slug', 'u-uid', 'url']:
         data[key] = old_entry[key]
-    if data['category'] and not draft:
-        data['category'] = data['category'].strip().split(',')
-        for c in data['category']:
-            g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                 [old_entry['slug'], old_entry['published'], c])
-            g.db.commit()
+    if data['category']:
+        old_entry['category'] = data['category']
+        if not draft:
+            for c in old_entry['category'].strip().split(','):
+                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                     [old_entry['slug'], old_entry['published'], c])
+                g.db.commit()
 
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
-    print(old_entry)
     create_json_entry(old_entry, g, draft, update=True)
 
 
