@@ -70,7 +70,7 @@
         {% endif %}
 
         <div class="hentry h-entry col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
-            {% if entry.in_reply_to is sequence %}
+            {% if entry.in_reply_to %}
             {% for site in entry.in_reply_to %}
             {% if site.photo is defined %}
             <a href="/e{{site.url}}">
@@ -85,14 +85,14 @@
             {% endif %}
             <div class="e-content p-note">
                 <!-- The title of an entry -->
-                {% if entry.title != 'None' %}
+                {% if entry.title %}
 
                 <h2 class="post-title p-name">
                     <a href="/e{{entry.url}}">{{ entry.title }}</a>
                 </h2>
                 {% endif %}
 
-                {% if entry.summary != 'None' %}
+                {% if entry.summary %}
                 <div class="post-subtitle p-summary">
                     <p>
                         <i>
@@ -102,12 +102,14 @@
                 </div>
                 {% endif%}
 
-                {% if entry.photo is defined %}
+                {% if entry.photo %}
                 <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
                      style="image-orientation: from-image; max-height:600px"
                      src="/{{entry.photo}}">
                 {% endif %}
+                {% if entry.content %}
                 {{entry.content | safe}}</div>
+                {% endif %}
             <div class="entry-footer clearfix">                         <!-- Footer -->
             <hr>
             <div class="row post-meta">
@@ -117,7 +119,7 @@
                     <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
                     by
                     <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
-                    {% if entry.location != 'None'%} <!-- If there's a location -->
+                    {% if entry.location%} <!-- If there's a location -->
                         in
                         {% if entry.location_name %}
                             <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
@@ -128,12 +130,12 @@
                     </p>
                 </div> <!-- END POST DETAILS -->
                 <div class="col-md-6 pull-right text-right">
-                        <i class="fa fa-tags"></i>
-                        {% for c in entry.category %}
-                        {% if c != None and c != 'None' %}
-                        <a class="p-category" href="/t/{{c}}">{{c}}</a>
+                        {% if entry.category %}
+                            <i class="fa fa-tags"></i>
+                            {% for c in entry.category %}
+                            <a class="p-category" href="/t/{{c}}">{{c}}</a>
+                            {% endfor %}
                         {% endif %}
-                        {% endfor %}
                         <a class="u-url" href="/e{{entry.url}}"></a>
                 </div> <!-- END PERMALINK -->
             </div> <!-- END AUTHORSHIP -->
