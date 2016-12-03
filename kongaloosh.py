@@ -764,7 +764,7 @@ def show_draft(name):
             return redirect(location)
 
 
-@app.route('/notification', methods=['GET','POST'])
+@app.route('/notification', methods=['GET', 'POST'])
 def notification():
     pass
 
