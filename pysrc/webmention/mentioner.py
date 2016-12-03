@@ -1,6 +1,5 @@
 """
  Collection of methods which relate to sending webmentions.
-
 """
 
 __author__ = 'alex'
@@ -27,7 +26,7 @@ def send_mention(source, target, endpoint=None):
         headers = {'Accept': 'text/html, application/json'}
         r = requests.post(endpoint, data=payload, headers=headers)
         return r
-    except:
+    except:                 #TODO: add a scope to the exception
         pass
 
 
@@ -38,5 +37,3 @@ if __name__ == '__main__':
     print(r)
     print(r.text)
     print(r.json())
-    # from webemention_checking import get_mentions
-    # print len(get_mentions(t))

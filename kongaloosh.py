@@ -11,7 +11,7 @@ from jinja2 import Environment
 from dateutil.parser import parse
 from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
-from pysrc.file_management.file_parser import create_json_entry, edit_entry_json, file_parser_json
+from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
@@ -96,16 +96,17 @@ def show_entries():
 
     try:
         for entry in entries:
-            for i in entry['syndication'].split(','):
-                if i.startswith('https://twitter.com/'):
-                    vals = i.split('/')
-                    twitter = {'id': vals[len(vals)-1], 'link': i}
-                    entry['twitter'] = twitter
-                    break
+            # print(entry  entry['syndication']:
+                for i in entry['syndication'].split(','):
+                    if i.startswith('https://twitter.com/'):
+                        vals = i.split('/')
+                        twitter = {'id': vals[len(vals)-1], 'link': i}
+                        entry['twitter'] = twitter
+                        break
     except AttributeError:
         pass
 
-    print(entries)
+    # print(entries)
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -361,13 +362,13 @@ def post_from_request(request):
         data[title] = request.files[title].read()
 
     for key in data:
-        if data[key] == "":
+        if data[key] == "None" or data[key] == '':
             data[key] = None
 
     return data
 
 
-@app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
+@app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET','POST'])
 def edit(year, month, day, name):
     """ The form for user-submission """
     if request.method == "GET":
@@ -383,7 +384,7 @@ def edit(year, month, day, name):
 
         if "Submit" in request.form:
             data = post_from_request(request)
-
+            print(data)
             if data['location'] is not None and data['location'].startswith("geo:"):
                 (place_name, geo_id) = resolve_placename(data['location'])
                 data['location_name'] = place_name
@@ -400,9 +401,9 @@ def edit(year, month, day, name):
                 t.start()
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name+".json")
-
-            location = create_json_entry(data, old_entry=entry, g=g)
-            return redirect(location)
+            print(entry)
+            update_json_entry(data, entry, g=g)
+            return redirect("/e/"+location)
         return redirect("/")
 
 
@@ -426,8 +427,8 @@ def profile(year, month, day, name):
     mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
+    reply_to = []                                           # where we store our replies so we can fetch their info
     if entry['in_reply_to']:
-        reply_to = []                                           # where we store our replies so we can fetch their info
         for i in entry['in_reply_to']:                          # for all the replies we have...
             if type(i) == dict:                                 # which are not images on our site...
                 reply_to.append(i)
@@ -731,25 +732,26 @@ def show_drafts():
         return render_template("drafts_list.html", entries=entries)
 
 
-@app.route('/drafts/<name>', methods=['GET','POST'])
+@app.route('/drafts/<name>', methods=['GET', 'POST'])
 def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".json"
         entry = file_parser_json(draft_location)
         return render_template('edit_draft.html', entry=entry)
+
     if request.method == 'POST':
         data = post_from_request(request)
 
-        if "Save" in request.form:
+        if "Save" in request.form:                          # if we're updating a draft
             file_name = "drafts/{0}".format(name)
             entry = file_parser_json(file_name+".json")
-            location = create_json_entry(data, g=g, draft=True)
+            location = update_json_entry(data, entry, g=g, draft=True)
             return redirect("/drafts")
 
-        if "Submit" in request.form:            # if we're publishing it now
+        if "Submit" in request.form:                        # if we're publishing it now
             data['published'] = datetime.now()
 
-            location = create_json_entry(data, image=data['photo'], g=g)
+            location = create_json_entry(data, g=g)
             if data['in_reply_to']:
                 send_mention('http://' + DOMAIN_NAME + '/e'+location, data['in_reply_to'])
 
