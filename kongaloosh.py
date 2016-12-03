@@ -85,6 +85,7 @@ def show_entries():
 
     for (row,) in cur.fetchall():
         if os.path.exists(row+".json"):
+            print(row+".json")
             entries.append(file_parser_json(row+".json"))
 
     try:

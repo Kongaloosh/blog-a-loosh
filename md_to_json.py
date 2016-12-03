@@ -64,10 +64,9 @@ def create_json_entry(data):
     total_path = file_path+"{slug}".format(slug=slug)
 
     # check to make sure that the .json and human-readable versions do not exist currently
-    print('path', total_path + ".json")
-    if not os.path.isfile(total_path+'.json'):
+    if os.path.isfile(total_path+'.json'):
+        print('path', total_path + ".json")
         # Find all the multimedia files which were added with the posts
-        print('here')
         data['published'] = data['published'].__str__()
         file_writer = open(total_path+".json", 'wb')                # open and dump the actual post meta-data
         file_writer.write(json.dumps(data))
@@ -81,40 +80,24 @@ def file_parser(filename):
     str = f.read()
     str = str.decode('utf-8')
     e = {}
-    try: e['title'] = re.search('(?<=title:)(.)*', str).group()
-    except: pass
-    try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
-    except: pass
-    try: e['summary'] = re.search('(?<=summary:)(.)*', str).group()
-    except: pass
+    e['title'] = re.search('(?<=title:)(.)*', str).group()
+    e['slug'] = re.search('(?<=slug:)(.)*', str).group()
+    e['summary'] = re.search('(?<=summary:)(.)*', str).group()
+    e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
+    date = parse(re.search('(?<=published:)(.)*', str).group())
+    e['published'] = date.date()
     try:
-        e['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-    except: pass
-    try:
-        date = parse(re.search('(?<=published:)(.)*', str).group())
-        e['published'] = date.date()
-    except: pass
-    try: e['author'] = re.search('(?<=author:)(.)*', str).group()
-    except: pass
-    try: e['category'] = re.search('(?<=category:)(.)*', str).group().split(',')
-    except: pass
-    try: e['url'] = re.search('(?<=url:)(.)*', str).group()
-    except: pass
-    try:
-        e['u-uid'] = re.search('(?<=u-uid:)(.)*', str).group()
-        if e['u-uid']:
-            e['u-uid'] = e['uid'].group()
-        else:
-            e['u-uid'] = re.search('(?<=u-uid)(.)*', str).group()
-    except:
-        e['u-uid'] = e['slug']
-    try: e['time-zone'] = re.search('(?<=time-zone:)(.)*', str).group()
-    except: pass
-    try:
-        e['location'] = re.search('(?<=location:)(.)*', str).group()
-    except: pass
-    try: e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
-    except: pass
+        e['author'] = re.search('(?<=author:)(.)*', str).group()
+    except AttributeError:
+        e['author'] = None
+    e['category'] = re.search('(?<=category:)(.)*', str).group().split(',')
+    for c in e['category']:
+        if c == "None":
+            e['category'] = None
+    e['url'] = re.search('(?<=url:)(.)*', str).group()
+    e['u-uid'] = e['url']
+    e['location'] = re.search('(?<=location:)(.)*', str).group()
+    e['syndication'] = re.search('(?<=syndication:)(.)*', str).group()
     try: e['location_name'] = re.search('(?<=location_name:)(.)*', str).group()
     except: pass
     try: e['location_id'] = re.search('(?<=location_id:)(.)*', str).group()
@@ -126,27 +109,33 @@ def file_parser(filename):
             replies = replies.split(',')
         else:
             e['in_reply_to'] = replies
-        for site in replies:
-            if site.startswith('http'):         # if it's an external site, we simply add it
-                e['in_reply_to'].append(site)
-            elif site.startswith('/'):          # if it's a local id, we append it with the site's url
-                e['in_reply_to'].append(file_parser('data'+site+'.md'))
     except:pass
     if os.path.exists(filename.split('.md')[0]+".jpg"):
         e['photo'] = filename.split('.md')[0]+".jpg" # get the actual file
-
+    for key in e.keys():
+        if e[key] == '' or e[key] == 'None':
+            print(key)
+            e[key] = None
     return e
 
 path = 'data/'
 
-for (dirpath, dirnames, filenames) in os.walk(path):
-    for filename in filenames:
-        if filename.endswith('.md'):
-            # print(os.sep.join([dirpath, filename]))
-            try:
-                entry = file_parser(os.sep.join([dirpath, filename]))
-                entry['u-uid'] = '/e' + entry['u-uid']
-                entry['url'] = '/e' + entry['url']
-                create_json_entry(entry)
-            except (AttributeError, UnicodeDecodeError):
-                pass
+def fix():
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        for filename in filenames:
+            if filename.endswith('.md'):
+                # print(os.sep.join([dirpath, filename]))
+                try:
+                    entry = file_parser(os.sep.join([dirpath, filename]))
+                    entry['u-uid'] = '/e' + entry['u-uid']
+                    entry['url'] = '/e' + entry['url']
+                    create_json_entry(entry)
+                except (AttributeError, UnicodeDecodeError):
+                    pass
+
+if __name__ == '__main__':
+    e = file_parser('data/2015/11/20/test-notes.md')
+    print(e)
+    # e = file_parser('data/2015/7/25/albums.md')
+    # create_json_entry(e)
+    fix()
