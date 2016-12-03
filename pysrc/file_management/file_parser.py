@@ -29,24 +29,25 @@ FULLNAME = config.get('PersonalInfo', 'FullName')
 
 def file_parser_json(filename):
     entry = json.loads(open(filename, 'rb').read())
-    entry['published'] = parse(entry['published'])
+    try:
+        entry['published'] = parse(entry['published'])
+    except ValueError:
+        pass
     return entry
 
 
-def create_json_entry(data, g, draft=False):
-    if data['name']:                            # is it an article?
-        title = data['name']                    # we make the slug from the title
-        slug = title
-    else:                                       # otherwise we make a slug from post content
-        slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
-    slug = slugify(slug)                        # slugify the slug
-    data['u-uid'] = slug
-    data['slug'] = slug
-
-    date_location = "{year}/{month}/{day}/".format(
-                        year=str(data['published'].year),
-                        month=str(data['published'].month),
-                        day=str(data['published'].day))             # turn date into filepath
+def create_json_entry(data, g, draft=False, update=False,):
+    try:
+        slug = data['slug']
+    except KeyError:
+        if data['name']:                            # is it an article?
+            title = data['name']                    # we make the slug from the title
+            slug = title
+        else:                                       # otherwise we make a slug from post content
+            slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
+        slug = slugify(slug)                        # slugify the slug
+        data['u-uid'] = slug
+        data['slug'] = slug
 
     if data['category']:
         data['category'] = data['category'].strip().split(",")  # comes in as a string, so we need to parse it
@@ -54,7 +55,12 @@ def create_json_entry(data, g, draft=False):
     if draft:                                   # whether or not this is a draft changes the location saved
         file_path = "drafts/"
         data['url'] = '/drafts/' + slug
+
     else:
+        date_location = "{year}/{month}/{day}/".format(
+                        year=str(data['published'].year),
+                        month=str(data['published'].month),
+                        day=str(data['published'].day))             # turn date into filepath
         file_path = "data/" + date_location
         data['url'] = '/e/' + date_location + slug
 
@@ -64,9 +70,8 @@ def create_json_entry(data, g, draft=False):
     total_path = file_path+"{slug}".format(slug=slug)
 
     # check to make sure that the .json and human-readable versions do not exist currently
-    if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json'):
+    if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
         # Find all the multimedia files which were added with the posts
-
         for (key, extension) in [
                 # (data['video'], '.mp4'),
                 # (data['audio'], '.mp3'),
@@ -82,7 +87,6 @@ def create_json_entry(data, g, draft=False):
                 data[key] = total_path + extension                            # update the dict to a location refrence
 
         data['published'] = data['published'].__str__()
-        print(data)
         file_writer = open(total_path+".json", 'wb')                # open and dump the actual post meta-data
         file_writer.write(json.dumps(data))
         file_writer.close()
@@ -108,8 +112,10 @@ def create_json_entry(data, g, draft=False):
         return "/already_made"                                      # a post of this name already exists
 
 
-def update_json_entry(data, old_entry, g):
-    if data['category']:
+def update_json_entry(data, old_entry, g, draft=False):
+    for key in ['slug', 'u-uid', 'url']:
+        data[key] = old_entry[key]
+    if data['category'] and not draft:
         data['category'] = data['category'].strip().split(',')
         for c in data['category']:
             g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
@@ -119,7 +125,8 @@ def update_json_entry(data, old_entry, g):
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
-    create_json_entry(data, g)
+    print(old_entry)
+    create_json_entry(old_entry, g, draft, update=True)
 
 
 def create_entry_markdown(data, path):
