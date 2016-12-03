@@ -104,7 +104,7 @@ def create_json_entry(data, g, draft=False):
             create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
         return data['url']
     else:
-        "/already_made"                                             # a post of this name already exists
+        return "/already_made"                                      # a post of this name already exists
 
 
 def create_entry_markdown(data, path):
@@ -120,7 +120,7 @@ def create_entry_markdown(data, path):
     entry += "location:" + str(data['location']) + "\n"
     entry += "location_name:" + str(data['location_name']) + "\n"
     entry += "location_id:" + str(data['location_id']) + "\n"
-    entry += "in-reply-to:" + str(data['in-reply-to']) + "\n"
+    entry += "in-reply-to:" + str(data['in_reply_to']) + "\n"
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
     entry += "content:" + data['content'] + "\n"
