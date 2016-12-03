@@ -71,8 +71,8 @@
         {% endif%}
         <div class="entry-footer clearfix">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
-                <i class="fa fa-tags"></i>
                 {% if entry.category %}
+                    <i class="fa fa-tags"></i>
                     {% for c in entry.category %}
                     <a class="category" href="/t/{{c}}">{{c}}</a>
                     {% endfor %}
