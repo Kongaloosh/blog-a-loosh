@@ -94,16 +94,16 @@ def show_entries():
 
     before = 1
 
-    try:
-        for entry in entries:
-            for i in entry['syndication'].split(','):
-                if i.startswith('https://twitter.com/'):
-                    vals = i.split('/')
-                    twitter = {'id': vals[len(vals)-1], 'link': i}
-                    entry['twitter'] = twitter
-                    break
-    except AttributeError:
-        pass
+    # try:
+    #     for entry in entries:
+    #         for i in entry['syndication'].split(','):
+    #             if i.startswith('https://twitter.com/'):
+    #                 vals = i.split('/')
+    #                 twitter = {'id': vals[len(vals)-1], 'link': i}
+    #                 entry['twitter'] = twitter
+    #                 break
+    # except AttributeError:
+    #     pass
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -297,6 +297,7 @@ def bridgy_facebook(location):
         data['syndication'] = syndication['url']+","
     else:
         data['syndication'] += syndication['url']+","
+    data['facebook'] = {'url': syndication['url']}
     create_json_entry(data)
 
 
@@ -315,6 +316,8 @@ def bridgy_twitter(location):
         data['syndication'] = syndication['url']+","
     else:
         data['syndication'] += syndication['url']+","
+    data['twitter'] = {'url': syndication['url'],
+                       'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
     create_json_entry(data)
 
 
@@ -432,16 +435,16 @@ def profile(year, month, day, name):
             elif i.startswith('http'):                          # which are not data resources on our site...
                 reply_to.append(get_entry_content(i))
 
-    if entry['syndication']:
-        for i in entry['syndication'].split(','):               # look at all the syndication links
-            if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
-                twitter = dict()
-                vals = i.split('/')
-                twitter['id'] = vals[len(vals)-1]
-                twitter['link'] = i
-                entry['twitter'] = twitter
-            if i.startswith('https://www.facebook.com/'):
-                entry['facebook'] = {'link':i}
+    # if entry['syndication']:
+    #     for i in entry['syndication'].split(','):               # look at all the syndication links
+    #         if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
+    #             twitter = dict()
+    #             vals = i.split('/')
+    #             twitter['id'] = vals[len(vals)-1]
+    #             twitter['link'] = i
+    #             entry['twitter'] = twitter
+    #         if i.startswith('https://www.facebook.com/'):
+    #             entry['facebook'] = {'link':i}
 
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
 
@@ -579,31 +582,18 @@ def handle_micropub():
                     data[key] = request.form.get(key)
 
                 if data['syndication']:
-                    data['syndication'] += ","
+                    data['syndication'] += ","                  #TODO: add twitter keywords
 
                 if not data['published']:                       # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
 
-                if request.files.get('photo'):
-                    img = request.files.get('photo').read()
-                    data['photo'] = img
-                    data['category'] += ',image'                # we've added an image, so append it
-                else:
-                    data['photo'] = None
-
-                try:
-                    audio = request.files.get('audio').read()
-                    data['audio'] = audio
-                    data['category'] += ',audio'                # we've added an image, so append it
-                except: pass
-
-                try:
-                    video = request.files.get('video').read()
-                    data['video'] = video
-                    data['category'] += ',video'                # we've added an image, so append it
-                except: pass
+                for key, name in [('photo','image'),('audio','audio'),('video','video')]:
+                    if request.files.get(key):
+                        img = request.files.get(key).read()
+                        data[key] = img
+                        data['category'] += ','+name                # we've added an image, so append it
 
                 location = create_json_entry(data, image=data['photo'], g=g)
                 
