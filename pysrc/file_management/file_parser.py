@@ -10,11 +10,14 @@ from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from pysrc.file_management.markdown_album_extension import AlbumExtension
+import logging
 
 __author__ = 'alex'
 
 config = ConfigParser.ConfigParser()
 config.read('config.ini')
+
+logger = logging.getLogger(__name__)
 
 # configuration
 DATABASE = config.get('Global', 'Database')
@@ -33,24 +36,21 @@ def file_parser_json(filename):
         entry['published'] = parse(entry['published'])
     except ValueError:
         pass
-    try:
-        entry['category'] = ', '.join(entry['category'])
-    except KeyError:
-        pass
 
     return entry
 
 
 def create_json_entry(data, g, draft=False, update=False,):
-    try:
+    slug = None
+    if data['slug']:
         slug = data['slug']
-    except KeyError:
+    else:
         if data['name']:                            # is it an article?
             title = data['name']                    # we make the slug from the title
             slug = title
         else:                                       # otherwise we make a slug from post content
             slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
-        slug = slugify(slug)                        # slugify the slug
+            slug = slugify(slug)                        # slugify the slug
         data['u-uid'] = slug
         data['slug'] = slug
 
@@ -104,11 +104,11 @@ def create_json_entry(data, g, draft=False, update=False,):
                 """, [slug, data['published'], total_path]
                          )
             g.db.commit()
-
-            for c in data['category']:
-                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                             [slug, data['published'], c])
-                g.db.commit()
+            if data['category']:
+                for c in data['category']:
+                    g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                                 [slug, data['published'], c])
+                    g.db.commit()
 
             create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
         return data['url']
@@ -134,13 +134,19 @@ def update_json_entry(data, old_entry, g, draft=False):
 
 
 def create_entry_markdown(data, path):
+    for key in data.keys():
+        if data[key] is None:
+            data[key] = ''
     entry = ''
     entry += "p-name:\n" \
              "title:{title}\n" \
              "slug:{slug}\n".format(title=data['name'], slug=data['slug'])
     entry += "summary:" + str(data['summary']) + "\n"
     entry += "published:" + str(data['published']) + "\n"
-    entry += "category:" + str(data['category']) + "\n"
+    try:
+        entry += "category:" + ', '.join(data['category']) + "\n"
+    except TypeError:
+        entry += "category:" + data['category']
     entry += "url:" + data['url'] + "\n"
     entry += "u-uid:" + data['url'] + "\n"
     entry += "location:" + str(data['location']) + "\n"

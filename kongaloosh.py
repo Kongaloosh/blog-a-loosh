@@ -298,7 +298,7 @@ def bridgy_facebook(location):
     else:
         data['syndication'] += syndication['url']+","
     data['facebook'] = {'url': syndication['url']}
-    create_json_entry(data)
+    create_json_entry(data, g, update=True)
 
 
 def bridgy_twitter(location):
@@ -318,7 +318,7 @@ def bridgy_twitter(location):
         data['syndication'] += syndication['url']+","
     data['twitter'] = {'url': syndication['url'],
                        'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
-    create_json_entry(data)
+    create_json_entry(data, g, update=True)
 
 
 def resolve_placename(location):
@@ -375,6 +375,7 @@ def edit(year, month, day, name):
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name + ".json")
+            entry['category'] = ', '.join(entry['category'])
             return render_template('edit_entry.html', entry=entry)
         except IOError:
             return redirect('/404')
@@ -434,7 +435,6 @@ def profile(year, month, day, name):
                 reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
             elif i.startswith('http'):                          # which are not data resources on our site...
                 reply_to.append(get_entry_content(i))
-
     # if entry['syndication']:
     #     for i in entry['syndication'].split(','):               # look at all the syndication links
     #         if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
@@ -595,15 +595,15 @@ def handle_micropub():
                         data[key] = img
                         data['category'] += ','+name                # we've added an image, so append it
 
-                location = create_json_entry(data, image=data['photo'], g=g)
+                location = create_json_entry(data, g=g)
                 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 if request.form.get('twitter') or data['photo']:
-                    t = Timer(10, bridgy_twitter, [location])
+                    t = Timer(30, bridgy_twitter, [location])
                     t.start()
 
                 if request.form.get('facebook') or data['photo']:
-                    t = Timer(20, bridgy_facebook, [location])
+                    t = Timer(30, bridgy_facebook, [location])
                     t.start()
 
                 resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
@@ -620,7 +620,9 @@ def handle_micropub():
             syndicate_to = [
                 'twitter.com/',
                 'tumblr.com/',
+                'facebook.com/'
             ]
+
             r = ''
             while len(syndicate_to) > 1:
                 r += 'syndicate-to[]=' + syndicate_to.pop() + '&'
@@ -722,6 +724,7 @@ def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".json"
         entry = file_parser_json(draft_location)
+        entry['category'] = ', '.join(entry['category'])
         return render_template('edit_draft.html', entry=entry)
 
     if request.method == 'POST':
