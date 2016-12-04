@@ -37,7 +37,7 @@ def file_parser_json(filename, md=True):
     except ValueError:
         pass
 
-    if md :
+    if md:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
 
     return entry
@@ -99,7 +99,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         file_writer.write(json.dumps(data))
         file_writer.close()
 
-        if not draft:                                               # if this isn't a draft, put it in the dbms
+        if not draft and g:                                          # if this isn't a draft, put it in the dbms
             g.db.execute(
                 """
                 insert into entries
