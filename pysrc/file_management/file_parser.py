@@ -38,7 +38,7 @@ def file_parser_json(filename, md=True):
         pass
 
     if md :
-        markdown.markdown(entry['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
 
     return entry
 
