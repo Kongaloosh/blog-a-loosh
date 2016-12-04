@@ -30,12 +30,15 @@ GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
 
 
-def file_parser_json(filename):
+def file_parser_json(filename, md=True):
     entry = json.loads(open(filename, 'rb').read())
     try:
         entry['published'] = parse(entry['published'])
     except ValueError:
         pass
+
+    if md :
+        markdown.markdown(entry['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
 
     return entry
 
