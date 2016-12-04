@@ -306,6 +306,7 @@ def bridgy_facebook(location):
     except KeyError:
         pass
 
+
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
     location = 'http://' + DOMAIN_NAME +location
@@ -327,6 +328,7 @@ def bridgy_twitter(location):
         create_json_entry(data, g, update=True)
     except KeyError:
         pass
+
 
 def resolve_placename(location):
     try:
@@ -381,7 +383,7 @@ def edit(year, month, day, name):
     if request.method == "GET":
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json")
+            entry = file_parser_json(file_name + ".json", markdown=Falses)
             entry['category'] = ', '.join(entry['category'])
             return render_template('edit_entry.html', entry=entry)
         except IOError:
@@ -731,7 +733,7 @@ def show_drafts():
 def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".json"
-        entry = file_parser_json(draft_location)
+        entry = file_parser_json(draft_location, markdown=False)
         entry['category'] = ', '.join(entry['category'])
         return render_template('edit_draft.html', entry=entry)
 
