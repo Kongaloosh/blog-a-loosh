@@ -20,8 +20,10 @@
 </header>
 {% if session.logged_in %}
 <div class="container">
-    <i class="fa fa-times pull-right"></i>
     <div class="container input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <form class="pull-right" action="/delete_draft{{entry.url}}" method="post">
+            <button value="submit" type="submit" class="btn-link"><i class="fa fa-times"></i></button>
+        </form>
         <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
             {% if entry.slug %}
                 <data value="{{entry.slug}}"></data>

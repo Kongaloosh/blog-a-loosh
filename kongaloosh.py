@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, \
+from flask import Flask, request, session, g, redirect, url_for, abort, \
     render_template, flash, Response, send_file
 from contextlib import closing
 import os
@@ -142,7 +142,6 @@ def page_not_found(e):
 def page_not_found(e):
     return render_template('server_error.html'), 500
 
-
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     """ The form for user-submission """
@@ -150,6 +149,8 @@ def add():
         return render_template('add.html')
 
     elif request.method == 'POST':                  # if we're adding a new post
+        if not session.get('logged_in'):
+            abort(401)
         app.logger.info(request.form)
 
         data = post_from_request(request)
@@ -186,11 +187,50 @@ def add():
         return redirect('/404'), 404
 
 
+@app.route('/delete_draft/<name>', methods=['POST'])
+def delete_drafts(year, month, day, name):
+    app.logger.info("delete requested")
+    if not session.get('logged_in'):
+        abort(401)
+
+    totalpath = "drafts/{name}"
+    for extension in [".md", '.json', '.jpg']:
+        if os.path.isfile(totalpath+extension):
+            os.remove(totalpath+extension)
+
+    return redirect('/', 200)
+
+
+@app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST'])
+def delete_entry(year, month, day, name):
+    app.logger.info('here')
+    app.logger.info("delete requested")
+    app.logger.info(session.get('logged_in'))
+    if not session.get('logged_in'):
+        abort(401)
+
+    totalpath = "data/{0}/{1}/{2}/{3}".format(year,month,day,name)
+    for extension in [".md", '.json', '.jpg']:
+        if os.path.isfile(totalpath+extension):
+            os.remove(totalpath+extension)
+
+    g.db.execute(
+            """
+            DELETE FROM ENTRIES
+            WHERE Location=(?);
+            """, (totalpath,)
+    )
+    g.db.commit()
+    return redirect('/', 200)
+
 @app.route('/bulk_upload', methods=['GET', 'POST'])
 def bulk_upload():
     if request.method == 'GET':
         return render_template('bulk_photo_uploader.html')
     elif request.method == 'POST':
+        if not session.get('logged_in'):
+            abort(401)
+
         date = datetime.now()
 
         file_path = "data/{0}/{1}/{2}/".format(
@@ -293,7 +333,7 @@ def bridgy_facebook(location):
     )
     # get the response from the send
     syndication = r.json()
-    data = file_parser_json('data/' + location.split('/e/')[1]+".json")
+    data = file_parser_json('data/' + location.split('/e/')[1]+".json", md=False)
     app.logger.info(syndication)
     if data['syndication']:
         data['syndication'].append(syndication['url'])
@@ -314,7 +354,7 @@ def bridgy_twitter(location):
     )
     syndication = r.json()
     app.logger.info(syndication)
-    data = file_parser_json('data/' + location.split('/e/')[1]+".json")
+    data = file_parser_json('data/' + location.split('/e/')[1]+".json", md=False)
     if data['syndication']:
         data['syndication'].append(syndication['url'])
     else:
@@ -371,19 +411,25 @@ def post_from_request(request):
     return data
 
 
-@app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET','POST'])
+@app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET', 'POST', 'DELETE'])
 def edit(year, month, day, name):
     """ The form for user-submission """
+    app.logger.info(request)
     if request.method == "GET":
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name + ".json", md=False)
-            entry['category'] = ', '.join(entry['category'])
+            try:
+                entry['category'] = ', '.join(entry['category'])
+            except TypeError:
+                entry['category'] = ''
             return render_template('edit_entry.html', entry=entry)
         except IOError:
             return redirect('/404')
 
     elif request.method == "POST":
+        if not session.get('logged_in'):
+            abort(401)
         app.logger.info(request.form)
 
         if "Submit" in request.form:
@@ -408,7 +454,6 @@ def edit(year, month, day, name):
             update_json_entry(data, entry, g=g)
             return redirect("/e/"+location)
         return redirect("/")
-
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
@@ -659,33 +704,32 @@ def handle_inbox():
 
     elif request.method == 'POST':
         # check content is json-ld
-
-            data = json.loads(request.data)
-            app.logger.info(data)
+        data = json.loads(request.data)
+        app.logger.info(data)
+        try:
+            sender = data['actor']['@id']
+        except KeyError:
             try:
-                sender = data['actor']['@id']
+                sender = data['actor']['id']
             except KeyError:
-                try:
-                    sender = data['actor']['id']
-                except KeyError:
-                    return "could not validate notification sender: no actor id", 403
+                return "could not validate notification sender: no actor id", 403
 
-            if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
-                # todo: make better names for notifications
-                notification = open('inbox/' + slugify(str(datetime.now())) + '.json','w+')
-                notification.write(request.data)
-                return "added to inbox", 202
-            else:                                           # if the sender isn't whitelisted
-                try:
-                    validate = requests.get(sender)
-                    if validate.status_code - 200 < 100:    # if the sender is real
-                        notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
-                        notification.write(request.data)
-                        return "queued", 202
-                    else:
-                        return "forbidden", 403
-                except requests.ConnectionError:
+        if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
+            # todo: make better names for notifications
+            notification = open('inbox/' + slugify(str(datetime.now())) + '.json','w+')
+            notification.write(request.data)
+            return "added to inbox", 202
+        else:                                           # if the sender isn't whitelisted
+            try:
+                validate = requests.get(sender)
+                if validate.status_code - 200 < 100:    # if the sender is real
+                    notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
+                    notification.write(request.data)
+                    return "queued", 202
+                else:
                     return "forbidden", 403
+            except requests.ConnectionError:
+                return "forbidden", 403
     else:
         return "this is not implemented", 501
 
@@ -732,6 +776,8 @@ def show_draft(name):
         return render_template('edit_draft.html', entry=entry)
 
     if request.method == 'POST':
+        if not session.get('logged_in'):
+            abort(401)
         data = post_from_request(request)
 
         if "Save" in request.form:                          # if we're updating a draft
