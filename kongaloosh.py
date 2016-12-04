@@ -85,7 +85,6 @@ def show_entries():
 
     for (row,) in cur.fetchall():
         if os.path.exists(row+".json"):
-            print(row+".json")
             entries.append(file_parser_json(row+".json"))
 
     try:
@@ -296,20 +295,18 @@ def bridgy_facebook(location):
     syndication = r.json()
     data = file_parser_json('data/' + location.split('/e/')[1]+".json")
     app.logger.info(syndication)
-    try:
-        if data['syndication']:
-            data['syndication'].append(syndication['url'])
-        else:
-            data['syndication'] = [syndication['url']]
-        data['facebook'] = {'url': syndication['url']}
-        create_json_entry(data, g, update=True)
-    except KeyError:
-        pass
+    if data['syndication']:
+        data['syndication'].append(syndication['url'])
+    else:
+        data['syndication'] = [syndication['url']]
+    data['facebook'] = {'url': syndication['url']}
+    create_json_entry(data, g, update=True)
 
 
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
     location = 'http://' + DOMAIN_NAME +location
+    app.logger.info(location)
     r = send_mention(
         location,
         'https://brid.gy/publish/twitter',
@@ -317,17 +314,14 @@ def bridgy_twitter(location):
     )
     syndication = r.json()
     app.logger.info(syndication)
-    data = get_entry_content('data/' + location.split('/e/')[1]+".json")
-    try:
-        if data['syndication']:
-            data['syndication'].append(syndication['url'])
-        else:
-            data['syndication'] = [syndication['url']]
-        data['twitter'] = {'url': syndication['url'],
-                           'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
-        create_json_entry(data, g, update=True)
-    except KeyError:
-        pass
+    data = file_parser_json('data/' + location.split('/e/')[1]+".json")
+    if data['syndication']:
+        data['syndication'].append(syndication['url'])
+    else:
+        data['syndication'] = [syndication['url']]
+    data['twitter'] = {'url': syndication['url'],
+                       'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
+    create_json_entry(data, g, update=True)
 
 
 def resolve_placename(location):
@@ -383,7 +377,7 @@ def edit(year, month, day, name):
     if request.method == "GET":
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json", markdown=Falses)
+            entry = file_parser_json(file_name + ".json", markdown=False)
             entry['category'] = ', '.join(entry['category'])
             return render_template('edit_entry.html', entry=entry)
         except IOError:
