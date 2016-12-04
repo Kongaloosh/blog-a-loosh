@@ -109,9 +109,10 @@
         </div> <!-- END PERMALINK -->
     </div> <!-- END AUTHORSHIP -->
 
-    {% if entry.twitter %}
+
     <div class="entry-footer row">
         <div class="actions col-md-9 pull-left">
+            {% if entry.twitter %}
             <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
                 <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
                     <i class="fa fa-star"></i>
@@ -130,16 +131,24 @@
                     Reply
                 </a>
             </indie-action>
+            {% endif %}
         </div> <!-- END ACTIONS -->
 
         <div class="actions col-md-3 text-right">
-            <a href="{{entry.twitter.link}}">
-                On Twitter
-                <i class="fa fa-twitter"></i>
-            </a>
+            {% if entry.twitter %}
+                <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
+                    On Twitter
+                    <i class="fa fa-twitter"></i>
+                </a>
+                {% endif %}
+                {% if entry.facebook %}
+                <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
+                    On facebook
+                    <i class="fa fa-facebook-square"></i>
+                </a>
+            {% endif %}
         </div> <!-- END TWITTER LINK -->
     </div><!-- END TWITTER SYNDICATION -->
-    {% endif %}
 </div>
 <hr>
 {% else %}

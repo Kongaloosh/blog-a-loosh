@@ -377,7 +377,7 @@ def edit(year, month, day, name):
     if request.method == "GET":
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json", markdown=False)
+            entry = file_parser_json(file_name + ".json", md=False)
             entry['category'] = ', '.join(entry['category'])
             return render_template('edit_entry.html', entry=entry)
         except IOError:
@@ -727,7 +727,7 @@ def show_drafts():
 def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".json"
-        entry = file_parser_json(draft_location, markdown=False)
+        entry = file_parser_json(draft_location, md=False)
         entry['category'] = ', '.join(entry['category'])
         return render_template('edit_draft.html', entry=entry)
 
