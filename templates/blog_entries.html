@@ -25,7 +25,7 @@
         </div>
     {% endif %}
 
-    {% if entry.title != 'None' %}
+    {% if entry.title %}
 
     <h2 class="post-title p-name">
         <a href="/e{{entry.url}}">{{ entry.title }}</a>
@@ -53,12 +53,12 @@
     {% endfor %}
     {% endif %}
     <div class="e-content">
-        {% if entry.photo is defined %}
+        {% if entry.photo%}
         <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
              style="image-orientation: from-image; max-height:500px"
              src="/{{entry.photo}}">
         {% endif %}
-        {% if entry.summary != 'None' %}
+        {% if entry.summary %}
         <div class="post-subtitle p-summary">
                 <p>
                 <i>
@@ -66,18 +66,17 @@
                 </i>
             </p>
         </div>
-
         {% else %}
-        <p class="row e-content">{{entry.content | safe}}</p>
+        <p class="row e-content">{{entry.content}}</p>
         {% endif%}
         <div class="entry-footer clearfix">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
-                <i class="fa fa-tags"></i>
-                {% for c in entry.category %}
-                {% if c != None and c != 'None' %}
-                <a class="category" href="/t/{{c}}">{{c}}</a>
+                {% if entry.category %}
+                    <i class="fa fa-tags"></i>
+                    {% for c in entry.category %}
+                    <a class="category" href="/t/{{c}}">{{c}}</a>
+                    {% endfor %}
                 {% endif %}
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -86,22 +85,26 @@
         <div class="text-left col-lg-9 col-md-9 col-sm-9 col-xs-9">
             <p>Posted on
             <a href="/e{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-            {% if entry.location != 'None'%} <!-- If there's a location -->9
+            {% if entry.location and entry.location_name%} <!-- If there's a location -->
                 in
-                <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+                {% if entry.location_name %}
+			        <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
+		        {% else %}
+			        <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+		        {% endif %}
             {% endif %}
             </p>
         </div> <!-- END POST DETAILS -->
 
         <div class="text-right col-lg-3 col-md-3 col-sm-3 col-xs-3">
             <p>
-                {% if entry.in_reply_to != 'None' %}
+                {% if entry.in_reply_to%}
                 <span>{{entry.in_reply_to | length}}</span>
                 <i class="fa fa-reply"></i>
                 {% endif %}
-                <span data-webmention-count data-url="http://kongaloosh.com/e{{entry.url}}"></span>
+                <span data-webmention-count data-url="http://kongaloosh.com{{entry.url}}"></span>
                 <i class="fa fa-comments"></i>
-                <a href="/e{{entry.url}}"><i class="fa fa-link"></i></a>
+                <a href="{{entry.url}}"><i class="fa fa-link"></i></a>
             </p>
         </div> <!-- END PERMALINK -->
     </div> <!-- END AUTHORSHIP -->
@@ -109,19 +112,19 @@
     {% if entry.twitter %}
     <div class="entry-footer row">
         <div class="actions col-md-9 pull-left">
-            <indie-action do="like" with="http://kongaloosh.com/e{{entry.url}}">
+            <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
                 <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
                     <i class="fa fa-star"></i>
                     Like
                 </a>
             </indie-action>
-            <indie-action do="repost" with="http://kongaloosh.com/e{{entry.url}}">
+            <indie-action do="repost" with="http://kongaloosh.com{{entry.url}}">
                 <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
                     <i class="fa fa-retweet"></i>
                     Repost
                 </a>
             </indie-action>
-            <indie-action do="reply" with="http://kongaloosh.com/e{{entry.url}}">
+            <indie-action do="reply" with="http://kongaloosh.com{{entry.url}}">
                 <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
                     <i class="fa fa-reply"></i>
                     Reply

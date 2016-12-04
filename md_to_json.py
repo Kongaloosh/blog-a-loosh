@@ -64,6 +64,7 @@ def create_json_entry(data):
     total_path = file_path+"{slug}".format(slug=slug)
 
     # check to make sure that the .json and human-readable versions do not exist currently
+
     if not os.path.isfile(total_path+'.json'):
         print('path', total_path + ".json")
         # Find all the multimedia files which were added with the posts
@@ -134,8 +135,16 @@ def fix():
                     pass
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     # e = file_parser('data/2015/11/20/test-notes.md')
     # print(e)
     # e = file_parser('data/2015/7/25/albums.md')
     # create_json_entry(e)
     fix()
+=======
+    e = file_parser('data/2015/11/20/test-notes.md')
+    print(e)
+    # e = file_parser('data/2015/7/25/albums.md')
+    # create_json_entry(e)
+    fix()
+>>>>>>> 27189e110eff027095c09330dff8a94b99f1fedd
