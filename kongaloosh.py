@@ -287,7 +287,7 @@ def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
     # send the mention
     r = send_mention(
-        'http://' + DOMAIN_NAME + '/e/' + location,
+        'http://' + DOMAIN_NAME + location,
         'https://brid.gy/publish/facebook',
         endpoint='https://brid.gy/publish/webmention'
     )
@@ -300,7 +300,7 @@ def bridgy_facebook(location):
     else:
         data['syndication'] = [syndication['url']]
     data['facebook'] = {'url': syndication['url']}
-    create_json_entry(data, g, update=True)
+    create_json_entry(data, g=None,update=True)
 
 
 def bridgy_twitter(location):
@@ -321,7 +321,7 @@ def bridgy_twitter(location):
         data['syndication'] = [syndication['url']]
     data['twitter'] = {'url': syndication['url'],
                        'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
-    create_json_entry(data, g, update=True)
+    create_json_entry(data, g=None, update=True)
 
 
 def resolve_placename(location):
