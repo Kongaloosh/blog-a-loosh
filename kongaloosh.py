@@ -11,7 +11,7 @@ from jinja2 import Environment
 from dateutil.parser import parse
 from pysrc.webmention.extractor import get_entry_content
 from pysrc.posse_scripts import tweeter
-from pysrc.file_management.file_parser import editEntry, create_entry, file_parser, get_bare_file, entry_re_write, activity_stream_parser
+from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
 from pysrc.webmention.mentioner import send_mention
@@ -33,10 +33,13 @@ config.read('config.ini')
 DATABASE = config.get('Global', 'Database')
 DEBUG = config.get('Global', 'Debug')
 SECRET_KEY = config.get('Global', 'DevKey')
-USERNAME = config.get('SiteAuthentication', 'Username')
-PASSWORD = config.get('SiteAuthentication', 'Password')
+USERNAME = config.get('SiteAuthentication', "Username")
+PASSWORD = config.get('SiteAuthentication', 'password')
 DOMAIN_NAME = config.get('Global', 'DomainName')
+GEONAMES = config.get('GeoNamesUsername', 'Username')
+FULLNAME = config.get('PersonalInfo', 'FullName')
 
+print(DATABASE, USERNAME, PASSWORD, DOMAIN_NAME)
 
 # create our little application :)
 app = Flask(__name__)
@@ -73,28 +76,35 @@ def show_entries():
     """ The main view: presents author info and entries. """
     entries = []
     cur = g.db.execute(
-        "SELECT location "
-        +"FROM entries "
-        +"ORDER BY published DESC")
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            print(row+".json")
+            entries.append(file_parser_json(row+".json"))
+
     try:
-        entries=entries[:10]
+        entries = entries[:10]
     except IndexError:
-        entries=None
+        entries = None
 
     before = 1
 
-    for entry in entries:
-        for i in entry['syndication'].split(','):
-            if i.startswith('https://twitter.com/'):
-                twitter = dict()
-                vals = i.split('/')
-                twitter['id'] = vals[len(vals)-1]
-                twitter['link'] = i
-                entry['twitter'] = twitter
-                break
+    # try:
+    #     for entry in entries:
+    #         for i in entry['syndication'].split(','):
+    #             if i.startswith('https://twitter.com/'):
+    #                 vals = i.split('/')
+    #                 twitter = {'id': vals[len(vals)-1], 'link': i}
+    #                 entry['twitter'] = twitter
+    #                 break
+    # except AttributeError:
+    #     pass
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -110,8 +120,8 @@ def pagination(number):
     )
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            entries.append(file_parser_json(row+".json"))
 
     try:
         start = int(number) * 10
@@ -134,47 +144,32 @@ def page_not_found(e):
     return render_template('server_error.html'), 500
 
 
-@app.route('/stream')
-def show_entries_stream():
-    """ A simple stream that people can go to if they don't want the cover """
-    pass
-
-
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     """ The form for user-submission """
     if request.method == 'GET':
         return render_template('add.html')
 
-    elif request.method == 'POST':              # if we're adding a new post
+    elif request.method == 'POST':                  # if we're adding a new post
         app.logger.info(request.form)
-        if "Submit" in request.form:            # if we're publishing it now
-            data = {}
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
 
-            for title in request.form:
-                data[title] = request.form[title]
+        data = post_from_request(request)
 
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            try:
-                data['photo'] = request.files['photo']
-            except KeyError:
-                data['photo'] = None
-
-            for key in data:
-                if data[key] == "":
-                    data[key] = None
-
+        if "Submit" in request.form:                    # we're publishing it now; give it the present time
             data['published'] = datetime.now()
 
-            location = create_entry(data, image=data['photo'], g=g)
+            if data['location'] is not None and data['location'].startswith("geo:"):
+                if data['location'].startswith("geo:"):
+                    app.logger.info(data['location'])
+                    (place_name, geo_id) = resolve_placename(data['location'])
+                    data['location_name'] = place_name
+                    data['location_id'] = geo_id
 
-            if data['in-reply-to']:
-                send_mention('http://' + DOMAIN_NAME + '/e/'+location, data['in-reply-to'])
+            location = create_json_entry(data, g=g)
+
+            if data['in_reply_to']:
+                send_mention('http://' + DOMAIN_NAME +location, data['in_reply_to'])
+
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])
@@ -184,28 +179,8 @@ def add():
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
-        if "Save" in request.form:
-            data = {}
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
-
-            for title in request.form:
-                data[title] = request.form[title]
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            try:
-                photo = request.files['photo']
-            except KeyError:
-                photo = None
-
-            for key in data:
-                if data[key] == "":
-                    data[key] = None
-
-            location = create_entry(data, image=data['photo'], g=g, draft=True)
+        if "Save" in request.form:              # if we're simply saving the post as a draft
+            location = create_json_entry(data, g=g, draft=True)
 
         return redirect(location)
     else:
@@ -311,71 +286,121 @@ def recent_uploads():
 
 def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
+    # send the mention
     r = send_mention(
         'http://' + DOMAIN_NAME + '/e/' + location,
         'https://brid.gy/publish/facebook',
         endpoint='https://brid.gy/publish/webmention'
     )
+    # get the response from the send
     syndication = r.json()
-    data = get_bare_file('data/' + location.split('/e/')[1]+".md")
-    if data['syndication'] == 'None':
-        data['syndication'] = syndication['url']+","
-    else:
-        data['syndication'] += syndication['url']+","
-    entry_re_write(data)
-
+    data = file_parser_json('data/' + location.split('/e/')[1]+".json")
+    app.logger.info(syndication)
+    try:
+        if data['syndication']:
+            data['syndication'].append(syndication['url'])
+        else:
+            data['syndication'] = [syndication['url']]
+        data['facebook'] = {'url': syndication['url']}
+        create_json_entry(data, g, update=True)
+    except KeyError:
+        pass
 
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
+    location = 'http://' + DOMAIN_NAME +location
     r = send_mention(
-        'http://' + DOMAIN_NAME +'/e/' + location,
+        location,
         'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
-    location = 'http://' + DOMAIN_NAME +'/e/' + location
     syndication = r.json()
     app.logger.info(syndication)
-    data = get_bare_file('data/' + location.split('/e/')[1]+".md")
-    if data['syndication'] == 'None':
-        data['syndication'] = syndication['url']+","
-    else:
-        data['syndication'] += syndication['url']+","
-    entry_re_write(data)
+    data = get_entry_content('data/' + location.split('/e/')[1]+".json")
+    try:
+        if data['syndication']:
+            data['syndication'].append(syndication['url'])
+        else:
+            data['syndication'] = [syndication['url']]
+        data['twitter'] = {'url': syndication['url'],
+                           'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
+        create_json_entry(data, g, update=True)
+    except KeyError:
+        pass
+
+def resolve_placename(location):
+    try:
+        (lat,long) = location[4:].split(',')
+        geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
+        place_name = geo_results.json()['geonames'][0]['name']
+        if geo_results.json()['geonames'][0]['adminName2']:
+            place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
+        elif geo_results.json()['geonames'][0]['adminName1']:
+            place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
+        else:
+            place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+        return place_name, geo_results.json()['geonames'][0]['geonameId']
+    except IndexError:
+        return None, None
 
 
-@app.route('/edit/<year>/<month>/<day>/<name>', methods=['GET','POST'])
+def post_from_request(request):
+    data = {
+                'h': None,
+                'name': None,
+                'summary': None,
+                'content': None,
+                'published': None,
+                'updated': None,
+                'category': None,
+                'slug': None,
+                'location': None,
+                'location_name': None,
+                'location_id': None,
+                'in_reply_to': None,
+                'repost-of': None,
+                'syndication': None,
+                'photo': None
+            }
+    for title in request.form:
+        data[title] = request.form[title]
+
+    for title in request.files:
+        data[title] = request.files[title].read()
+
+    for key in data:
+        if data[key] == "None" or data[key] == '':
+            data[key] = None
+
+    return data
+
+
+@app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET','POST'])
 def edit(year, month, day, name):
     """ The form for user-submission """
     if request.method == "GET":
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = get_bare_file(file_name+".md")
+            entry = file_parser_json(file_name + ".json")
+            entry['category'] = ', '.join(entry['category'])
             return render_template('edit_entry.html', entry=entry)
-        except:
-            return render_template('page_not_found.html')
+        except IOError:
+            return redirect('/404')
 
     elif request.method == "POST":
-        data = {}
         app.logger.info(request.form)
 
         if "Submit" in request.form:
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
-
-            for title in request.form:
-                data[title] = request.form[title]
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            for key in data:
-                if data[key] == "":
-                    data[key] = None
+            data = post_from_request(request)
+            if data['location'] is not None and data['location'].startswith("geo:"):
+                (place_name, geo_id) = resolve_placename(data['location'])
+                data['location_name'] = place_name
+                data['location_id'] = geo_id
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
             if request.form.get('twitter'):
+
                 t = Timer(30, bridgy_twitter, [location])
                 t.start()
 
@@ -383,27 +408,10 @@ def edit(year, month, day, name):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = get_bare_file(file_name+".md")
-
-            location = editEntry(data, old_entry=entry, g=g)
-            return redirect(location)
+            entry = file_parser_json(file_name+".json")
+            update_json_entry(data, entry, g=g)
+            return redirect("/e/"+location)
         return redirect("/")
-
-
-@app.route('/data/<year>/<month>/<day>/image/<name>')
-def image_fetcher_depricated(year, month, day, name):
-    """ do not use---old image fetcher """
-    entry = 'data/{year}/{month}/{day}/image/{name}'.format(year=year, month=month, day=day, type=type, name=name)
-    img = open(entry)
-    return send_file(img)
-
-
-@app.route('/data/<year>/<month>/<day>/<name>')
-def image_fetcher(year, month, day, name):
-    """ Retruns a specific image """
-    entry = 'data/{year}/{month}/{day}/{name}'.format(year=year, month=month, day=day, type=type, name=name)
-    img = open(entry)
-    return send_file(img)
 
 
 @app.route('/e/<year>/<month>/<day>/<name>')
@@ -412,42 +420,41 @@ def profile(year, month, day, name):
 
     file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
     if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
-        return action_stream_parser(file_name+".md")
+        return action_stream_parser(file_name+".json")
 
-    entry = file_parser(file_name+".md")
+    entry = file_parser_json(file_name+".json")
 
     if os.path.exists(file_name+".jpg"):
-        entry['photo'] = file_name+".jpg" # get the actual file
+        entry['photo'] = file_name+".jpg"                   # get the actual file
     if os.path.exists(file_name+".mp4"):
-        entry['video'] = file_name+".mp4" # get the actual file
+        entry['video'] = file_name+".mp4"                   # get the actual file
     if os.path.exists(file_name+".mp3"):
-        entry['audio'] = file_name+".mp3" # get the actual file
+        entry['audio'] = file_name+".mp3"                   # get the actual file
 
     mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []                                           # where we store our replies so we can fetch their info
-    for i in entry['in_reply_to']:                          # for all the replies we have...
-        if type(i) == dict:           # which are not images on our site...
-            reply_to.append(i)
-        elif i.startswith('http://127.0.0.1:5000'):
-            reply_to.append(file_parser(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".md"))
-        elif i.startswith('http'):                          # which are not data resources on our site...
-            reply_to.append(get_entry_content(i))
-
-    for i in entry['syndication'].split(','):
-        if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
-            twitter = dict()
-            vals = i.split('/')
-            twitter['id'] = vals[len(vals)-1]
-            twitter['link'] = i
-            entry['twitter'] = twitter
-        if i.startswith('https://www.facebook.com/'):
-            entry['facebook'] = {'link':i}
+    if entry['in_reply_to']:
+        for i in entry['in_reply_to']:                          # for all the replies we have...
+            if type(i) == dict:                                 # which are not images on our site...
+                reply_to.append(i)
+            elif i.startswith('http://127.0.0.1:5000'):
+                reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
+            elif i.startswith('http'):                          # which are not data resources on our site...
+                reply_to.append(get_entry_content(i))
+    # if entry['syndication']:
+    #     for i in entry['syndication'].split(','):               # look at all the syndication links
+    #         if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
+    #             twitter = dict()
+    #             vals = i.split('/')
+    #             twitter['id'] = vals[len(vals)-1]
+    #             twitter['link'] = i
+    #             entry['twitter'] = twitter
+    #         if i.startswith('https://www.facebook.com/'):
+    #             entry['facebook'] = {'link':i}
 
     return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
-    # except:
-    #     return redirect('/404'), 404
 
 
 @app.route('/t/<category>')
@@ -464,8 +471,8 @@ def tag_search(category):
          ORDER BY entries.published DESC
         """.format(category=category))
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            entries.append(file_parser_json(row+".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -481,8 +488,8 @@ def time_search_year(year):
         """.format(year=int(year)))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            entries.append(file_parser_json(row+".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -499,8 +506,8 @@ def time_search_month(year, month):
         """.format(year=int(year), month=int(month)))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            entries.append(file_parser_json(row+".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -518,8 +525,8 @@ def time_search(year, month, day):
         """.format(year=int(year), month=int(month), day=int(day)))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            entries.append(file_parser_json(row+".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -538,8 +545,8 @@ def articles():
         """.format(category='article'))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".md"):
-            entries.append(file_parser(row+".md"))
+        if os.path.exists(row+".json"):
+            entries.append(file_parser_json(row+".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -579,45 +586,32 @@ def handle_micropub():
 
                 for key in (
                         'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication', 'syndicate-to[]'):
+                        'slug', 'location', 'in_reply_to', 'repost-of', 'syndication', 'syndicate-to[]'):
                     data[key] = request.form.get(key)
 
                 if data['syndication']:
-                    data['syndication'] += ","
+                    data['syndication'] += ","                  #TODO: add twitter keywords
 
                 if not data['published']:                       # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
 
-                if request.files.get('photo'):
-                    img = request.files.get('photo').read()
-                    data['photo'] = img
-                    data['category'] += ',image'                # we've added an image, so append it
-                else:
-                    data['photo'] = None
+                for key, name in [('photo','image'),('audio','audio'),('video','video')]:
+                    if request.files.get(key):
+                        img = request.files.get(key).read()
+                        data[key] = img
+                        data['category'] += ','+name                # we've added an image, so append it
 
-                try:
-                    audio = request.files.get('audio').read()
-                    data['audio'] = audio
-                    data['category'] += ',audio'                # we've added an image, so append it
-                except: pass
-
-                try:
-                    video = request.files.get('video').read()
-                    data['video'] = video
-                    data['category'] += ',video'                # we've added an image, so append it
-                except: pass
-
-                location = create_entry(data, image=data['photo'], g=g)
+                location = create_json_entry(data, g=g)
                 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 if request.form.get('twitter') or data['photo']:
-                    t = Timer(10, bridgy_twitter, [location])
+                    t = Timer(30, bridgy_twitter, [location])
                     t.start()
 
                 if request.form.get('facebook') or data['photo']:
-                    t = Timer(20, bridgy_facebook, [location])
+                    t = Timer(30, bridgy_facebook, [location])
                     t.start()
 
                 resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
@@ -634,7 +628,9 @@ def handle_micropub():
             syndicate_to = [
                 'twitter.com/',
                 'tumblr.com/',
+                'facebook.com/'
             ]
+
             r = ''
             while len(syndicate_to) > 1:
                 r += 'syndicate-to[]=' + syndicate_to.pop() + '&'
@@ -726,59 +722,34 @@ def show_drafts():
         entries = [
                 drafts_location + f for f in os.listdir(drafts_location)
                 if os.path.isfile(os.path.join(drafts_location, f))
-                and f.endswith('.md')]
-        entries = [get_bare_file(entry) for entry in entries]
+                and f.endswith('.json')]
+        entries = [file_parser_json(entry) for entry in entries]
         return render_template("drafts_list.html", entries=entries)
 
-@app.route('/drafts/<name>', methods=['GET','POST'])
+
+@app.route('/drafts/<name>', methods=['GET', 'POST'])
 def show_draft(name):
     if request.method == 'GET':
-        draft_location = 'drafts/' + name + ".md"
-        entry = get_bare_file(draft_location)
+        draft_location = 'drafts/' + name + ".json"
+        entry = file_parser_json(draft_location)
+        entry['category'] = ', '.join(entry['category'])
         return render_template('edit_draft.html', entry=entry)
+
     if request.method == 'POST':
-        data = {}
-        if "Save" in request.form:
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
+        data = post_from_request(request)
 
-            for title in request.form:
-                data[title] = request.form[title]
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
+        if "Save" in request.form:                          # if we're updating a draft
             file_name = "drafts/{0}".format(name)
-            entry = get_bare_file(file_name+".md")
-            location = editEntry(data, old_entry=entry, g=g)
+            entry = file_parser_json(file_name+".json")
+            location = update_json_entry(data, entry, g=g, draft=True)
             return redirect("/drafts")
-        if "Submit" in request.form:            # if we're publishing it now
-            data = {}
-            for key in ('h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in-reply-to', 'repost-of', 'syndication'):
-                data[key] = None
-            for title in request.form:
-                if request.form[title] is not 'None':
-                    data[title] = request.form[title]
 
-            for key in data.keys():
-                if data[key] == "None":
-                    data[key] = None
-
-            for title in request.files:
-                data[title] = request.files[title].read()
-
-            try:
-                data['photo'] = request.files['photo']
-            except KeyError:
-                data['photo'] = None
-
+        if "Submit" in request.form:                        # if we're publishing it now
             data['published'] = datetime.now()
 
-            location = create_entry(data, image=data['photo'], g=g)
-            if data['in-reply-to']:
-                send_mention('http://' + DOMAIN_NAME + '/e'+location, data['in-reply-to'])
+            location = create_json_entry(data, g=g)
+            if data['in_reply_to']:
+                send_mention('http://' + DOMAIN_NAME + '/e'+location, data['in_reply_to'])
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])
@@ -788,13 +759,13 @@ def show_draft(name):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
-            if os.path.isfile("drafts/"+name+".md"): # this won't always be the slug generated
-                os.remove("drafts/"+name+".md")
+            if os.path.isfile("drafts/"+name+"json"): # this won't always be the slug generated
+                os.remove("drafts/"+name+".json")
 
             return redirect(location)
 
 
-@app.route('/notification', methods=['GET','POST'])
+@app.route('/notification', methods=['GET', 'POST'])
 def notification():
     pass
 
