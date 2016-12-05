@@ -3,7 +3,9 @@
 
 ### What the heckbicuit is this?
 
-I built this as a little hacked-together example of a flask [indieweb site](http://indiewebcamp.com/). In short, the indieweb is about maintating control of your data and self-publishing on your own site. 
+I built this as a little hacked-together example of a flask [indieweb site](http://indiewebcamp.com/). 
+
+In short, the indieweb is about maintating control of your data and self-publishing on your own site.
 
 I use this to power [kongaloosh.com](http://kongaloosh.com), my blog. I post my photos, updates, and anything else here and it gets whisked down the internet tubes to all the other social-media sites I use afterwards. This is my hub on the internet.
 
@@ -14,11 +16,14 @@ Spaghetti.
 Right now, to varying degrees of effectiveness, it can:
   
   * recieve entries via a micropub endpoint using indieauth
-  * syndicate out to twitter and facebook
+  * syndicate out to twitter and facebook using [bridgy](https://brid.gy/)
   * post images
   * post albums full of images
-  * recieve webmentions using webmention.io
+  * recieve webmentions using [webmention.io](https://webmention.io/)
   * send webmentions
+  * delete posts
+  * save and create drafts
+  * auto-add locations to posts, including placenames and geonames ids
   * recieve linked data notifications [NEW AND IMPROVED!]
 
 In short, it has most of the functionality of an indieweb site. 
@@ -39,7 +44,7 @@ From there, sign up for [indieauth](https://indieauth.com/). This allows you to 
 
 ### Where is the data stored?
 
-The data is kept as .md files in a folder called data. All other multimedia is kept alongside their respective textual .md files. The data folder is broken down by year/month/day. Additionally we keep a sqlite database which acts as a cache, maintaining the most recent posts, their location, and what tags are associated with them.
+The data is kept in a human-readable format as .md files, and a more machine-readable format as .json in a folder called data. All other multimedia is kept alongside their respective .md and .json files. The data folder is broken down by year/month/day. Additionally we keep a sqlite database which maintains a record of posts, their location, and what tags are associated with them. However, this can all be inferred by looking at the .md files.
 
 ### Recently Done Things
 1. clean-up the social-media refrences so other people can simply drop their own details in
@@ -51,8 +56,10 @@ The data is kept as .md files in a folder called data. All other multimedia is k
 
 1. (maybe) write a script which auto-magically configures social-keys
 2. testing
-3. Display my syndication information somewhere on the post
 4. Indie-actions allowing people to auto-like, & auto-reply on Instagram
-5. Indie-actions allowing people to auto-like, auto-repost, and auto-reply on Twitter
 6. Web-mention box on the bottom of a page
 7. Search-bar
+8. Better and more complete integration of Linked-Data Notifications and Activity Streams
+9. Linking hashtags back to a stream using that tag
+10. Better integration of twitter (auto-lookup for handles, etc)
+11. Better posting interface
