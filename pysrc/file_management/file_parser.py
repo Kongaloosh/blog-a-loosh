@@ -44,6 +44,10 @@ def file_parser_json(filename, md=True):
 
 
 def create_json_entry(data, g, draft=False, update=False,):
+    """
+    creates a json entry based on recieved dictionary, then creates a human-readable .md alongisde it.
+    :
+    """
     slug = None
     if data['slug']:
         slug = data['slug']
@@ -84,15 +88,17 @@ def create_json_entry(data, g, draft=False, update=False,):
                 # (data['video'], '.mp4'),
                 # (data['audio'], '.mp3'),
                 ('photo', '.jpg')]:
-
-            if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
-                print('here', data['key'])
-                file_writer = open(total_path + extension, 'wb')          # find a location to put the media
-                file_writer.write(data[key])                              # write the media to a file
-                file_writer.close()
-                data[key] = total_path + extension
-            elif os.path.isfile(total_path + extension):
-                data[key] = total_path + extension                            # update the dict to a location refrence
+            try:
+                if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
+                    print('here', data['key'])
+                    file_writer = open(total_path + extension, 'wb')          # find a location to put the media
+                    file_writer.write(data[key])                              # write the media to a file
+                    file_writer.close()
+                    data[key] = total_path + extension
+                elif os.path.isfile(total_path + extension):
+                    data[key] = total_path + extension                            # update the dict to a location refrence
+            except KeyError:
+                pass
 
         data['published'] = data['published'].__str__()
         file_writer = open(total_path+".json", 'wb')                # open and dump the actual post meta-data
@@ -120,12 +126,19 @@ def create_json_entry(data, g, draft=False, update=False,):
 
 
 def update_json_entry(data, old_entry, g, draft=False):
-    for key in ['slug', 'u-uid', 'url']:
+    """
+    Update entry based on edits recieved
+    :param data: the new entry
+    :param old_entry: the old entry to be updated
+    :param g: dbms cursor
+    :param draft: flag indicating whether we're updating a draft or an alredy submitted post
+    """
+    for key in ['slug', 'u-uid', 'url']:                            # these things should never be updated
         data[key] = old_entry[key]
-    if data['category']:
+    if data['category']:                                            # if categories exist, update them
         old_entry['category'] = data['category']
         if not draft:
-            for c in old_entry['category'].strip().split(','):
+            for c in old_entry['category'].strip().split(','):      # parse the categories into a list and add to dbms
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
@@ -137,6 +150,11 @@ def update_json_entry(data, old_entry, g, draft=False):
 
 
 def create_entry_markdown(data, path):
+    """
+    Creates a markdown post given a path and the data
+    :param data: dictionary containing the information to be posted
+    :param path: the path where we're creating the .md
+    """
     for key in data.keys():
         if data[key] is None:
             data[key] = ''
