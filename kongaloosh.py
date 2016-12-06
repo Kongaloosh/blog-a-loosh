@@ -22,6 +22,7 @@ import requests
 import json
 from slugify import slugify
 import ConfigParser
+import re
 
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
@@ -366,7 +367,11 @@ def bridgy_twitter(location):
 
 def resolve_placename(location):
     try:
-        (lat,long) = location[4:].split(',')
+        (lat, long) = location[4:].split(',')
+        try:
+            float(long)
+        except ValueError:
+            long = re.search('(.)*(?=;)', long).group(0)
         geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
@@ -612,6 +617,7 @@ def logout():
     return redirect(url_for('show_entries'))
 
 
+#TODO: the POST functionality could 100% just be the same as our add function
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handle_micropub():
     app.logger.info('handleMicroPub [%s]' % request.method)
@@ -639,22 +645,38 @@ def handle_micropub():
                     data['published'] = parse(data['published'])
 
                 for key, name in [('photo','image'),('audio','audio'),('video','video')]:
-                    if request.files.get(key):
-                        img = request.files.get(key).read()
-                        data[key] = img
-                        data['category'] += ','+name                # we've added an image, so append it
+                    try:
+                        if request.files.get(key):
+                            img = request.files.get(key).read()
+                            data[key] = img
+                            data['category'] += ','+name                # we've added an image, so append it
+                    except KeyError:
+                        pass
 
+                try:
+                    if data['location']:
+                        app.logger.info(data['location'])
+                        (place_name, geo_id) = resolve_placename(data['location'])
+                        data['location_name'] = place_name
+                        data['location_id'] = geo_id
+                except KeyError:
+                    pass
                 location = create_json_entry(data, g=g)
                 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
-                if request.form.get('twitter') or data['photo']:
-                    t = Timer(30, bridgy_twitter, [location])
-                    t.start()
-
-                if request.form.get('facebook') or data['photo']:
-                    t = Timer(30, bridgy_facebook, [location])
-                    t.start()
-
+                try:
+                    if request.form.get('twitter') or data['photo']:
+                        t = Timer(30, bridgy_twitter, [location])
+                        t.start()
+                except KeyError:
+                    pass
+                try:
+                    if request.form.get('facebook') or data['photo']:
+                        t = Timer(30, bridgy_facebook, [location])
+                        t.start()
+                except KeyError:
+                    pass
+                
                 resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
                 resp.status_code = 201
                 return resp
