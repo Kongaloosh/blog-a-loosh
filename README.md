@@ -25,6 +25,8 @@ Right now, to varying degrees of effectiveness, it can:
   * save and create drafts
   * auto-add locations to posts, including placenames and geonames ids
   * recieve linked data notifications [NEW AND IMPROVED!]
+  * Linking hashtags back to a stream using that tag [NEW AND IMPROVED!]
+
 
 In short, it has most of the functionality of an indieweb site. 
 
@@ -46,12 +48,6 @@ From there, sign up for [indieauth](https://indieauth.com/). This allows you to 
 
 The data is kept in a human-readable format as .md files, and a more machine-readable format as .json in a folder called data. All other multimedia is kept alongside their respective .md and .json files. The data folder is broken down by year/month/day. Additionally we keep a sqlite database which maintains a record of posts, their location, and what tags are associated with them. However, this can all be inferred by looking at the .md files.
 
-### Recently Done Things
-1. clean-up the social-media refrences so other people can simply drop their own details in
-2. fetching of reply-to details for presentation
-3. better formatting of reply-to and mentions
-4. better formatting fo entries
-
 ### Roadmap
 
 1. (maybe) write a script which auto-magically configures social-keys
@@ -60,6 +56,5 @@ The data is kept in a human-readable format as .md files, and a more machine-rea
 6. Web-mention box on the bottom of a page
 7. Search-bar
 8. Better and more complete integration of Linked-Data Notifications and Activity Streams
-9. Linking hashtags back to a stream using that tag
 10. Better integration of twitter (auto-lookup for handles, etc)
 11. Better posting interface
