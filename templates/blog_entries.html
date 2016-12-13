@@ -28,7 +28,7 @@
     {% if entry.title %}
 
     <h2 class="post-title p-name">
-        <a href="/e{{entry.url}}">{{ entry.title }}</a>
+        <a href="{{entry.url}}">{{ entry.title }}</a>
     </h2>
     {% endif %}
 
@@ -41,7 +41,7 @@
     {% if entry.in_reply_to is sequence %}
     {% for site in entry.in_reply_to %}
     {% if site.photo is defined %}
-    <a href="/e{{site.url}}">
+    <a href="{{site.url}}">
         <img
                 class="u-photo img-responsive center-block img-thumbnail img-rounded"
                 style="image-orientation: from-image; max-height:300px"
