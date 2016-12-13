@@ -24,8 +24,6 @@ import ConfigParser
 import re
 import requests
 
-
-
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
 config = ConfigParser.ConfigParser()
