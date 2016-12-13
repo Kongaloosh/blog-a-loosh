@@ -14,7 +14,6 @@ from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
-from pysrc.webmention.mentioner import send_mention
 from rdflib import Graph, plugin
 import pickle
 from threading import Timer
@@ -23,6 +22,8 @@ import json
 from slugify import slugify
 import ConfigParser
 import re
+import requests
+
 
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
@@ -171,7 +172,7 @@ def add():
             if data['in_reply_to']:
                 send_mention('http://' + DOMAIN_NAME +location, data['in_reply_to'])
 
-
+            app.logger.info("posted at {0}".format(location))
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])
                 t.start()
@@ -223,6 +224,7 @@ def delete_entry(year, month, day, name):
     )
     g.db.commit()
     return redirect('/', 200)
+
 
 @app.route('/bulk_upload', methods=['GET', 'POST'])
 def bulk_upload():
@@ -324,6 +326,29 @@ def recent_uploads():
         return redirect('/404'), 404
 
 
+def find_end_point(target):
+    """Uses regular expressions to find a site's webmention endpoint"""
+    html = requests.get(target)
+    search_result = re.search('(rel(\ )*=(\ )*(")*webmention)(")*(.)*',html.content).group()
+    url = re.search('((?<=href=)(\ )*(")*(.)*(")*)(?=/>)', search_result).group()
+    url = re.sub('["\ ]','',url)
+    return url
+
+
+def send_mention(source, target, endpoint=None):
+    """Sends a webmention to a target site from our source link"""
+    try:
+        if not endpoint:
+            endpoint = find_end_point(target)
+        payload = {'source': source, 'target': target}
+        headers = {'Accept': 'text/html, application/json'}
+        app.logger.info(payload)
+        r = requests.post(endpoint, data=payload, headers=headers)
+        return r
+    except:                 #TODO: add a scope to the exception
+        pass
+
+
 def bridgy_facebook(location):
     """send a facebook mention to brid.gy"""
     # send the mention
@@ -346,8 +371,8 @@ def bridgy_facebook(location):
 
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
-    location = 'http://' + DOMAIN_NAME +location
-    app.logger.info(location)
+    location = 'http://' + DOMAIN_NAME + location
+    app.logger.info("bridgy sent to {0}".format(location))
     r = send_mention(
         location,
         'https://brid.gy/publish/twitter',
@@ -355,13 +380,14 @@ def bridgy_twitter(location):
     )
     syndication = r.json()
     app.logger.info(syndication)
+    app.logger.info("recieved {0} {1}".format(syndication['url'], syndication['id']))
     data = file_parser_json('data/' + location.split('/e/')[1]+".json", md=False)
     if data['syndication']:
         data['syndication'].append(syndication['url'])
     else:
         data['syndication'] = [syndication['url']]
     data['twitter'] = {'url': syndication['url'],
-                       'id': syndication['url'].split('/')[len(syndication['url'].split('/'))-1]}
+                       'id': syndication['id']}
     create_json_entry(data, g=None, update=True)
 
 
@@ -676,7 +702,7 @@ def handle_micropub():
                         t.start()
                 except KeyError:
                     pass
-                
+
                 resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
                 resp.status_code = 201
                 return resp
@@ -794,7 +820,8 @@ def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".json"
         entry = file_parser_json(draft_location, md=False)
-        entry['category'] = ', '.join(entry['category'])
+        if entry['category']:
+            entry['category'] = ', '.join(entry['category'])
         return render_template('edit_draft.html', entry=entry)
 
     if request.method == 'POST':
@@ -813,7 +840,7 @@ def show_draft(name):
 
             location = create_json_entry(data, g=g)
             if data['in_reply_to']:
-                send_mention('http://' + DOMAIN_NAME + '/e'+location, data['in_reply_to'])
+                send_mention('http://' + DOMAIN_NAME +location, data['in_reply_to'])
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])

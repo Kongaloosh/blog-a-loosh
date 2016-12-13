@@ -10,6 +10,7 @@ from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from pysrc.file_management.markdown_album_extension import AlbumExtension
+from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
 import logging
 
 __author__ = 'alex'
@@ -38,7 +39,7 @@ def file_parser_json(filename, md=True):
         pass
 
     if md:
-        entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
 
     return entry
 
@@ -53,8 +54,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         slug = data['slug']
     else:
         if data['name']:                            # is it an article?
-            title = data['name']                    # we make the slug from the title
-            slug = title
+            slug = slugify(data['name'])
         else:                                       # otherwise we make a slug from post content
             slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
             slug = slugify(slug)                        # slugify the slug
@@ -90,8 +90,7 @@ def create_json_entry(data, g, draft=False, update=False,):
                 ('photo', '.jpg')]:
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
-                    print('here', data['key'])
-                    file_writer = open(total_path + extension, 'wb')          # find a location to put the media
+                    file_writer = open(total_path + extension, 'w')           # find a location to put the media
                     file_writer.write(data[key])                              # write the media to a file
                     file_writer.close()
                     data[key] = total_path + extension
@@ -101,7 +100,7 @@ def create_json_entry(data, g, draft=False, update=False,):
                 pass
 
         data['published'] = data['published'].__str__()
-        file_writer = open(total_path+".json", 'wb')                # open and dump the actual post meta-data
+        file_writer = open(total_path+".json", 'w')                # open and dump the actual post meta-data
         file_writer.write(json.dumps(data))
         file_writer.close()
 
@@ -142,7 +141,6 @@ def update_json_entry(data, old_entry, g, draft=False):
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
-
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
@@ -211,9 +209,9 @@ def activity_stream_parser(filename):
 
     try:
         e['object']['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        e['object']['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        e['object']['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), HashtagExtension()])
         if e['object']['content'] is None:
-            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), HashtagExtension()])
     except KeyError:
         pass
 
