@@ -10,6 +10,7 @@ from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from pysrc.file_management.markdown_album_extension import AlbumExtension
+from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
 import logging
 
 __author__ = 'alex'
@@ -38,7 +39,7 @@ def file_parser_json(filename, md=True):
         pass
 
     if md:
-        entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
 
     return entry
 
@@ -140,7 +141,6 @@ def update_json_entry(data, old_entry, g, draft=False):
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
-
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
@@ -209,9 +209,9 @@ def activity_stream_parser(filename):
 
     try:
         e['object']['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        e['object']['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+        e['object']['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), HashtagExtension()])
         if e['object']['content'] is None:
-            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), 'pysrc.file_management.markdown_album_extension'])
+            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), HashtagExtension()])
     except KeyError:
         pass
 
