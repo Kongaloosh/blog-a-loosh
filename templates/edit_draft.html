@@ -19,67 +19,154 @@
     </div>
 </header>
 {% if session.logged_in %}
-<div class="container">
-    <div class="container input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <form class="pull-right" action="/delete_draft{{entry.url}}" method="post">
-            <button value="submit" type="submit" class="btn-link"><i class="fa fa-times"></i></button>
-        </form>
-        <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
-            {% if entry.slug %}
-                <data value="{{entry.slug}}"></data>
-            {% endif %}
-            Title:<br>
-            <input type="text" name="name" value="{{entry.title}}">
-            <br>
-            Reply-to:<br>
-            <input type="text" name="in-reply-to" value="{{entry.in_reply_to}}">
-            <br>
-            Tags:<br>
-            <input type="text" name="category" value="{{entry.category}}">
-            <br>
-            <textarea cols="50" rows="5" name="content" form_id="input">{{entry.content}}</textarea>
-            <br>
-            <textarea cols="50" rows="5" name="social_content" form_id="">tweet preview</textarea>
-            <br>
-            Summary:<br>
-            <input type="text" name="summary" value="{{entry.summary}}">
-            <br>
-            <input type="checkbox" name="twitter" value="twitter">twitter
-            <input type="checkbox" name="facebook" value="facebook">facebook
-            Geo:<br>
-            <textarea type="text" name="location" id="geo_coord" cols="50">{{entry.location}}</textarea>
-            <br>
-            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save">
-            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit">
-        </form>
-        <button onclick="getLocation()">Add Location</button>
+<div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
+            <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
+                <p>
+                    <label>Title:</label> <input type="text" style="width: 100%"  name="name" value="{{entry.title}}">
+                </p>
+                <p>
+                    <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"></textarea>
+                </p>
+                <p>
+                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{{entry.content}}</textarea>
+                </p>
+                <hr>
+                <p>
+                    <div class="text-center" id="photo_holder" style="overflow:scroll; width:100%; max-height:400px;"></div>
+                </p>
+
+                <p>
+                    <label>Tags</label>
+                    <input type="text" style="width: 100%" name="category" value="{{entry.category}}">
+                </p>
+
+                <p>
+                    <label>Reply-to</label>
+                    <input type="text" style="width: 100%" name="in_reply_to" value="{{entry.in_reply_to}}">
+
+                </p>
+
+                <p>
+                    <label>Photo</label>
+                    <input type="file" name="photo" id="img_input" accept="image/*">
+                    <img id="blah" src="#" class="img-responsive center-block img-thumbnail" alt="your image" />
+                </p>
+
+                <p>
+                    <label>facebook </label><input type="checkbox" name="facebook" value="facebook"> <br>
+                    <label>twitter </label><input type="checkbox" name="twitter" value="twitter"> <br>
+
+                    <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
+                    <textarea style="width: 100%" type="text" name="location" id="geo_coord">{{entry.location}}</textarea>
+                </p>
+                <p>
+                    <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save">
+                    <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit">
+                </p>
+            </form>
+            <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
+
+        </div>
     </div>
 </div>
+
+<script src="/static/js/jquery.js"></script>
+
 <script>
-    var x = document.getElementById("geo_coord");
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition);
-        } else {
-            x.innerHTML = "Geolocation is not supported by this browser.";
+
+var x = document.getElementById("geo_coord");
+
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+function showPosition(position) {
+    x.innerHTML = "geo:" + position.coords.latitude +
+    "," + position.coords.longitude;
+}
+
+var form = document.getElementById("input");
+
+<!--document.getElementById("submit").addEventListener("click", function () {-->
+  <!--form.submit();-->
+<!--});-->
+
+function getRecentPhotos() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+            document.getElementById("photo_holder").innerHTML = xhttp.responseText;
         }
-    }
+    };
+    xhttp.open("GET", "/recent_uploads", true);
+    xhttp.send();
+}
 
-    function showPosition(position) {
-        x.innerHTML = "geo:" + position.coords.latitude +
-        "," + position.coords.longitude;
-    }
+function insertAtCaret(areaId,text) {
+var txtarea = document.getElementById(areaId);
+var scrollPos = txtarea.scrollTop;
+var strPos = 0;
+var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
+    "ff" : (document.selection ? "ie" : false ) );
+if (br == "ie") {
+    txtarea.focus();
+    var range = document.selection.createRange();
+    range.moveStart ('character', -txtarea.value.length);
+    strPos = range.text.length;
+}
+else if (br == "ff") strPos = txtarea.selectionStart;
 
-    var form = document.getElementById("input");
+var front = (txtarea.value).substring(0,strPos);
+var back = (txtarea.value).substring(strPos,txtarea.value.length);
+txtarea.value=front+text+back;
+strPos = strPos + text.length;
+if (br == "ie") {
+    txtarea.focus();
+    var range = document.selection.createRange();
+    range.moveStart ('character', -txtarea.value.length);
+    range.moveStart ('character', strPos);
+    range.moveEnd ('character', 0);
+    range.select();
+}
+else if (br == "ff") {
+    txtarea.selectionStart = strPos;
+    txtarea.selectionEnd = strPos;
+    txtarea.focus();
+}
+txtarea.scrollTop = scrollPos;
+}
 
-    document.getElementById("submit").addEventListener("click", function () {
-      form.submit();
-    });
-
+if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
+    getLocation()
+}
 </script>
+
+<script>
+function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $('#blah').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+$("#img_input").change(function(){
+    readURL(this);
+});
+</script>
+
 {% else %}
-<div class="container">
-    <p>You need to be logged in, buck-eye</p>
+<div class="row">
+    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <p>You need to be logged in, buck-eye.</p>
+    </div>
 </div>
 {% endif %}
 {% endblock %}
