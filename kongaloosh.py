@@ -850,7 +850,7 @@ def show_draft(name):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
-            if os.path.isfile("drafts/"+name+"json"): # this won't always be the slug generated
+            if os.path.isfile("drafts/"+name+".json"):           # this won't always be the slug generated
                 os.remove("drafts/"+name+".json")
 
             return redirect(location)
