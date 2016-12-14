@@ -5,5 +5,22 @@ __author__ = 'kongaloosh'
 
 
 if __name__ == "__main__":
-    str = """#here"""
+    # str = """#here"""
+    # print markdown.markdown(str, extensions=[AlbumExtension(), HashtagExtension()])
+    #
+    # str = "here #there"
+    # print markdown.markdown(str, extensions=[AlbumExtension(), HashtagExtension()])
+    #
+    # str = """#here there"""
+    # print markdown.markdown(str, extensions=[AlbumExtension(), HashtagExtension()])
+
+    str = \
+    """
+    here
+
+    #sadiofjs asdiojijs
+    #herethere taoisdhf #asdifjosidjf sdifoij
+    saoifjsdoi
+    """
+    print(str)
     print markdown.markdown(str, extensions=[AlbumExtension(), HashtagExtension()])
