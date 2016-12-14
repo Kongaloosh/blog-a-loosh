@@ -24,116 +24,142 @@
     <div class="row">
         <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
             <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
-                Title:<br>
-                <input type="text" name="name">
-                <br>
-                Reply-to:<br>
-                <input type="text" name="in_reply_to">
-                <br>
-                Tags:<br>
-                <input type="text" name="category">
-                <br>
+                <p>
+                    <label>Title:</label> <input type="text" style="width: 100%"  name="name">
+                </p>
+                <p>
+                    <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"></textarea>
+                </p>
+                <p>
+                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">note</textarea>
+                </p>
                 <hr>
-                <div class="text-center" id="photo_holder" style="overflow:scroll; width:100%; max-height:400px;"></div>
-                <br>
-                <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">note</textarea>
-                <br>
-                <br>
-                <br>
-                <hr>
-                <br>
-                Summary:<br>
-                <input type="text" style="width:100%" name="summary">
-                <br>
-                <input type="checkbox" name="facebook" value="facebook">facebook
-                <br>
-                <input type="checkbox" name="twitter" value="twitter">twitter
-                <br>
-                <hr>
-                <br>
-                Photo:<br>
-                <input type="file" name="photo" accept="image/*">
-                <br>
-                Geo:<br>
-                <textarea style="width: 100%" type="text" name="location" id="geo_coord"></textarea>
-                <br>
-                <input type="submit" value="Save" name="Save">
-                <input type="submit" value="Submit" name="Submit">
+                <p>
+                    <div class="text-center" id="photo_holder" style="overflow:scroll; width:100%; max-height:400px;"></div>
+                </p>
+
+                <p>
+                    <label>Tags</label>
+                    <input type="text" style="width: 100%" name="category">
+                </p>
+
+                <p>
+                    <label>Reply-to</label>
+                    <input type="text" style="width: 100%" name="in_reply_to">
+
+                </p>
+
+                <p>
+                    <label>Photo</label>
+                    <input type="file" name="photo" id="img_input" accept="image/*">
+                    <img id="blah" src="#" class="img-responsive center-block img-thumbnail" alt="your image" />
+                </p>
+
+                <p>
+                    <label>facebook </label><input type="checkbox" name="facebook" value="facebook"> <br>
+                    <label>twitter </label><input type="checkbox" name="twitter" value="twitter"> <br>
+
+                    <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
+                    <textarea style="width: 100%" type="text" name="location" id="geo_coord"></textarea>
+                </p>
+                <p>
+                    <input type="submit" style="width:49%" value="Save" name="Save"> <input type="submit" style="width:49%" value="Submit" name="Submit">
+                </p>
             </form>
-            <div class="row">
-                <button onclick="getLocation()">Add Location</button>
-                <br>
-                <button onclick="getRecentPhotos()">Show Recent Photos</button>
-            </div>
+            <button onclick="getRecentPhotos()">Show Recent Photos</button>
+
         </div>
     </div>
 </div>
+
+<script src="/static/js/jquery.js"></script>
+
 <script>
-    var x = document.getElementById("geo_coord");
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition);
-        } else {
-            x.innerHTML = "Geolocation is not supported by this browser.";
-        }
-    }
 
-    function showPosition(position) {
-        x.innerHTML = "geo:" + position.coords.latitude +
-        "," + position.coords.longitude;
-    }
+var x = document.getElementById("geo_coord");
 
-    var form = document.getElementById("input");
-
-    document.getElementById("submit").addEventListener("click", function () {
-      form.submit();
-    });
-
-    function getRecentPhotos() {
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-            if (xhttp.readyState == 4 && xhttp.status == 200) {
-                document.getElementById("photo_holder").innerHTML = xhttp.responseText;
-            }
-        };
-        xhttp.open("GET", "/recent_uploads", true);
-        xhttp.send();
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
     }
-
-    function insertAtCaret(areaId,text) {
-    var txtarea = document.getElementById(areaId);
-    var scrollPos = txtarea.scrollTop;
-    var strPos = 0;
-    var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
-        "ff" : (document.selection ? "ie" : false ) );
-    if (br == "ie") {
-        txtarea.focus();
-        var range = document.selection.createRange();
-        range.moveStart ('character', -txtarea.value.length);
-        strPos = range.text.length;
-    }
-    else if (br == "ff") strPos = txtarea.selectionStart;
-
-    var front = (txtarea.value).substring(0,strPos);
-    var back = (txtarea.value).substring(strPos,txtarea.value.length);
-    txtarea.value=front+text+back;
-    strPos = strPos + text.length;
-    if (br == "ie") {
-        txtarea.focus();
-        var range = document.selection.createRange();
-        range.moveStart ('character', -txtarea.value.length);
-        range.moveStart ('character', strPos);
-        range.moveEnd ('character', 0);
-        range.select();
-    }
-    else if (br == "ff") {
-        txtarea.selectionStart = strPos;
-        txtarea.selectionEnd = strPos;
-        txtarea.focus();
-    }
-    txtarea.scrollTop = scrollPos;
 }
 
+function showPosition(position) {
+    x.innerHTML = "geo:" + position.coords.latitude +
+    "," + position.coords.longitude;
+}
+
+var form = document.getElementById("input");
+
+<!--document.getElementById("submit").addEventListener("click", function () {-->
+  <!--form.submit();-->
+<!--});-->
+
+function getRecentPhotos() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+            document.getElementById("photo_holder").innerHTML = xhttp.responseText;
+        }
+    };
+    xhttp.open("GET", "/recent_uploads", true);
+    xhttp.send();
+}
+
+function insertAtCaret(areaId,text) {
+var txtarea = document.getElementById(areaId);
+var scrollPos = txtarea.scrollTop;
+var strPos = 0;
+var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
+    "ff" : (document.selection ? "ie" : false ) );
+if (br == "ie") {
+    txtarea.focus();
+    var range = document.selection.createRange();
+    range.moveStart ('character', -txtarea.value.length);
+    strPos = range.text.length;
+}
+else if (br == "ff") strPos = txtarea.selectionStart;
+
+var front = (txtarea.value).substring(0,strPos);
+var back = (txtarea.value).substring(strPos,txtarea.value.length);
+txtarea.value=front+text+back;
+strPos = strPos + text.length;
+if (br == "ie") {
+    txtarea.focus();
+    var range = document.selection.createRange();
+    range.moveStart ('character', -txtarea.value.length);
+    range.moveStart ('character', strPos);
+    range.moveEnd ('character', 0);
+    range.select();
+}
+else if (br == "ff") {
+    txtarea.selectionStart = strPos;
+    txtarea.selectionEnd = strPos;
+    txtarea.focus();
+}
+txtarea.scrollTop = scrollPos;
+}
+
+if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
+    getLocation()
+}
+</script>
+
+<script>
+function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $('#blah').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+$("#img_input").change(function(){
+    readURL(this);
+});
 </script>
 
 {% else %}
