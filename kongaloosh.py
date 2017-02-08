@@ -210,20 +210,20 @@ def delete_entry(year, month, day, name):
     app.logger.info(session.get('logged_in'))
     if not session.get('logged_in'):
         abort(401)
+    else:
+        totalpath = "data/{0}/{1}/{2}/{3}".format(year,month,day,name)
+        for extension in [".md", '.json', '.jpg']:
+            if os.path.isfile(totalpath+extension):
+                os.remove(totalpath+extension)
 
-    totalpath = "data/{0}/{1}/{2}/{3}".format(year,month,day,name)
-    for extension in [".md", '.json', '.jpg']:
-        if os.path.isfile(totalpath+extension):
-            os.remove(totalpath+extension)
-
-    g.db.execute(
-            """
-            DELETE FROM ENTRIES
-            WHERE Location=(?);
-            """, (totalpath,)
-    )
-    g.db.commit()
-    return redirect('/', 200)
+        g.db.execute(
+                """
+                DELETE FROM ENTRIES
+                WHERE Location=(?);
+                """, (totalpath,)
+        )
+        g.db.commit()
+        return redirect('/', 200)
 
 
 @app.route('/bulk_upload', methods=['GET', 'POST'])
@@ -414,7 +414,7 @@ def resolve_placename(location):
 def post_from_request(request):
     data = {
                 'h': None,
-                'name': None,
+                'title': None,
                 'summary': None,
                 'content': None,
                 'published': None,
@@ -442,7 +442,7 @@ def post_from_request(request):
     return data
 
 
-@app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET', 'POST', 'DELETE'])
+@app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET', 'POST'])
 def edit(year, month, day, name):
     """ The form for user-submission """
     app.logger.info(request)
