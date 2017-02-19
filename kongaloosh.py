@@ -144,6 +144,7 @@ def page_not_found(e):
 def page_not_found(e):
     return render_template('server_error.html'), 500
 
+
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     """ The form for user-submission """
@@ -189,7 +190,7 @@ def add():
         return redirect('/404'), 404
 
 
-@app.route('/delete_draft/<name>', methods=['POST'])
+@app.route('/delete_draft/<name>', methods=['GET'])
 def delete_drafts(year, month, day, name):
     app.logger.info("delete requested")
     if not session.get('logged_in'):
@@ -199,12 +200,12 @@ def delete_drafts(year, month, day, name):
     for extension in [".md", '.json', '.jpg']:
         if os.path.isfile(totalpath+extension):
             os.remove(totalpath+extension)
+        return redirect('/', 200)
 
-    return redirect('/', 200)
 
-
-@app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST'])
+@app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
+    app.logger.info(year)
     app.logger.info('here')
     app.logger.info("delete requested")
     app.logger.info(session.get('logged_in'))
@@ -223,7 +224,7 @@ def delete_entry(year, month, day, name):
                 """, (totalpath,)
         )
         g.db.commit()
-        return redirect('/', 200)
+        return re('/', 200)
 
 
 @app.route('/bulk_upload', methods=['GET', 'POST'])
