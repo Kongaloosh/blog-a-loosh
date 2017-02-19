@@ -9,64 +9,77 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <div class="site-heading">
-                        <h1>Edit</h1>
-                        <hr class="small">
-                        <span class="subheading">Time to Edit.</span>
-                    </div>
+                <div class="site-heading">
+                    <h1>Edit</h1>
+                    <hr class="small">
+                    <span class="subheading">Time to Edit.</span>
+                </div>
             </div>
         </div>
     </div>
 </header>
 {% if session.logged_in %}
-<div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-    <div class="row">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
-            <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
-                <p>
-                    <label>Title:</label> <input type="text" style="width: 100%"  name="title" value="{{entry.title}}">
-                </p>
-                <p>
-                    <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"></textarea>
-                </p>
-                <p>
-                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{{entry.content}}</textarea>
-                </p>
-                <hr>
-                <p>
-                    <div class="text-center" id="photo_holder" style="overflow:scroll; width:100%; max-height:400px;"></div>
-                </p>
+<div class="container">
+    <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="row pull-right">
+            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a href>
+        </div>
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
+                <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
+                    <p>
+                        <label>Title:</label> <input type="text" style="width: 100%" name="title"
+                                                     value="{{entry.title}}">
+                    </p>
 
-                <p>
-                    <label>Tags</label>
-                    <input type="text" style="width: 100%" name="category" value="{{entry.category}}">
-                </p>
+                    <p>
+                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2
+                                                         name="summary"></textarea>
+                    </p>
 
-                <p>
-                    <label>Reply-to</label>
-                    <input type="text" style="width: 100%" name="in_reply_to" value="{{entry.in_reply_to}}">
+                    <p>
+                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{{entry.content}}</textarea>
+                    </p>
+                    <hr>
+                    <p>
 
-                </p>
+                    <div class="text-center" id="photo_holder"
+                         style="overflow:scroll; width:100%; max-height:400px;"></div>
+                    </p>
 
-                <p>
-                    <label>Photo</label>
-                    <input type="file" name="photo" id="img_input" accept="image/*">
-                    <img id="blah" src="#" class="img-responsive center-block img-thumbnail" alt="your image" />
-                </p>
+                    <p>
+                        <label>Tags</label>
+                        <input type="text" style="width: 100%" name="category" value="{{entry.category}}">
+                    </p>
 
-                <p>
-                    <label>facebook </label><input type="checkbox" name="facebook" value="facebook"> <br>
-                    <label>twitter </label><input type="checkbox" name="twitter" value="twitter"> <br>
+                    <p>
+                        <label>Reply-to</label>
+                        <input type="text" style="width: 100%" name="in_reply_to" value="{{entry.in_reply_to}}">
 
-                    <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
-                    <textarea style="width: 100%" type="text" name="location" id="geo_coord">{{entry.location}}</textarea>
-                </p>
-                <p>
-                    <input type="submit" style="width:49%" value="Submit" name="Submit">
-                </p>
-            </form>
-            <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
+                    </p>
 
+                    <p>
+                        <label>Photo</label>
+                        <input type="file" name="photo" id="img_input" accept="image/*">
+                        <img id="blah" src="#" class="img-responsive center-block img-thumbnail" alt="your image"/>
+                    </p>
+
+                    <p>
+                        <label>facebook </label><input type="checkbox" name="facebook" value="facebook"> <br>
+                        <label>twitter </label><input type="checkbox" name="twitter" value="twitter"> <br>
+
+                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check"
+                                                  checked>
+                        <textarea style="width: 100%" type="text" name="location"
+                                  id="geo_coord">{{entry.location}}</textarea>
+                    </p>
+
+                    <p>
+                        <input type="submit" style="width:49%" value="Submit" name="Submit">
+                    </p>
+                </form>
+                <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
+            </div>
         </div>
     </div>
 </div>
@@ -144,6 +157,7 @@ txtarea.scrollTop = scrollPos;
 if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
     getLocation()
 }
+
 </script>
 
 <script>
@@ -159,6 +173,7 @@ function readURL(input) {
 $("#img_input").change(function(){
     readURL(this);
 });
+
 </script>
 
 {% else %}
