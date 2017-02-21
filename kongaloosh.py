@@ -224,7 +224,7 @@ def delete_entry(year, month, day, name):
                 """, (totalpath,)
         )
         g.db.commit()
-        return re('/', 200)
+        return redirect('/', 200)
 
 
 @app.route('/bulk_upload', methods=['GET', 'POST'])
@@ -367,7 +367,7 @@ def bridgy_facebook(location):
     else:
         data['syndication'] = [syndication['url']]
     data['facebook'] = {'url': syndication['url']}
-    create_json_entry(data, g=None,update=True)
+    create_json_entry(data, g=None, update=True)
 
 
 def bridgy_twitter(location):
@@ -446,7 +446,6 @@ def post_from_request(request):
 @app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET', 'POST'])
 def edit(year, month, day, name):
     """ The form for user-submission """
-    app.logger.info(request)
     if request.method == "GET":
         try:
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
@@ -462,7 +461,7 @@ def edit(year, month, day, name):
     elif request.method == "POST":
         if not session.get('logged_in'):
             abort(401)
-        app.logger.info(request.form)
+        app.logger.info("updating. {0}".format(request.form))
 
         if "Submit" in request.form:
             data = post_from_request(request)
@@ -474,13 +473,13 @@ def edit(year, month, day, name):
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
             if request.form.get('twitter'):
-
-                t = Timer(30, bridgy_twitter, [location])
+                t = Timer(30, bridgy_twitter, ['/e/'+location])
                 t.start()
 
             if request.form.get('facebook'):
-                t = Timer(30, bridgy_facebook, [location])
+                t = Timer(30, bridgy_facebook, ['/e/'+location])
                 t.start()
+
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name+".json")
             update_json_entry(data, entry, g=g)
