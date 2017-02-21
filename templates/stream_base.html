@@ -25,14 +25,15 @@
 <meta name="theme-color" content="#ffffff">
 
     <div class="container">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="col-lg-8 col-lg-offset-2 col-md-12 col-sm-12 col-xs-12">
             <div class="row site-heading jumbotron" style="display: block;">
-                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 profile-image-holder">
-                        <img src="{{ url_for('static', filename='img/profile.jpg') }}"
+
+                <div class="col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
+                        <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
                          class="img-responsive img-thumbnail img-circle profile-image">
                 </div>
 
-                <div  style="text-align:left;">
+                <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12 intro-text">
                     <p>
                             I'm <a href="http://alexkearney.com">Alex Kearney</a>, a Master's student studying Computer
                         Science at the <a href="http://ualberta.ca">University of Alberta</a>. I focus on Artificial
