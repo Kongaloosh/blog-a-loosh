@@ -22,11 +22,11 @@
 <div class="container">
     <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
         <div class="row pull-right">
-            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a href>
+            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
         </div>
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
-                <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
+                <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
                     <p>
                         <label>Title:</label> <input type="text" style="width: 100%" name="title"
                                                      value="{{entry.title}}">
