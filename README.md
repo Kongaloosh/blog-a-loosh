@@ -23,9 +23,11 @@ Right now, to varying degrees of effectiveness, it can:
   * send webmentions
   * delete posts
   * save and create drafts
+  * Indie-actions allowing people to auto-like, & auto-reply on Instagram
   * auto-add locations to posts, including placenames and geonames ids
   * recieve linked data notifications [NEW AND IMPROVED!]
   * Linking hashtags back to a stream using that tag [NEW AND IMPROVED!]
+  * Better posting interface
 
 
 In short, it has most of the functionality of an indieweb site. 
@@ -52,9 +54,6 @@ The data is kept in a human-readable format as .md files, and a more machine-rea
 
 1. (maybe) write a script which auto-magically configures social-keys
 2. testing
-4. Indie-actions allowing people to auto-like, & auto-reply on Instagram
-6. Web-mention box on the bottom of a page
-7. Search-bar
-8. Better and more complete integration of Linked-Data Notifications and Activity Streams
-10. Better integration of twitter (auto-lookup for handles, etc)
-11. Better posting interface
+3. Search-bar
+4. Better and more complete integration of Linked-Data Notifications and Activity Streams
+5. Better integration of twitter (auto-lookup for handles, etc)
