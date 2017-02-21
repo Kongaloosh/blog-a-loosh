@@ -53,8 +53,8 @@ def create_json_entry(data, g, draft=False, update=False,):
     if data['slug']:
         slug = data['slug']
     else:
-        if data['name']:                            # is it an article?
-            slug = slugify(data['name'])
+        if data['title']:                            # is it an article?
+            slug = slugify(data['title'])
         else:                                       # otherwise we make a slug from post content
             slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
             slug = slugify(slug)                        # slugify the slug
@@ -76,7 +76,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         file_path = "data/" + date_location
         data['url'] = '/e/' + date_location + slug
 
-    if not os.path.exists(file_path):
+    if not os.path.exists(file_path):                               # if the path doesn't exist, make it
         os.makedirs(os.path.dirname(file_path))
 
     total_path = file_path+"{slug}".format(slug=slug)
