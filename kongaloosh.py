@@ -200,7 +200,6 @@ def delete_drafts(year, month, day, name):
             os.remove(totalpath+extension)
         return redirect('/', 200)
 
-
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
     app.logger.info(year)
@@ -223,6 +222,7 @@ def delete_entry(year, month, day, name):
         )
         g.db.commit()
         return redirect('/', 200)
+
 
 
 @app.route('/bulk_upload', methods=['GET', 'POST'])
