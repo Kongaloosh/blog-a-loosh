@@ -147,7 +147,7 @@ hr.small {
 .intro-header .page-heading {
   padding: 30px;
   color: white;
-  height: 400px;
+  /*height: 400px;*/
 
 }
 @media only screen and (min-width: 768px) {
@@ -211,6 +211,19 @@ hr.small {
     font-size: 30px;
   }
 }
+
+.intro-text{
+  text-align:left
+}
+
+.intro-text p{
+  line-height: 120%;
+  margin-top: 0px;
+  margin-bottom: 12px;
+  margin-right: 0px;
+  margin-left: 0px;
+}
+
 .post-preview > a {
   color: #404040;
 }
