@@ -2,7 +2,7 @@
 # coding: utf-8
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-    render_template, flash, Response, send_file
+    render_template, flash, Response,
 from contextlib import closing
 import os
 import math
@@ -707,9 +707,12 @@ def handle_micropub():
                 resp.status_code = 201
                 return resp
             else:
-                return 'unauthorized', 403
+                resp = Response(status='unauthorized')
+                resp.status_code = 401
+                return  resp
         else:
-            return 'unauthorized', 401
+            resp = Response(status='unauthorized')
+            resp.status_code = 401
 
     elif request.method == 'GET':
         qs = request.query_string
@@ -726,10 +729,11 @@ def handle_micropub():
             r += 'syndicate-to[]=' + syndicate_to.pop()
             resp = Response(content_type='application/x-www-form-urlencoded', response=r)
             return resp
-        return 'not implemented', 501
+        resp = Response(status='not implemented')
+        resp.status_code = 501
+        return resp
 
-
-@app.route('/inbox', methods=['GET', 'POST'])
+@app.route('/inbox', methods=['GET', 'POST', 'OPTIONS'])
 def handle_inbox():
     if request.method == 'GET':
         inbox_location = "inbox/"
@@ -760,26 +764,38 @@ def handle_inbox():
             try:
                 sender = data['actor']['id']
             except KeyError:
-                return "could not validate notification sender: no actor id", 403
+                resp = Response(status='could not validate notification sender: no actor id')
+                resp.status_code = 403
+                return resp
 
         if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
             # todo: make better names for notifications
             notification = open('inbox/' + slugify(str(datetime.now())) + '.json','w+')
             notification.write(request.data)
-            return "added to inbox", 202
+            resp = Response(status='created')
+            resp.status_code = 202
+            return resp
         else:                                           # if the sender isn't whitelisted
             try:
                 validate = requests.get(sender)
                 if validate.status_code - 200 < 100:    # if the sender is real
                     notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
                     notification.write(request.data)
-                    return "queued", 202
+                    resp = Response(status='queued')
+                    resp.status_code = 202
+                    return resp
                 else:
-                    return "forbidden", 403
+                    resp = Response(status='unauthorized')
+                    resp.status_code = 403
+                    return resp
             except requests.ConnectionError:
-                return "forbidden", 403
+                resp = Response(status='unauthorized')
+                resp.status_code = 403
+                return resp
     else:
-        return "this is not implemented", 501
+        resp = Response(status='Not Implemented')
+        resp.status_code = 501
+        return resp
 
 
 @app.route('/inbox/send/', methods=['GET', 'POST'])
