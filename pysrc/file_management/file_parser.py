@@ -61,8 +61,11 @@ def create_json_entry(data, g, draft=False, update=False,):
         data['u-uid'] = slug
         data['slug'] = slug
 
-    if data['category']:
-        data['category'] = data['category'].strip().split(",")  # comes in as a string, so we need to parse it
+    try:
+        if data['category']:
+            data['category'] = data['category'].strip().split(",")  # comes in as a string, so we need to parse it
+    except AttributeError:
+        pass
 
     if draft:                                   # whether or not this is a draft changes the location saved
         file_path = "drafts/"
@@ -80,9 +83,10 @@ def create_json_entry(data, g, draft=False, update=False,):
         os.makedirs(os.path.dirname(file_path))
 
     total_path = file_path+"{slug}".format(slug=slug)
-
+    logger.info("printing the stuff ", total_path)
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
+
         # Find all the multimedia files which were added with the posts
         for (key, extension) in [
                 # (data['video'], '.mp4'),
@@ -104,7 +108,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         file_writer.write(json.dumps(data))
         file_writer.close()
 
-        if not draft and g:                                          # if this isn't a draft, put it in the dbms
+        if not draft and not update and g:                                          # if this isn't a draft, put it in the dbms
             g.db.execute(
                 """
                 insert into entries
@@ -132,7 +136,7 @@ def update_json_entry(data, old_entry, g, draft=False):
     :param g: dbms cursor
     :param draft: flag indicating whether we're updating a draft or an alredy submitted post
     """
-    for key in ['slug', 'u-uid', 'url']:                            # these things should never be updated
+    for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
     if data['category']:                                            # if categories exist, update them
         old_entry['category'] = data['category']
@@ -159,7 +163,7 @@ def create_entry_markdown(data, path):
     entry = ''
     entry += "p-name:\n" \
              "title:{title}\n" \
-             "slug:{slug}\n".format(title=data['name'], slug=data['slug'])
+             "slug:{slug}\n".format(title=data['title'], slug=data['slug'])
     entry += "summary:" + str(data['summary']) + "\n"
     entry += "published:" + str(data['published']) + "\n"
     try:
