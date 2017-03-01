@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, \
-    render_template, flash, Response,
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response
 from contextlib import closing
 import os
 import math
@@ -741,14 +740,15 @@ def handle_inbox():
 
         for_approval = [entry for entry in entries if entry.startswith("approval_")]
         entries = [entry for entry in entries if not entry.startswith("approval_")]
-
+	app.logger.info(request.headers.get('Accept'))
         if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
             inbox_items = {}
             inbox_items['@context'] = "https://www.w3.org/ns/ldp"
             inbox_items['@id'] = "http://" + DOMAIN_NAME + "/inbox"
             inbox_items['contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries]
-            return json.dumps(inbox_items)
-
+	    resp = Response(content_type="application/ld+json", status=200)
+            resp.json = json.dumps(inbox_items)
+	    return resp            
         return render_template('inbox.html', entries=entries, for_approval=for_approval)
 
     elif request.method == 'POST':
@@ -760,10 +760,13 @@ def handle_inbox():
         except KeyError:
             try:
                 sender = data['actor']['id']
-            except KeyError:
-                resp = Response(status='could not validate notification sender: no actor id')
-                resp.status_code = 403
-                return resp
+	    except KeyError:
+		try:
+		    sender = data['@id']
+		except KeyError:
+                    resp = Response(status='could not validate notification sender: no actor id')
+                    resp.status_code = 403
+                    return resp
 
         if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
             # todo: make better names for notifications
@@ -774,17 +777,19 @@ def handle_inbox():
             return resp
         else:                                           # if the sender isn't whitelisted
             try:
-                validate = requests.get(sender)
-                if validate.status_code - 200 < 100:    # if the sender is real
-                    notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
-                    notification.write(request.data)
-                    resp = Response(status='queued')
-                    resp.status_code = 202
-                    return resp
-                else:
-                    resp = Response(status='unauthorized')
-                    resp.status_code = 403
-                    return resp
+		app.logger.info("trying to validate sender")
+                #validate = requests.get(sender)
+                #app.logger.info(validate)
+		#if validate.status_code - 200 < 100:    # if the sender is real
+                notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
+                notification.write(request.data)
+                resp = Response(status='queued')
+                resp.status_code = 202
+                return resp
+                #else:
+                #    resp = Response(status='unauthorized')
+                #    resp.status_code = 403
+                #    return resp
             except requests.ConnectionError:
                 resp = Response(status='unauthorized')
                 resp.status_code = 403
@@ -811,8 +816,10 @@ def show_inbox_item(name):
         try:
             sender = entry['actor']['@id']
         except KeyError:
-            sender = entry['actor']['id']
-
+	    try:
+            	sender = entry['actor']['id']
+	    except KeyError:
+		sender = entry['@id']
         return render_template('inbox_notification.html', entry=entry, sender=sender)
 
 
