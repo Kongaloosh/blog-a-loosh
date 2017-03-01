@@ -83,8 +83,8 @@ def show_entries():
     )
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
 
     try:
         entries = entries[:10]
@@ -118,16 +118,16 @@ def pagination(number):
     )
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
 
     try:
         start = int(number) * 10
-        entries = entries[start:start+10]
+        entries = entries[start:start + 10]
     except IndexError:
         entries = None
 
-    before = int(number)+1
+    before = int(number) + 1
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -148,14 +148,14 @@ def add():
     if request.method == 'GET':
         return render_template('add.html')
 
-    elif request.method == 'POST':                  # if we're adding a new post
+    elif request.method == 'POST':  # if we're adding a new post
         if not session.get('logged_in'):
             abort(401)
         app.logger.info(request.form)
 
         data = post_from_request(request)
 
-        if "Submit" in request.form:                    # we're publishing it now; give it the present time
+        if "Submit" in request.form:  # we're publishing it now; give it the present time
             data['published'] = datetime.now()
 
             if data['location'] is not None and data['location'].startswith("geo:"):
@@ -168,7 +168,7 @@ def add():
             location = create_json_entry(data, g=g)
 
             if data['in_reply_to']:
-                send_mention('http://' + DOMAIN_NAME +location, data['in_reply_to'])
+                send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
 
             app.logger.info("posted at {0}".format(location))
             if request.form.get('twitter'):
@@ -179,7 +179,7 @@ def add():
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
-        if "Save" in request.form:              # if we're simply saving the post as a draft
+        if "Save" in request.form:  # if we're simply saving the post as a draft
             location = create_json_entry(data, g=g, draft=True)
 
         return redirect(location)
@@ -195,9 +195,10 @@ def delete_drafts(year, month, day, name):
 
     totalpath = "drafts/{name}"
     for extension in [".md", '.json', '.jpg']:
-        if os.path.isfile(totalpath+extension):
-            os.remove(totalpath+extension)
+        if os.path.isfile(totalpath + extension):
+            os.remove(totalpath + extension)
         return redirect('/', 200)
+
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
@@ -208,16 +209,16 @@ def delete_entry(year, month, day, name):
     if not session.get('logged_in'):
         abort(401)
     else:
-        totalpath = "data/{0}/{1}/{2}/{3}".format(year,month,day,name)
+        totalpath = "data/{0}/{1}/{2}/{3}".format(year, month, day, name)
         for extension in [".md", '.json', '.jpg']:
-            if os.path.isfile(totalpath+extension):
-                os.remove(totalpath+extension)
+            if os.path.isfile(totalpath + extension):
+                os.remove(totalpath + extension)
 
         g.db.execute(
-                """
-                DELETE FROM ENTRIES
-                WHERE Location=(?);
-                """, (totalpath,)
+            """
+            DELETE FROM ENTRIES
+            WHERE Location=(?);
+            """, (totalpath,)
         )
         g.db.commit()
         return redirect('/', 200)
@@ -291,7 +292,7 @@ def recent_uploads():
         j = 0
         while (True):
             row = ""
-            for i in range(0,4):            # for every row we want to make
+            for i in range(0, 4):  # for every row we want to make
                 image_index = (4 * j) + i
                 if image_index >= len(file_list):
                     preview += \
@@ -309,7 +310,7 @@ def recent_uploads():
                         <a onclick="insertAtCaret('text_input','%s');return false;">
                             <img src="%s" class="img-responsive img-thumbnail" style="max-width:%d%%; max-height:200px">
                         </a>
-                    ''' % (text_box_insert, image_location, 100/(4+0.2))
+                    ''' % (text_box_insert, image_location, 100 / (4 + 0.2))
             preview += \
                 '''
                 <div class="row">
@@ -326,9 +327,9 @@ def recent_uploads():
 def find_end_point(target):
     """Uses regular expressions to find a site's webmention endpoint"""
     html = requests.get(target)
-    search_result = re.search('(rel(\ )*=(\ )*(")*webmention)(")*(.)*',html.content).group()
+    search_result = re.search('(rel(\ )*=(\ )*(")*webmention)(")*(.)*', html.content).group()
     url = re.search('((?<=href=)(\ )*(")*(.)*(")*)(?=/>)', search_result).group()
-    url = re.sub('["\ ]','',url)
+    url = re.sub('["\ ]', '', url)
     return url
 
 
@@ -342,7 +343,7 @@ def send_mention(source, target, endpoint=None):
         app.logger.info(payload)
         r = requests.post(endpoint, data=payload, headers=headers)
         return r
-    except:                 #TODO: add a scope to the exception
+    except:  # TODO: add a scope to the exception
         pass
 
 
@@ -356,7 +357,7 @@ def bridgy_facebook(location):
     )
     # get the response from the send
     syndication = r.json()
-    data = file_parser_json('data/' + location.split('/e/')[1]+".json", md=False)
+    data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
     app.logger.info(syndication)
     if data['syndication']:
         data['syndication'].append(syndication['url'])
@@ -378,7 +379,7 @@ def bridgy_twitter(location):
     syndication = r.json()
     app.logger.info(syndication)
     app.logger.info("recieved {0} {1}".format(syndication['url'], syndication['id']))
-    data = file_parser_json('data/' + location.split('/e/')[1]+".json", md=False)
+    data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
     if data['syndication']:
         data['syndication'].append(syndication['url'])
     else:
@@ -395,7 +396,8 @@ def resolve_placename(location):
             float(long)
         except ValueError:
             long = re.search('(.)*(?=;)', long).group(0)
-        geo_results = requests.get('http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat='+lat+'&lng='+long+'&username='+GEONAMES)
+        geo_results = requests.get(
+            'http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat=' + lat + '&lng=' + long + '&username=' + GEONAMES)
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
             place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
@@ -410,22 +412,22 @@ def resolve_placename(location):
 
 def post_from_request(request):
     data = {
-                'h': None,
-                'title': None,
-                'summary': None,
-                'content': None,
-                'published': None,
-                'updated': None,
-                'category': None,
-                'slug': None,
-                'location': None,
-                'location_name': None,
-                'location_id': None,
-                'in_reply_to': None,
-                'repost-of': None,
-                'syndication': None,
-                'photo': None
-            }
+        'h': None,
+        'title': None,
+        'summary': None,
+        'content': None,
+        'published': None,
+        'updated': None,
+        'category': None,
+        'slug': None,
+        'location': None,
+        'location_name': None,
+        'location_id': None,
+        'in_reply_to': None,
+        'repost-of': None,
+        'syndication': None,
+        'photo': None
+    }
     for title in request.form:
         data[title] = request.form[title]
 
@@ -469,18 +471,19 @@ def edit(year, month, day, name):
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
             if request.form.get('twitter'):
-                t = Timer(30, bridgy_twitter, ['/e/'+location])
+                t = Timer(30, bridgy_twitter, ['/e/' + location])
                 t.start()
 
             if request.form.get('facebook'):
-                t = Timer(30, bridgy_facebook, ['/e/'+location])
+                t = Timer(30, bridgy_facebook, ['/e/' + location])
                 t.start()
 
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name+".json")
+            entry = file_parser_json(file_name + ".json")
             update_json_entry(data, entry, g=g)
-            return redirect("/e/"+location)
+            return redirect("/e/" + location)
         return redirect("/")
+
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
@@ -488,28 +491,28 @@ def profile(year, month, day, name):
 
     file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
     if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
-        return action_stream_parser(file_name+".json")
+        return action_stream_parser(file_name + ".json")
 
-    entry = file_parser_json(file_name+".json")
+    entry = file_parser_json(file_name + ".json")
 
-    if os.path.exists(file_name+".jpg"):
-        entry['photo'] = file_name+".jpg"                   # get the actual file
-    if os.path.exists(file_name+".mp4"):
-        entry['video'] = file_name+".mp4"                   # get the actual file
-    if os.path.exists(file_name+".mp3"):
-        entry['audio'] = file_name+".mp3"                   # get the actual file
+    if os.path.exists(file_name + ".jpg"):
+        entry['photo'] = file_name + ".jpg"  # get the actual file
+    if os.path.exists(file_name + ".mp4"):
+        entry['video'] = file_name + ".mp4"  # get the actual file
+    if os.path.exists(file_name + ".mp3"):
+        entry['audio'] = file_name + ".mp3"  # get the actual file
 
     mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
-    reply_to = []                                           # where we store our replies so we can fetch their info
+    reply_to = []  # where we store our replies so we can fetch their info
     if entry['in_reply_to']:
-        for i in entry['in_reply_to']:                          # for all the replies we have...
-            if type(i) == dict:                                 # which are not images on our site...
+        for i in entry['in_reply_to']:  # for all the replies we have...
+            if type(i) == dict:  # which are not images on our site...
                 reply_to.append(i)
             elif i.startswith('http://127.0.0.1:5000'):
                 reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
-            elif i.startswith('http'):                          # which are not data resources on our site...
+            elif i.startswith('http'):  # which are not data resources on our site...
                 reply_to.append(get_entry_content(i))
     # if entry['syndication']:
     #     for i in entry['syndication'].split(','):               # look at all the syndication links
@@ -539,8 +542,8 @@ def tag_search(category):
          ORDER BY entries.published DESC
         """.format(category=category))
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -556,8 +559,8 @@ def time_search_year(year):
         """.format(year=int(year)))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -574,8 +577,8 @@ def time_search_month(year, month):
         """.format(year=int(year), month=int(month)))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -593,8 +596,8 @@ def time_search(year, month, day):
         """.format(year=int(year), month=int(month), day=int(day)))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -613,8 +616,8 @@ def articles():
         """.format(category='article'))
 
     for (row,) in cur.fetchall():
-        if os.path.exists(row+".json"):
-            entries.append(file_parser_json(row+".json"))
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -639,14 +642,14 @@ def logout():
     return redirect(url_for('show_entries'))
 
 
-#TODO: the POST functionality could 100% just be the same as our add function
+# TODO: the POST functionality could 100% just be the same as our add function
 @app.route('/micropub', methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
 def handle_micropub():
     app.logger.info('handleMicroPub [%s]' % request.method)
-    if request.method == 'POST':                                                    # if post, authorise and create
-        access_token = request.headers.get('Authorization')                         # get the token and report it
+    if request.method == 'POST':  # if post, authorise and create
+        access_token = request.headers.get('Authorization')  # get the token and report it
         app.logger.info('token [%s]' % access_token)
-        if access_token:                                                            # if the token is not none...
+        if access_token:  # if the token is not none...
             access_token = access_token.replace('Bearer ', '')
             app.logger.info('acccess [%s]' % request)
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
@@ -659,19 +662,19 @@ def handle_micropub():
                     data[key] = request.form.get(key)
 
                 if data['syndication']:
-                    data['syndication'] += ","                  #TODO: add twitter keywords
+                    data['syndication'] += ","  # TODO: add twitter keywords
 
-                if not data['published']:                       # if we don't have a timestamp, make one now
+                if not data['published']:  # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
 
-                for key, name in [('photo','image'),('audio','audio'),('video','video')]:
+                for key, name in [('photo', 'image'), ('audio', 'audio'), ('video', 'video')]:
                     try:
                         if request.files.get(key):
                             img = request.files.get(key).read()
                             data[key] = img
-                            data['category'] += ','+name                # we've added an image, so append it
+                            data['category'] += ',' + name  # we've added an image, so append it
                     except KeyError:
                         pass
 
@@ -684,7 +687,7 @@ def handle_micropub():
                 except KeyError:
                     pass
                 location = create_json_entry(data, g=g)
-                
+
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
                     if request.form.get('twitter') or data['photo']:
@@ -705,7 +708,7 @@ def handle_micropub():
             else:
                 resp = Response(status='unauthorized')
                 resp.status_code = 401
-                return  resp
+                return resp
         else:
             resp = Response(status='unauthorized')
             resp.status_code = 401
@@ -729,6 +732,7 @@ def handle_micropub():
         resp.status_code = 501
         return resp
 
+
 @app.route('/inbox', methods=['GET', 'POST', 'OPTIONS'])
 def handle_inbox():
     if request.method == 'GET':
@@ -740,15 +744,15 @@ def handle_inbox():
 
         for_approval = [entry for entry in entries if entry.startswith("approval_")]
         entries = [entry for entry in entries if not entry.startswith("approval_")]
-	app.logger.info(request.headers.get('Accept'))
+        app.logger.info(request.headers.get('Accept'))
         if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
             inbox_items = {}
             inbox_items['@context'] = "https://www.w3.org/ns/ldp"
             inbox_items['@id'] = "http://" + DOMAIN_NAME + "/inbox"
             inbox_items['contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries]
-	    resp = Response(content_type="application/ld+json", status=200)
+            resp = Response(content_type="application/ld+json", status=200)
             resp.json = json.dumps(inbox_items)
-	    return resp            
+            return resp
         return render_template('inbox.html', entries=entries, for_approval=for_approval)
 
     elif request.method == 'POST':
@@ -760,36 +764,38 @@ def handle_inbox():
         except KeyError:
             try:
                 sender = data['actor']['id']
-	    except KeyError:
-		try:
-		    sender = data['@id']
-		except KeyError:
-                    resp = Response(status='could not validate notification sender: no actor id')
-                    resp.status_code = 403
-                    return resp
+            except KeyError:
+                sender = None
+                # try:
+                #     sender = data['@id']
+                # except KeyError:
+                #     resp = Response(status='could not validate notification sender: no actor id')
+                #     resp.status_code = 403
+                #     return resp
 
-        if sender == 'https://rhiaro.co.uk':             # check if the sender is whitelisted
+        if sender == 'https://rhiaro.co.uk':  # check if the sender is whitelisted
             # todo: make better names for notifications
-            notification = open('inbox/' + slugify(str(datetime.now())) + '.json','w+')
+            notification = open('inbox/' + slugify(str(datetime.now())) + '.json', 'w+')
             notification.write(request.data)
             resp = Response(status='created')
             resp.status_code = 202
             return resp
-        else:                                           # if the sender isn't whitelisted
+        else:  # if the sender isn't whitelisted
             try:
-		app.logger.info("trying to validate sender")
-                #validate = requests.get(sender)
-                #app.logger.info(validate)
-		#if validate.status_code - 200 < 100:    # if the sender is real
-                notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json','w+')
-                notification.write(request.data)
-                resp = Response(status='queued')
-                resp.status_code = 202
-                return resp
-                #else:
-                #    resp = Response(status='unauthorized')
-                #    resp.status_code = 403
-                #    return resp
+                # validate = requests.get(sender)
+                # app.logger.info(validate)
+                # if validate.status_code - 200 < 100:    # if the sender is real
+                try:
+                    data['context']
+                    notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json', 'w+')
+                    notification.write(request.data)
+                    resp = Response(status='queued')
+                    resp.status_code = 202
+                    return resp
+                except KeyError:
+                   resp = Response(status='unauthorized')
+                   resp.status_code = 403
+                   return resp
             except requests.ConnectionError:
                 resp = Response(status='unauthorized')
                 resp.status_code = 403
@@ -808,7 +814,7 @@ def notifier():
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
     if request.method == 'GET':
-        entry = json.loads(open('inbox/'+name).read())
+        entry = json.loads(open('inbox/' + name).read())
 
         if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
             return json.dumps(entry)
@@ -816,10 +822,10 @@ def show_inbox_item(name):
         try:
             sender = entry['actor']['@id']
         except KeyError:
-	    try:
-            	sender = entry['actor']['id']
-	    except KeyError:
-		sender = entry['@id']
+            try:
+                sender = entry['actor']['id']
+            except KeyError:
+                sender = entry['@id']
         return render_template('inbox_notification.html', entry=entry, sender=sender)
 
 
@@ -828,9 +834,9 @@ def show_drafts():
     if request.method == 'GET':
         drafts_location = "drafts/"
         entries = [
-                drafts_location + f for f in os.listdir(drafts_location)
-                if os.path.isfile(os.path.join(drafts_location, f))
-                and f.endswith('.json')]
+            drafts_location + f for f in os.listdir(drafts_location)
+            if os.path.isfile(os.path.join(drafts_location, f))
+            and f.endswith('.json')]
         entries = [file_parser_json(entry) for entry in entries]
         return render_template("drafts_list.html", entries=entries)
 
@@ -849,18 +855,18 @@ def show_draft(name):
             abort(401)
         data = post_from_request(request)
 
-        if "Save" in request.form:                          # if we're updating a draft
+        if "Save" in request.form:  # if we're updating a draft
             file_name = "drafts/{0}".format(name)
-            entry = file_parser_json(file_name+".json")
+            entry = file_parser_json(file_name + ".json")
             location = update_json_entry(data, entry, g=g, draft=True)
             return redirect("/drafts")
 
-        if "Submit" in request.form:                        # if we're publishing it now
+        if "Submit" in request.form:  # if we're publishing it now
             data['published'] = datetime.now()
 
             location = create_json_entry(data, g=g)
             if data['in_reply_to']:
-                send_mention('http://' + DOMAIN_NAME +location, data['in_reply_to'])
+                send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])
@@ -870,8 +876,8 @@ def show_draft(name):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
-            if os.path.isfile("drafts/"+name+".json"):           # this won't always be the slug generated
-                os.remove("drafts/"+name+".json")
+            if os.path.isfile("drafts/" + name + ".json"):  # this won't always be the slug generated
+                os.remove("drafts/" + name + ".json")
 
             return redirect(location)
 
