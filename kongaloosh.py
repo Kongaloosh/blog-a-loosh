@@ -735,6 +735,7 @@ def handle_micropub():
 
 @app.route('/inbox', methods=['GET', 'POST', 'OPTIONS'])
 def handle_inbox():
+    app.logger.info(request)
     if request.method == 'GET':
         inbox_location = "inbox/"
         entries = [
@@ -744,58 +745,62 @@ def handle_inbox():
 
         for_approval = [entry for entry in entries if entry.startswith("approval_")]
         entries = [entry for entry in entries if not entry.startswith("approval_")]
-        app.logger.info(request.headers.get('Accept'))
-        if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
+        if 'text/html' in request.headers.get('Accept'):
+            return render_template('inbox.html', entries=entries, for_approval=for_approval)
+        elif 'application/ld+json' in request.headers.get('Accept'):
             inbox_items = {}
             inbox_items['@context'] = "https://www.w3.org/ns/ldp"
             inbox_items['@id'] = "http://" + DOMAIN_NAME + "/inbox"
-            inbox_items['contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries]
-            resp = Response(content_type="application/ld+json", status=200)
-            resp.json = json.dumps(inbox_items)
+            inbox_items['http://www.w3.org/ns/ldp#contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries]
+            resp = Response(inbox_items, content_type="application/ld+json", status=200)
+            resp.data = json.dumps(inbox_items)
             return resp
-        return render_template('inbox.html', entries=entries, for_approval=for_approval)
-
+        # else:
+        #     resp = Response(content_type="application/ld+json", status=200)
+        #     resp.data = """
+        #         <inbox>
+        #         a ldp:Container
+        #         ldp:contains {0}
+        #         </inbox>
+        #         """.format([{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries])
+        #     return resp
+        else:
+            resp = Response(status=501)
+            return resp
     elif request.method == 'POST':
-        # check content is json-ld
         data = json.loads(request.data)
-        app.logger.info(data)
         try:
             sender = data['actor']['@id']
+        except TypeError:
+            sender = data['actor']
         except KeyError:
             try:
                 sender = data['actor']['id']
             except KeyError:
                 sender = None
-                # try:
-                #     sender = data['@id']
-                # except KeyError:
-                #     resp = Response(status='could not validate notification sender: no actor id')
-                #     resp.status_code = 403
-                #     return resp
 
-        if sender == 'https://rhiaro.co.uk':  # check if the sender is whitelisted
+        if sender == 'https://rhiaro.co.uk' or sender == "https://rhiaro.co.uk/#me":  # check if the sender is whitelisted
             # todo: make better names for notifications
-            notification = open('inbox/' + slugify(str(datetime.now())) + '.json', 'w+')
+            app.logger.info("it's Rhiaro!")
+            location = 'inbox/' + slugify(str(datetime.now())) + '.json'
+            notification = open(location, 'w+')
             notification.write(request.data)
-            resp = Response(status='created')
-            resp.status_code = 202
+            resp = Response(status=201, headers={'Location':location})
             return resp
         else:  # if the sender isn't whitelisted
             try:
-                # validate = requests.get(sender)
-                # app.logger.info(validate)
-                # if validate.status_code - 200 < 100:    # if the sender is real
                 try:
                     data['context']
                     notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json', 'w+')
                     notification.write(request.data)
                     resp = Response(status='queued')
+                    resp.data = {"@id": "", "http://www.w3.org/ns/ldp#contains": []}
                     resp.status_code = 202
                     return resp
                 except KeyError:
-                   resp = Response(status='unauthorized')
-                   resp.status_code = 403
-                   return resp
+                    resp = Response(403)
+                    resp.status_code = 403
+                    return resp
             except requests.ConnectionError:
                 resp = Response(status='unauthorized')
                 resp.status_code = 403
@@ -803,6 +808,7 @@ def handle_inbox():
     else:
         resp = Response(status='Not Implemented')
         resp.status_code = 501
+        app.logger.info(resp)
         return resp
 
 
@@ -811,23 +817,68 @@ def notifier():
     return 501
 
 
+"""{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "@id": "",
+  "@type": "Announce",
+  "actor": "https://rhiaro.co.uk/#me",
+  "object": "http://example.net/note",
+  "target": "http://example.org/article",
+  "updated": "2016-06-28T19:56:20.114Z"
+}"""
+
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
     if request.method == 'GET':
         entry = json.loads(open('inbox/' + name).read())
-
-        if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
-            return json.dumps(entry)
-
+        app.logger.info((request, request.data))
         try:
-            sender = entry['actor']['@id']
-        except KeyError:
-            try:
-                sender = entry['actor']['id']
-            except KeyError:
-                sender = entry['@id']
-        return render_template('inbox_notification.html', entry=entry, sender=sender)
+            if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
+                inbox_items = {}
+                resp = Response(content_type="application/ld+json", status=200)
+                resp.data = json.dumps(entry)
+                return resp
 
+            if 'text/html' in request.headers.get('Accept'):
+                try:
+                    sender = entry['actor']['@id']
+                except KeyError:
+                    try:
+                        sender = entry['actor']['id']
+                    except KeyError:
+                        sender = entry['@id']
+                except TypeError:
+                    sender = entry['actor']
+                return render_template('inbox_notification.html', entry=entry, sender=sender)
+
+            else:
+                # app.logger.info(request.headers.get('Accept'))
+                # resp = Response(content_type="application/ld+json", status=200)
+                # resp.data = """
+                #     <inbox>
+                #     a ldp:Container
+                #     ldp:contains {0}
+                #     </inbox>
+                #     """.format(str(entry))
+                inbox_items = {}
+                resp = Response(content_type="application/ld+json", status=200)
+                resp.data = json.dumps(entry)
+            return resp
+
+        except TypeError:
+            # app.logger.info("empyt")
+            # resp = Response(content_type="application/ld+json", status=200)
+            # resp.data = """
+            #     <inbox>
+            #     a ldp:Container
+            #     ldp:contains {0}
+            #     </inbox>
+            #     """.format(str(entry))
+            # return resp
+                inbox_items = {}
+                resp = Response(content_type="application/ld+json", status=200)
+                resp.data = json.dumps(entry)
+                return resp
 
 @app.route('/drafts', methods=['GET'])
 def show_drafts():
