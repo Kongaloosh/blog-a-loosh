@@ -43,13 +43,17 @@
                         When I'm not playing with robots, I hang out with the indieweb community, drink tea, and
                         scubadive.
                     </p>
+
+                    <p> I talk a lot about {% for tag in popular_tags%} <a href="/t/{{tag}}">{{tag}}</a> {% if not loop.last %} ,
+{% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
+                    </p>
+
                 </div>
 
             </div>
         </div>
     </div>
-</header>
-
+</header>i
 <!-- Main Content -->
 <div class="container">
     <!-- col-md-offset-2   col-lg-offset-2-->
