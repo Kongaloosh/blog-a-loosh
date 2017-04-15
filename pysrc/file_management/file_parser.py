@@ -148,8 +148,7 @@ def update_json_entry(data, old_entry, g, draft=False):
                     WHERE slug = '{0}' AND category = '{1}'
                     '''.format(data['slug'], c)
                 )
-            old_entry['category'] = data['category']
-            for c in old_entry['category'].strip().split(','):      # parse the categories into a list and add to dbms
+            for c in data['category']:      # parse the categories into a list and add to dbms
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
