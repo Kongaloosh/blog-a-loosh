@@ -63,7 +63,7 @@ def create_json_entry(data, g, draft=False, update=False,):
 
     try:
         if data['category']:
-            data['category'] = data['category'].strip().split(",")  # comes in as a string, so we need to parse it
+            data['category'] = data['category'].replace(" ", "").split(",")  # comes in as a string, so we need to parse it
     except AttributeError:
         pass
 
@@ -139,8 +139,16 @@ def update_json_entry(data, old_entry, g, draft=False):
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
     if data['category']:                                            # if categories exist, update them
-        old_entry['category'] = data['category']
         if not draft:
+            remove = set(old_entry['category']) - set(data['category'])
+            for c in remove:
+                g.db.execute(
+                    '''
+                    DELETE FROM Categories
+                    WHERE slug = '{0}' AND category = '{1}'
+                    '''.format(data['slug'], c)
+                )
+            old_entry['category'] = data['category']
             for c in old_entry['category'].strip().split(','):      # parse the categories into a list and add to dbms
                 g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
                      [old_entry['slug'], old_entry['published'], c])
