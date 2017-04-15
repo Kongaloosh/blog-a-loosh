@@ -18,7 +18,7 @@ class HashtagExtension(Extension):
 
 class HashtagPreprocessor(Preprocessor):
     ALBUM_GROUP_RE = re.compile(
-            r'''(?<=(\ ))#\w+|#\w+(?=(\ ))'''
+            r"""(?:(?<=\s)|^)#(\w*[A-Za-z_]+\w*)"""
     )
 
     SITE_INSERT = "http://kongaloosh.com/"
@@ -30,12 +30,14 @@ class HashtagPreprocessor(Preprocessor):
         """ Match and store Fenced Code Blocks in the HtmlStash. """
         HASHTAG_WRAP = '''<a href="/t/{0}"> #{0} </a>'''
         text = "\n".join(lines)
-        hashtag = ''
         while True:
+            hashtag = ''
             m = self.ALBUM_GROUP_RE.search(text)
             if m:                                    # if there is a match
                 hashtag += HASHTAG_WRAP.format(m.group()[1:])
+                print m.group(), m.start(), m.end()
                 placeholder = self.markdown.htmlStash.store(hashtag, safe=True)
+                print(placeholder)
                 text = '%s %s %s' % (text[:m.start()],
                                            placeholder,
                                            text[m.end():])
