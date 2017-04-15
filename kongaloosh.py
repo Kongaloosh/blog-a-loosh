@@ -73,8 +73,9 @@ def teardown_request(exception):
 @app.route('/')
 def show_entries():
     """ The main view: presents author info and entries. """
-    entries = []
-    cur = g.db.execute(
+
+    entries = []                            # store the entries which will be presented
+    cur = g.db.execute(                     # grab in order of newest
         """
         SELECT location
         FROM entries
@@ -82,33 +83,43 @@ def show_entries():
         """
     )
 
-    for (row,) in cur.fetchall():
-        if os.path.exists(row + ".json"):
+    for (row,) in cur.fetchall():           # iterate over the results
+        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
             entries.append(file_parser_json(row + ".json"))
 
     try:
-        entries = entries[:10]
+        entries = entries[:10]              # get the 10 newest
     except IndexError:
-        entries = None
+        entries = None                      # there are no entries
 
-    before = 1
+    before = 1                              # holder which tells us which page we're on
 
-    # try:
-    #     for entry in entries:
-    #         for i in entry['syndication'].split(','):
-    #             if i.startswith('https://twitter.com/'):
-    #                 vals = i.split('/')
-    #                 twitter = {'id': vals[len(vals)-1], 'link': i}
-    #                 entry['twitter'] = twitter
-    #                 break
-    # except AttributeError:
-    #     pass
+    """
+        SELECT categories.category, count(entries.slug)
+        FROM categories LEFT JOIN entries ON
+            entries.slug = categories.slug AND
+            entries.published = categories.published
+        GROUP BY categories.category
+        ORDER BY COUNT(entries.slug) DESC
+    """
 
-    return render_template('blog_entries.html', entries=entries, before=before)
+    cur = g.db.execute("""
+        SELECT category
+        FROM (
+            SELECT category as category, count(category) as count
+            FROM categories
+            GROUP BY category
+        )ORDER BY count DESC
+    """)
+
+    tags = [row for (row,) in cur.fetchall()][:10]
+    print tags
+    return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags)
 
 
 @app.route('/page/<number>')
 def pagination(number):
+    """gets the posts for a page number"""
     entries = []
     cur = g.db.execute(
         """
