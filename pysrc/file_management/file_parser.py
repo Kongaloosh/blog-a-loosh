@@ -63,7 +63,7 @@ def create_json_entry(data, g, draft=False, update=False,):
 
     try:
         if data['category']:
-            data['category'] = data['category'].replace(" ", "").lower().split(",")  # comes in as a string, so we need to parse it
+            data['category'] = [i.strip() for i in data['category'].lower().split(",")]  # comes in as a string, so we need to parse it
     except AttributeError:
         pass
 
@@ -140,7 +140,7 @@ def update_json_entry(data, old_entry, g, draft=False):
         data[key] = old_entry[key]
     if data['category']:                                            # if categories exist, update them
         if not draft:
-            data['category'] = data['category'].replace(" ", "").lower().split(",")
+            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
             for c in old_entry['category']:
                 g.db.execute(
                     '''
