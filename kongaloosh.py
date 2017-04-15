@@ -115,7 +115,7 @@ def show_entries():
 
 
     tags = [row for (row,) in cur.fetchall()]
-    for element in ["None", "image"]:
+    for element in ["None", "image", "album", "bookmark"]:
         try:
             tags.remove(element)
         except ValueError:
