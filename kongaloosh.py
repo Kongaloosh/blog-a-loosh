@@ -112,9 +112,15 @@ def show_entries():
         )ORDER BY count DESC
     """)
 
-    tags = [row for (row,) in cur.fetchall()][:10]
-    print tags
-    return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags)
+
+
+    tags = [row for (row,) in cur.fetchall()]
+    for element in ["None", "image"]:
+        try:
+            tags.remove(element)
+        except ValueError:
+            pass
+    return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
 
 
 @app.route('/page/<number>')
@@ -141,7 +147,6 @@ def pagination(number):
     before = int(number) + 1
 
     return render_template('blog_entries.html', entries=entries, before=before)
-
 
 @app.errorhandler(404)
 def page_not_found(e):
