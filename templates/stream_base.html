@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#ffffff">
 
     <div class="container">
-        <div class="col-lg-8 col-lg-offset-2 col-md-12 col-sm-12 col-xs-12">
+        <div class="">
             <div class="row site-heading jumbotron" style="display: block;">
 
                 <div class="col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
@@ -35,8 +35,8 @@
 
                 <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12 intro-text">
                     <p>
-                            I'm <a href="http://alexkearney.com">Alex Kearney</a>, a Master's student studying Computer
-                        Science at the <a href="http://ualberta.ca">University of Alberta</a>. I focus on Artificial
+                            I'm <a href="http://alexkearney.com" class="tag">Alex Kearney</a>, a Master's student studying Computer
+                        Science at the <a href="http://ualberta.ca" class="tag">University of Alberta</a>. I focus on Artificial
                         Intelligence and prosthetics.
                     </p>
                     <p>
@@ -44,8 +44,8 @@
                         scubadive.
                     </p>
                     {% if popular_tags %}
-                    <p> I talk a lot about {% for tag in popular_tags%} <a href="/t/{{tag}}">{{tag}}</a> {% if not loop.last %} ,
-{% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
+                    <p class="clearfix">
+                        I talk a lot about {% for tag in popular_tags%} <a href="/t/{{tag}}" class="tag" >{{tag}}</a> {% if not loop.last %} , {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
                     </p>
                     {%endif%}
                 </div>
@@ -53,11 +53,10 @@
             </div>
         </div>
     </div>
-</header>i
+</header>
 <!-- Main Content -->
 <div class="container">
-    <!-- col-md-offset-2   col-lg-offset-2-->
-    <div class="col-lg-12 col-md-12 ">
+    <div>
         {% block body %}
         {% endblock %}
         <!-- Pager -->

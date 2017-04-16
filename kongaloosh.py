@@ -94,15 +94,6 @@ def show_entries():
 
     before = 1                              # holder which tells us which page we're on
 
-    """
-        SELECT categories.category, count(entries.slug)
-        FROM categories LEFT JOIN entries ON
-            entries.slug = categories.slug AND
-            entries.published = categories.published
-        GROUP BY categories.category
-        ORDER BY COUNT(entries.slug) DESC
-    """
-
     cur = g.db.execute("""
         SELECT category
         FROM (
@@ -111,8 +102,6 @@ def show_entries():
             GROUP BY category
         )ORDER BY count DESC
     """)
-
-
 
     tags = [row for (row,) in cur.fetchall()]
     for element in ["None", "image", "album", "bookmark", "note"]:
@@ -162,7 +151,22 @@ def page_not_found(e):
 def add():
     """ The form for user-submission """
     if request.method == 'GET':
-        return render_template('add.html')
+        cur = g.db.execute("""
+               SELECT category
+               FROM (
+                   SELECT category as category, count(category) as count
+                   FROM categories
+                   GROUP BY category
+               )ORDER BY count DESC
+           """)
+
+        tags = [row for (row,) in cur.fetchall()]
+        for element in ["None", "image", "album", "bookmark", "note"]:
+            try:
+                tags.remove(element)
+            except ValueError:
+                pass
+        return render_template('add.html', popular_tags=tags)
 
     elif request.method == 'POST':  # if we're adding a new post
         if not session.get('logged_in'):
@@ -843,6 +847,7 @@ def notifier():
   "updated": "2016-06-28T19:56:20.114Z"
 }"""
 
+
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
     if request.method == 'GET':
@@ -895,6 +900,7 @@ def show_inbox_item(name):
                 resp = Response(content_type="application/ld+json", status=200)
                 resp.data = json.dumps(entry)
                 return resp
+
 
 @app.route('/drafts', methods=['GET'])
 def show_drafts():
