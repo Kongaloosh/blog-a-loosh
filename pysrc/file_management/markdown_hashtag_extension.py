@@ -35,9 +35,7 @@ class HashtagPreprocessor(Preprocessor):
             m = self.ALBUM_GROUP_RE.search(text)
             if m:                                    # if there is a match
                 hashtag += HASHTAG_WRAP.format(m.group()[1:])
-                print m.group(), m.start(), m.end()
                 placeholder = self.markdown.htmlStash.store(hashtag, safe=True)
-                print(placeholder)
                 text = '%s %s %s' % (text[:m.start()],
                                            placeholder,
                                            text[m.end():])
