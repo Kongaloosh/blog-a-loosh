@@ -42,7 +42,11 @@
                     <label>Tags</label>
                     <input type="text" style="width: 100%" name="category">
                 </p>
-
+                {% if popular_tags %}
+                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}">{{tag}}</a> {% if not loop.last %} ,
+{% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
+                    </p>
+                    {%endif%}
                 <p>
                     <label>Reply-to</label>
                     <input type="text" style="width: 100%" name="in_reply_to">
@@ -92,10 +96,6 @@ function showPosition(position) {
 }
 
 var form = document.getElementById("input");
-
-<!--document.getElementById("submit").addEventListener("click", function () {-->
-  <!--form.submit();-->
-<!--});-->
 
 function getRecentPhotos() {
     var xhttp = new XMLHttpRequest();
