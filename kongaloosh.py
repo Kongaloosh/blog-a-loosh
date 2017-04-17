@@ -22,6 +22,7 @@ from slugify import slugify
 import ConfigParser
 import re
 import requests
+from pysrc.file_management.markdown_album_pre_process import move, run
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -147,6 +148,29 @@ def page_not_found(e):
     return render_template('server_error.html'), 500
 
 
+def move_photos(text):
+
+    file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
+
+    file_path = "data/{0}/{1}/{2}/".format(
+        date.year,
+        date.month,
+        date.day
+    )
+
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path))
+
+    for uploaded_file in request.files.getlist('file'):
+        uploaded_file.save(
+            file_path + "{0}".format(
+                uploaded_file.filename
+            )
+        )
+        small_path = '/home/deploy/kongaloosh/data/'
+        uploaded_file = open(file_path + '{0}'.format(uploaded_file.filename), 'r')
+
+
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     """ The form for user-submission """
@@ -177,6 +201,8 @@ def add():
 
         if "Submit" in request.form:  # we're publishing it now; give it the present time
             data['published'] = datetime.now()
+
+            data['content'] = run(data['content'], date=data['published'])
 
             if data['location'] is not None and data['location'].startswith("geo:"):
                 if data['location'].startswith("geo:"):
@@ -252,16 +278,7 @@ def bulk_upload():
         if not session.get('logged_in'):
             abort(401)
 
-        date = datetime.now()
-
-        file_path = "data/{0}/{1}/{2}/".format(
-            date.year,
-            date.month,
-            date.day
-        )
-
-        if not os.path.exists(file_path):
-            os.makedirs(os.path.dirname(file_path))
+        file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
 
         for uploaded_file in request.files.getlist('file'):
             uploaded_file.save(
@@ -299,18 +316,16 @@ def recent_uploads():
 
             '''
 
-        now = datetime.now()
-        directory = "data/{0}/{1}/{2}".format(now.year, now.month, now.day)
+        directory = "/mnt/volume-nyc1-01/images/temp"
 
         file_list = []
         for file in os.listdir(directory):
-            if file.endswith((".jpg", ".png", ".gif")):
-                path = (directory + "/" + file)
-                file_list.append(path)
+            path = ("/images/temp/" + file)
+            file_list.append(path)
 
         preview = ""
         j = 0
-        while (True):
+        while True:
             row = ""
             for i in range(0, 4):  # for every row we want to make
                 image_index = (4 * j) + i

@@ -21,8 +21,6 @@ class HashtagPreprocessor(Preprocessor):
             r"""(?:(?<=\s)|^)#(\w*[A-Za-z_]+\w*)"""
     )
 
-    SITE_INSERT = "http://kongaloosh.com/"
-
     def __init__(self, md):
         super(HashtagPreprocessor, self).__init__(md)
 
