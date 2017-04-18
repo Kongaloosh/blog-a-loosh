@@ -10,7 +10,7 @@ def move(loc, date):
     # open old file
     # you're going to need to check trailing slashes
     old_prefix = '/home/deploy/kongaloosh/'
-    new_prefix = '/mnt/volume-nyc1-01/images/data/'
+    new_prefix = '/mnt/volume-nyc1-01/'
 
     if date is None:
         date = datetime.now()
@@ -21,28 +21,26 @@ def move(loc, date):
         date.day
     )
 
-    file_name = loc[12:]                                        # remove the '/images/temp/'
-    image = open(new_prefix+loc, 'r')                           # open the image from the temp
-    if not os.path.exists(new_prefix+loc):                      # if the target directory doesn't exist ...
-        os.makedirs(os.path.dirname(new_prefix+loc))            # ... make it.
-    image_unscaled = open(new_prefix+date_suffix+file_name)     # open the new location
+    file_name = loc[13:]                                        # remove the '/images/temp/'
+    if not os.path.exists(new_prefix+date_suffix):              # if the target directory doesn't exist ...
+        os.makedirs(os.path.dirname(new_prefix+date_suffix))                # ... make it.
+    image = open(new_prefix + loc[1:], 'r')                                 # open the image from the temp
+    image_unscaled = open(new_prefix+date_suffix+file_name.lower(), 'w')    # open the new location
     image_unscaled.write(image.read())                          # move the unscaled image to the new location
+    image_unscaled.close()
 
     max_height = 500                                            # maximum height
-    img = Image.open(old_prefix+loc)                            # open the image in PIL
+    img = Image.open(new_prefix + loc[1:])                      # open the image in PIL
     h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
     w_size = int((float(img.size[0]) * float(h_percent)))       # calculate the new size of the width
     img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
     if not os.path.exists(old_prefix+date_suffix):              # if the blog's directory doesn't exist
         os.makedirs(os.path.dirname(old_prefix+date_suffix))    # make it
-
-    img.save(old_prefix+date_suffix+file_name)                  # image save old_prefix
-
+    img.save(old_prefix+date_suffix+file_name.lower())          # image save old_prefix
     # Result:
     # Scaled optimised thumbnail in the blog-source next to the post's json and md files
     # Original-size photos in the self-hosting image server directory
-    return date_suffix+file_name        # of form data/yyyy/mm/dd/name.extension
-
+    return "/" + date_suffix+file_name                          # of form data/yyyy/mm/dd/name.extension
 
 def run(lines, date=None):
     # 1. find all the references to images
@@ -82,10 +80,9 @@ def run(lines, date=None):
                                 "(?<=\[{1})(.)*(?=\]{1})",
                                 images[index]
                             ).group()  # get the text
-
                             if image_ref.startswith("images/temp/"):  # if the location is in our temp folder...
                                 image_ref = move(image_ref, date)  # ... move and resize photos
-                            album += "(%s)[%s]" % (alt, image_ref)  # album
+                            album += "[%s](%s)" % (alt, image_ref)  # album
                             if index != len(images) - 1:  # if this isn't the last image in the set...
                                 album += "-\n"  # ... then make room for another image
                         current_index = last_index
@@ -103,4 +100,49 @@ def run(lines, date=None):
             finished = True
             break
     print text
-    return lines
+    return text
+
+
+if __name__ == "__main__":
+    run(""""
+@@@[](/images/temp/IMG_6224.JPG)@@@
+
+@@@[](/images/temp/IMG_6203.JPG)-[](/images/temp/IMG_6216.JPG)-[](/images/temp/IMG_6191.JPG)@@@
+
+@@@[](/images/temp/IMG_6208.JPG)-[](/images/temp/IMG_6225.JPG)@@@
+
+@@@[](/images/temp/IMG_6218.JPG)@@@
+""")
+
+#     run(
+# """"easter
+#
+# @@@
+# ()[/data/2017/4/17/IMG_6224.JPG]
+# @@@
+#
+#
+# @@@
+# ()[/data/2017/4/17/IMG_6203.JPG]-
+# ()[/data/2017/4/17/IMG_6216.JPG]-
+# ()[/data/2017/4/17/IMG_6191.JPG]
+# @@@
+#
+#
+# @@@
+# ()[/data/2017/4/17/IMG_6208.JPG]-
+# ()[/data/2017/4/17/IMG_6225.JPG]
+# @@@
+#
+#
+# @@@
+# ()[/data/2017/4/17/IMG_6224.JPG]
+# @@@
+#
+#
+# @@@
+# ()[/data/2017/4/17/IMG_6218.JPG]
+# @@@
+# """
+#
+#     )
