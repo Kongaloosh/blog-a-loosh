@@ -5,7 +5,6 @@ import re
 
 
 class AlbumExtension(Extension):
-
     def extendMarkdown(self, md, md_globals):
         """ Add FencedBlockPreprocessor to the Markdown instance. """
         md.registerExtension(self)
@@ -33,8 +32,6 @@ class AlbumPreprocessor(Preprocessor):
         </a>
         '''
 
-    SITE_INSERT = "http://kongaloosh.com/"
-
     def __init__(self, md):
         super(AlbumPreprocessor, self).__init__(md)
 
@@ -44,18 +41,17 @@ class AlbumPreprocessor(Preprocessor):
         text = "\n".join(lines)
         while True:
             m = self.ALBUM_GROUP_RE.search(text)
-            if m:                                    # if there is a match
-
+            if m:  # if there is a match
                 album_collection = ""
 
                 images = re.split("(?<=\){1})[ ,\n]*-*[ ,\n]*(?=\[{1})", m.group('album'))
                 # could probably just do it once for both and zip into tuple
                 generated_html = ""
-                for image in images:                    # for each image in the album
-                    alt = re.search("(?<=\[{1})(.)*(?=\]{1})",image).group() # get the alt text
-                    image_location = self.SITE_INSERT + re.search("(?<=\({1})(.)*(?=\){1})",image).group()
-                    generated_html += self.IMG_WRAP % (image_location, image_location, 100/(len(images)+.2))
-
+                for image in images:  # for each image in the album
+                    alt = re.search("(?<=\[{1})(.)*(?=\]{1})", image).group()  # get the alt text
+                    image_location = re.search("(?<=\({1})(.)*(?=\){1})", image).group()
+                    generated_html += self.IMG_WRAP % (
+                    "/images" + image_location, image_location, 100 / (len(images) + .2))
                 # finally put code into div
                 generated_html = self.GROUP_WRAP % (generated_html)
 
@@ -70,4 +66,3 @@ class AlbumPreprocessor(Preprocessor):
 
 def makeExtension(*args, **kwargs):
     return AlbumExtension(*args, **kwargs)
-
