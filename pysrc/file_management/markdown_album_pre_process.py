@@ -22,12 +22,10 @@ def move(loc, date):
     )
 
     file_name = loc[13:]                                        # remove the '/images/temp/'
-    if not os.path.exists(new_prefix+date_suffix):              # if the target directory doesn't exist ...
-        os.makedirs(os.path.dirname(new_prefix+date_suffix))                # ... make it.
-    image = open(new_prefix + loc[1:], 'r')                                 # open the image from the temp
-    image_unscaled = open(new_prefix+date_suffix+file_name.lower(), 'w')    # open the new location
-    image_unscaled.write(image.read())                          # move the unscaled image to the new location
-    image_unscaled.close()
+    if not os.path.exists(new_prefix+'images/' + date_suffix):              # if the target directory doesn't exist ...
+        os.makedirs(os.path.dirname(new_prefix+'images/'+date_suffix))                # ... make it.
+    img = Image.open(new_prefix + loc[1:])                                 # open the image from the temp
+    img.save(new_prefix+'images/'+date_suffix+file_name.lower())    # open the new location
 
     max_height = 500                                            # maximum height
     img = Image.open(new_prefix + loc[1:])                      # open the image in PIL
@@ -40,7 +38,8 @@ def move(loc, date):
     # Result:
     # Scaled optimised thumbnail in the blog-source next to the post's json and md files
     # Original-size photos in the self-hosting image server directory
-    return "/" + date_suffix+file_name                          # of form data/yyyy/mm/dd/name.extension
+    return "/" + date_suffix+file_name.lower()                          # of form data/yyyy/mm/dd/name.extension
+
 
 def run(lines, date=None):
     # 1. find all the references to images
@@ -80,7 +79,7 @@ def run(lines, date=None):
                                 "(?<=\[{1})(.)*(?=\]{1})",
                                 images[index]
                             ).group()  # get the text
-                            if image_ref.startswith("images/temp/"):  # if the location is in our temp folder...
+                            if image_ref.startswith("/images/temp/"):  # if the location is in our temp folder...
                                 image_ref = move(image_ref, date)  # ... move and resize photos
                             album += "[%s](%s)" % (alt, image_ref)  # album
                             if index != len(images) - 1:  # if this isn't the last image in the set...
