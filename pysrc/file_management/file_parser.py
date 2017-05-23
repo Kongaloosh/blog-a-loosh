@@ -83,7 +83,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         os.makedirs(os.path.dirname(file_path))
 
     total_path = file_path+"{slug}".format(slug=slug)
-    logger.info("printing the stuff ", total_path)
+
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
 

@@ -184,7 +184,7 @@ def add():
                )ORDER BY count DESC
            """)
 
-        tags = [row for (row,) in cur.fetchall()]
+        tags = [row for (row,) in cur.fetchall()][:10]
         for element in ["None", "image", "album", "bookmark", "note"]:
             try:
                 tags.remove(element)
@@ -289,6 +289,30 @@ def bulk_upload():
         return redirect('/')
     else:
         return redirect('/404'), 404
+
+
+@app.route('/mobile_upload', methods=['GET', 'POST'])
+def mobile_upload():
+    if request.method == 'GET':
+        return render_template('mobile_upload.html')
+    elif request.method == 'POST':
+        if not session.get('logged_in'):
+            abort(401)
+
+        file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
+        app.logger.info("uploading at" + file_path)
+	app.logger.info(request.files)
+	app.logger.info(request.files.getlist('files[]'))
+	for uploaded_file in request.files.getlist('files[]'):
+            app.logger.info("file " + uploaded_file.filename)
+            uploaded_file.save(
+                file_path + "{0}".format(
+                    uploaded_file.filename
+                )
+            )
+        return redirect('/')
+    else:
+        return redirect('/404')
 
 
 @app.route('/recent_uploads', methods=['GET', 'POST'])
