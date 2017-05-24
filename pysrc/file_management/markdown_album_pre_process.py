@@ -21,11 +21,11 @@ def move(loc, date):
         date.day
     )
 
-    file_name = loc[13:]                                        # remove the '/images/temp/'
+    file_name = loc[13:]                                                    # remove the '/images/temp/'
     if not os.path.exists(new_prefix+'images/' + date_suffix):              # if the target directory doesn't exist ...
-        os.makedirs(os.path.dirname(new_prefix+'images/'+date_suffix))                # ... make it.
-    img = Image.open(new_prefix + loc[1:])                                 # open the image from the temp
-    img.save(new_prefix+'images/'+date_suffix+file_name.lower())    # open the new location
+        os.makedirs(os.path.dirname(new_prefix+'images/'+date_suffix))      # ... make it.
+    img = Image.open(new_prefix + loc[1:])                                  # open the image from the temp
+    img.save(new_prefix+'images/'+date_suffix+file_name.lower())            # open the new location
 
     max_height = 500                                            # maximum height
     img = Image.open(new_prefix + loc[1:])                      # open the image in PIL
@@ -35,6 +35,7 @@ def move(loc, date):
     if not os.path.exists(old_prefix+date_suffix):              # if the blog's directory doesn't exist
         os.makedirs(os.path.dirname(old_prefix+date_suffix))    # make it
     img.save(old_prefix+date_suffix+file_name.lower())          # image save old_prefix
+    os.remove(new_prefix + loc[1:])
     # Result:
     # Scaled optimised thumbnail in the blog-source next to the post's json and md files
     # Original-size photos in the self-hosting image server directory
