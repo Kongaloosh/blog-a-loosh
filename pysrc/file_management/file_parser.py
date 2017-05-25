@@ -44,24 +44,25 @@ def file_parser_json(filename, md=True):
     return entry
 
 
-def create_json_entry(data, g, draft=False, update=False,):
+def create_json_entry(data, g, draft=False, update=False):
     """
     creates a json entry based on recieved dictionary, then creates a human-readable .md alongisde it.
     :
     """
-    slug = None
+
+    slug = None                                     # check if we can find the slug in the given data ...
     if data['slug']:
         slug = data['slug']
-    else:
-        if data['title']:                            # is it an article?
+    else:                                           # ... otherwise make a slug
+        if data['title']:                           # is it an article?
             slug = slugify(data['title'])
         else:                                       # otherwise we make a slug from post content
             slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
-            slug = slugify(slug)                        # slugify the slug
+            slug = slugify(slug)                    # slugify the slug
         data['u-uid'] = slug
         data['slug'] = slug
 
-    try:
+    try:                                            # if we have a category in the
         if data['category']:
             data['category'] = [i.strip() for i in data['category'].lower().split(",")]  # comes in as a string, so we need to parse it
     except AttributeError:
@@ -75,7 +76,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         date_location = "{year}/{month}/{day}/".format(
                         year=str(data['published'].year),
                         month=str(data['published'].month),
-                        day=str(data['published'].day))             # turn date into filepath
+                        day=str(data['published'].day))             # turn date into file-path
         file_path = "data/" + date_location
         data['url'] = '/e/' + date_location + slug
 
@@ -99,7 +100,7 @@ def create_json_entry(data, g, draft=False, update=False,):
                     file_writer.close()
                     data[key] = total_path + extension
                 elif os.path.isfile(total_path + extension):
-                    data[key] = total_path + extension                            # update the dict to a location refrence
+                    data[key] = total_path + extension                        # update the dict to a location refrence
             except KeyError:
                 pass
 
@@ -108,7 +109,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         file_writer.write(json.dumps(data))
         file_writer.close()
 
-        if not draft and not update and g:                                          # if this isn't a draft, put it in the dbms
+        if not draft and not update and g:                         # if this isn't a draft, put it in the dbms
             g.db.execute(
                 """
                 insert into entries
@@ -132,30 +133,42 @@ def update_json_entry(data, old_entry, g, draft=False):
     """
     Update entry based on edits recieved
     :param data: the new entry
-    :param old_entry: the old entry to be updated
     :param g: dbms cursor
     :param draft: flag indicating whether we're updating a draft or an alredy submitted post
     """
+    # file_path = "data/" + data['url'][:3]
+    # total_path = file_path + data['slug'] +  ".json"
+    # old_entry = file
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
     if data['category']:                                            # if categories exist, update them
         if not draft:
             data['category'] = [i.strip() for i in data['category'].lower().split(",")]
-            for c in old_entry['category']:
-                g.db.execute(
-                    '''
-                    DELETE FROM Categories
-                    WHERE slug = '{0}' AND category = '{1}'
-                    '''.format(data['slug'], c)
-                )
+
+            try:
+                for c in old_entry['category']:
+                    g.db.execute(
+                        '''
+                        DELETE FROM categories
+                        WHERE slug = '{0}' AND category = '{1}';
+                        '''.format(data['slug'], c)
+                    )
+            except TypeError:
+                pass
+
             for c in data['category']:      # parse the categories into a list and add to dbms
-                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                print c
+                g.db.execute('''
+                    insert into categories (slug, published, category) values (?, ?, ?)''',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
+
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
-    create_json_entry(old_entry, g, draft, update=True)
+
+    print old_entry
+    create_json_entry(data=old_entry, g=g, draft=draft, update=True)
 
 
 def create_entry_markdown(data, path):
