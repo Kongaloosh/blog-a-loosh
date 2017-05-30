@@ -30,12 +30,18 @@ DOMAIN_NAME = config.get('Global', 'DomainName')
 GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
 
-
-def file_parser_json(filename, md=True):
+def file_parser_json(filename, g=None, md=True):
     entry = json.loads(open(filename, 'rb').read())
     try:
         entry['published'] = parse(entry['published'])
+        if g:
+            entry['published'] = parse(g.db.execute("""
+            SELECT published
+            FROM entries
+            WHERE slug = '{0}'
+            """.format(entry['slug'])).fetchall()[0][0])
     except ValueError:
+        print "no file publish time"
         pass
 
     if md:
@@ -105,6 +111,7 @@ def create_json_entry(data, g, draft=False, update=False):
                 pass
 
         data['published'] = data['published'].__str__()
+
         file_writer = open(total_path+".json", 'w')                # open and dump the actual post meta-data
         file_writer.write(json.dumps(data))
         file_writer.close()
@@ -139,6 +146,9 @@ def update_json_entry(data, old_entry, g, draft=False):
     # file_path = "data/" + data['url'][:3]
     # total_path = file_path + data['slug'] +  ".json"
     # old_entry = file
+
+    print "new", data['published'], "old", old_entry['published']
+
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
     if data['category']:                                            # if categories exist, update them
