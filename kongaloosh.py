@@ -538,7 +538,7 @@ def edit(year, month, day, name):
                 t.start()
 
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json")
+            entry = file_parser_json(file_name + ".json", g=g)
             update_json_entry(data, entry, g=g)
             return redirect("/e/" + location)
         return redirect("/")
