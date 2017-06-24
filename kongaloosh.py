@@ -138,6 +138,7 @@ def pagination(number):
 
     return render_template('blog_entries.html', entries=entries, before=before)
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('page_not_found.html'), 404
@@ -713,39 +714,59 @@ def handle_micropub():
             app.logger.info('acccess [%s]' % request)
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
-                data = {}
+                data = {
+        'h': None,
+        'title': None,
+        'summary': None,
+        'content': None,
+        'published': None,
+        'updated': None,
+        'category': None,
+        'slug': None,
+        'location': None,
+        'location_name': None,
+        'location_id': None,
+        'in_reply_to': None,
+        'repost-of': None,
+        'syndication': None,
+        'photo': None
+    }
 
                 for key in (
-                        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in_reply_to', 'repost-of', 'syndication', 'syndicate-to[]'):
-                    data[key] = request.form.get(key)
-
-                if data['syndication']:
-                    data['syndication'] += ","  # TODO: add twitter keywords
+                        'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'place_name', 'in_reply_to', 'repost-of', 'syndication', 'syndicate-to[]'):
+                    try:
+                        data[key] = request.form.get(key)
+                    except KeyError:
+                        pass
 
                 if not data['published']:  # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
 
+
                 for key, name in [('photo', 'image'), ('audio', 'audio'), ('video', 'video')]:
                     try:
                         if request.files.get(key):
                             img = request.files.get(key).read()
                             data[key] = img
-                            data['category'] += ',' + name  # we've added an image, so append it
+                            data['category'].append(name)  # we've added an image, so append it
                     except KeyError:
                         pass
 
-                try:
-                    if data['location']:
-                        app.logger.info(data['location'])
+                if data['location'] is not None and data['location'].startswith("geo:"):
+                    if data['place_name']:
+                        data['location_name'] = data['place_name']
+                    elif data['location'].startswith("geo:"):
                         (place_name, geo_id) = resolve_placename(data['location'])
                         data['location_name'] = place_name
                         data['location_id'] = geo_id
-                except KeyError:
-                    pass
+
                 location = create_json_entry(data, g=g)
+
+                if data['in_reply_to']:
+                    send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
@@ -768,7 +789,7 @@ def handle_micropub():
                 resp = Response(status='unauthorized')
                 resp.status_code = 401
                 return resp
-        else:
+        else:    
             resp = Response(status='unauthorized')
             resp.status_code = 401
 
@@ -874,18 +895,6 @@ def handle_inbox():
 @app.route('/inbox/send/', methods=['GET', 'POST'])
 def notifier():
     return 501
-
-
-"""{
-  "@context": "https://www.w3.org/ns/activitystreams",
-  "@id": "",
-  "@type": "Announce",
-  "actor": "https://rhiaro.co.uk/#me",
-  "object": "http://example.net/note",
-  "target": "http://example.org/article",
-  "updated": "2016-06-28T19:56:20.114Z"
-}"""
-
 
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
