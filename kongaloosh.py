@@ -530,6 +530,8 @@ def edit(year, month, day, name):
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
+            data['content'] = run(data['content'], date=data['published'])
+
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, ['/e/' + location])
                 t.start()
