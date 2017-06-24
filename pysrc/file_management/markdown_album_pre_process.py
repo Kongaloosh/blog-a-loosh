@@ -6,12 +6,20 @@ from PIL import Image
 from datetime import datetime
 import os
 
-def move(loc, date):
-    # open old file
-    # you're going to need to check trailing slashes
-    old_prefix = '/home/deploy/kongaloosh/'
-    new_prefix = '/mnt/volume-nyc1-01/'
+old_prefix = '/home/deploy/kongaloosh/'
+new_prefix = '/mnt/volume-nyc1-01/'
 
+# the regular expression to find albums
+ALBUM_GROUP_RE = re.compile(
+    r'''(@{3,})(?P<album>((.)|(\n))*?)(@{3,})'''
+)
+
+def move(loc, date):
+    """"
+    Moves an image, scales it and stores a low-res with the blog post and a high-res in a long-term storage folder.
+    :param loc: the location of an image
+    :param loc: the date folder to which an image should be moved
+    """
     if date is None:
         date = datetime.now()
 
@@ -35,7 +43,6 @@ def move(loc, date):
     if not os.path.exists(old_prefix+date_suffix):              # if the blog's directory doesn't exist
         os.makedirs(os.path.dirname(old_prefix+date_suffix))    # make it
     img.save(old_prefix+date_suffix+file_name.lower())          # image save old_prefix
-    os.remove(new_prefix + loc[1:])
     # Result:
     # Scaled optimised thumbnail in the blog-source next to the post's json and md files
     # Original-size photos in the self-hosting image server directory
@@ -43,10 +50,14 @@ def move(loc, date):
 
 
 def run(lines, date=None):
+    """
+    Finds all references to images, removes them from their temporary directory, moves them to their new location, 
+    and replaces references to them in the original post text.
+    :param lines: the text of an entry which may, or may or may not have photos.
+    :param date: the date this post was made.
+    """
+
     # 1. find all the references to images
-    ALBUM_GROUP_RE = re.compile(
-        r'''(@{3,})(?P<album>((.)|(\n))*?)(@{3,})'''
-    )
 
     text = lines
     last_index = -1
@@ -57,7 +68,7 @@ def run(lines, date=None):
         # substituting immediately in will cause overlap
         # we need this loop to go over iteratively; we keep track of where we were last with
         collections = ALBUM_GROUP_RE.finditer(text)
-        if collections:
+        if collections:                                             # if there's an image match
             current_index = 0
             while True:
                 try:
@@ -102,47 +113,3 @@ def run(lines, date=None):
     print text
     return text
 
-
-if __name__ == "__main__":
-    run(""""
-@@@[](/images/temp/IMG_6224.JPG)@@@
-
-@@@[](/images/temp/IMG_6203.JPG)-[](/images/temp/IMG_6216.JPG)-[](/images/temp/IMG_6191.JPG)@@@
-
-@@@[](/images/temp/IMG_6208.JPG)-[](/images/temp/IMG_6225.JPG)@@@
-
-@@@[](/images/temp/IMG_6218.JPG)@@@
-""")
-
-#     run(
-# """"easter
-#
-# @@@
-# ()[/data/2017/4/17/IMG_6224.JPG]
-# @@@
-#
-#
-# @@@
-# ()[/data/2017/4/17/IMG_6203.JPG]-
-# ()[/data/2017/4/17/IMG_6216.JPG]-
-# ()[/data/2017/4/17/IMG_6191.JPG]
-# @@@
-#
-#
-# @@@
-# ()[/data/2017/4/17/IMG_6208.JPG]-
-# ()[/data/2017/4/17/IMG_6225.JPG]
-# @@@
-#
-#
-# @@@
-# ()[/data/2017/4/17/IMG_6224.JPG]
-# @@@
-#
-#
-# @@@
-# ()[/data/2017/4/17/IMG_6218.JPG]
-# @@@
-# """
-#
-#     )
