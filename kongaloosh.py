@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, jsonify
 from contextlib import closing
 import os
 import math
@@ -111,6 +111,82 @@ def show_entries():
         except ValueError:
             pass
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
+
+
+@app.route('/rss.xml')
+def show_rss():
+    """ The rss view: presents entries in rss form. """
+
+    entries = []                            # store the entries which will be presented
+    cur = g.db.execute(                     # grab in order of newest
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+
+    for (row,) in cur.fetchall():           # iterate over the results
+        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+            entries.append(file_parser_json(row + ".json"))
+
+    try:
+        entries = entries[:10]              # get the 10 newest
+    except IndexError:
+        entries = None                      # there are no entries
+
+    template = render_template('rss.xml', entries=entries)
+    response = make_response(template)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+
+@app.route('/json.feed')
+def show_json():
+    """ The rss view: presents entries in json feed form. """
+
+    entries = []                            # store the entries which will be presented
+    cur = g.db.execute(                     # grab in order of newest
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+
+    for (row,) in cur.fetchall():           # iterate over the results
+        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+            entries.append(file_parser_json(row + ".json"))
+
+    try:
+        entries = entries[:10]              # get the 10 newest
+    except IndexError:
+        entries = None                      # there are no entries
+    
+    feed_items = []
+
+    for entry in entries:
+        feed_item = {
+                        'id': entry['url'],
+                        'url': entry['url'],
+                        'content_text': entry['summary'] if entry['summary'] else entry['content'],
+                        'date_published': entry['published'],
+                        'author': {
+                            'name': 'Alex Kearney'
+                        }
+
+                    }
+        feed_items.append(feed_item)
+
+    feed_json = {
+        'version': 'https://jsonfeed.org/version/1',
+        'home_page_url' : 'https://kongaloosh.com/',
+        'feed_url' : 'https://kongaloosh.com/json.feed',
+        'title' : 'kongaloosh',
+        'items' : feed_items
+    }
+    
+    return jsonify(feed_json)
 
 
 @app.route('/page/<number>')
