@@ -11,9 +11,12 @@ sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from pysrc.file_management.markdown_album_extension import AlbumExtension
 from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
+from pysrc.file_management.markdown_album_pre_process import new_prefix
 import logging
+from PIL import Image
+import numpy as np
 
-__author__ = 'alex'
+__author__ = 'kongaloosh'
 
 config = ConfigParser.ConfigParser()
 config.read('config.ini')
@@ -29,6 +32,56 @@ PASSWORD = config.get('SiteAuthentication', 'password')
 DOMAIN_NAME = config.get('Global', 'DomainName')
 GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
+
+
+def move_and_resize(from_location, to_blog_location, to_copy):
+    """"
+        Moves an image, scales it and stores a low-res with the blog post and a high-res in a long-term storage folder.
+        :param loc: the location of an image
+        :param loc: the date folder to which an image should be moved
+        """
+
+    to_blog_location = to_blog_location.lower()
+    to_copy = to_copy.lower()
+
+    if not os.path.exists(os.path.dirname(to_copy)):            # if the target directory doesn't exist ...
+        os.makedirs(os.path.dirname(to_copy))                   # ... make it.
+    img = Image.open(from_location)                             # open the image from the temp
+    img_file = open(to_copy, "w")
+    img.save(img_file, "JPEG")                                  # open the new location
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+
+    img = Image.open(from_location)  # open the image from the temp
+    max_height = 500                                            # maximum height
+    h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
+    if h_percent >= 1:
+        w_size = 1
+    else:
+        w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
+    img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
+    if not os.path.exists(os.path.dirname(to_blog_location)):                    # if the blog's directory doesn't exist
+       os.makedirs(os.path.dirname(to_blog_location))          # make it
+    in_data = np.asarray(img, dtype=np.uint8)
+    print in_data
+    print in_data.shape
+    img_file = open(to_blog_location, "w")
+    print img_file.tell()
+    img.save(img_file, "JPEG")                                  # image save old_prefix
+    print img_file.tell()
+    img_file.flush()
+    print img_file.tell()
+    os.fsync(img_file)
+    print img_file.tell()
+    img_file.close()
+    img.close()
+    # Result:
+    # Scaled optimised thumbnail in the blog-source next to the post's json and md files
+    # Original-size photos in the self-hosting image server directory
+    os.remove(from_location)
+
 
 def file_parser_json(filename, g=None, md=True):
     entry = json.loads(open(filename, 'rb').read())
@@ -93,7 +146,6 @@ def create_json_entry(data, g, draft=False, update=False):
 
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
-
         # Find all the multimedia files which were added with the posts
         for (key, extension) in [
                 # (data['video'], '.mp4'),
@@ -101,12 +153,23 @@ def create_json_entry(data, g, draft=False, update=False):
                 ('photo', '.jpg')]:
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
-                    file_writer = open(total_path + extension, 'w')           # find a location to put the media
-                    file_writer.write(data[key])                              # write the media to a file
-                    file_writer.close()
+                    print type(data[key]) == unicode, type(data[key])
+                    print(
+                        new_prefix[:-1] + data[key],
+                        total_path  +extension,
+                        new_prefix + total_path+ extension
+                    )
+                    if type(data[key]) == unicode:
+                        move_and_resize(
+                            new_prefix[:-1] + data[key],
+                            total_path + extension,
+                            # new_prefix + total_path + "B" + extension,
+                            new_prefix + total_path + extension
+
+                        )
                     data[key] = total_path + extension
                 elif os.path.isfile(total_path + extension):
-                    data[key] = total_path + extension                        # update the dict to a location refrence
+                    data[key] = total_path + extension              # update the dict to a location refrence
             except KeyError:
                 pass
 
@@ -133,7 +196,7 @@ def create_json_entry(data, g, draft=False, update=False):
             create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
         return data['url']
     else:
-        return "/already_made"                                      # a post of this name already exists
+        return "/already_made"                                     # a post of this name already exists
 
 
 def update_json_entry(data, old_entry, g, draft=False):

@@ -23,6 +23,7 @@ import ConfigParser
 import re
 import requests
 from pysrc.file_management.markdown_album_pre_process import move, run
+from PIL import Image, ExifTags
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -302,15 +303,24 @@ def mobile_upload():
 
         file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
         app.logger.info("uploading at" + file_path)
-	app.logger.info(request.files)
-	app.logger.info(request.files.getlist('files[]'))
-	for uploaded_file in request.files.getlist('files[]'):
+        app.logger.info(request.files)
+        app.logger.info(request.files.getlist('files[]'))
+        for uploaded_file in request.files.getlist('files[]'):
             app.logger.info("file " + uploaded_file.filename)
-            uploaded_file.save(
-                file_path + "{0}".format(
-                    uploaded_file.filename
-                )
-            )
+            file_loc = file_path + "{0}".format(uploaded_file.filename)
+            image = Image.open(uploaded_file.read())
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = dict(image._getexif().items())
+
+            if exif[orientation] == 3:
+                image = image.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                image = image.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                image = image.rotate(90, expand=True)
+            image.save(file_loc)
         return redirect('/')
     else:
         return redirect('/404')
@@ -488,11 +498,12 @@ def post_from_request(request):
         'syndication': None,
         'photo': None
     }
-    for title in request.form:
-        data[title] = request.form[title]
 
     for title in request.files:
         data[title] = request.files[title].read()
+
+    for title in request.form:
+        data[title] = request.form[title]
 
     for key in data:
         if data[key] == "None" or data[key] == '':
@@ -717,22 +728,22 @@ def handle_micropub():
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
                 data = {
-        'h': None,
-        'title': None,
-        'summary': None,
-        'content': None,
-        'published': None,
-        'updated': None,
-        'category': None,
-        'slug': None,
-        'location': None,
-        'location_name': None,
-        'location_id': None,
-        'in_reply_to': None,
-        'repost-of': None,
-        'syndication': None,
-        'photo': None
-    }
+                    'h': None,
+                    'title': None,
+                    'summary': None,
+                    'content': None,
+                    'published': None,
+                    'updated': None,
+                    'category': None,
+                    'slug': None,
+                    'location': None,
+                    'location_name': None,
+                    'location_id': None,
+                    'in_reply_to': None,
+                    'repost-of': None,
+                    'syndication': None,
+                    'photo': None
+                }
 
                 for key in (
                         'name', 'summary', 'content', 'published', 'updated', 'category',
