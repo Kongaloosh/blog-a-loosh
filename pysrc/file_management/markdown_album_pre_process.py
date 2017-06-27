@@ -30,13 +30,14 @@ def move(loc, date):
     )
 
     file_name = loc[13:]                                                    # remove the '/images/temp/'
+    target_file_path = new_prefix + loc[1:]
     if not os.path.exists(new_prefix+'images/' + date_suffix):              # if the target directory doesn't exist ...
         os.makedirs(os.path.dirname(new_prefix+'images/'+date_suffix))      # ... make it.
-    img = Image.open(new_prefix + loc[1:])                                  # open the image from the temp
+    img = Image.open(target_file_path)                                      # open the image from the temp
     img.save(new_prefix+'images/'+date_suffix+file_name.lower())            # open the new location
 
     max_height = 500                                            # maximum height
-    img = Image.open(new_prefix + loc[1:])                      # open the image in PIL
+    img = Image.open(target_file_path)                          # open the image in PIL
     h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
     w_size = int((float(img.size[0]) * float(h_percent)))       # calculate the new size of the width
     img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
@@ -46,6 +47,7 @@ def move(loc, date):
     # Result:
     # Scaled optimised thumbnail in the blog-source next to the post's json and md files
     # Original-size photos in the self-hosting image server directory
+    os.remove(target_file_path)
     return "/" + date_suffix+file_name.lower()                          # of form data/yyyy/mm/dd/name.extension
 
 
@@ -58,7 +60,6 @@ def run(lines, date=None):
     """
 
     # 1. find all the references to images
-
     text = lines
     last_index = -1
     finished = False
@@ -83,21 +84,26 @@ def run(lines, date=None):
                         album = ""                                      # where we place reformatted images
                         for index in range(len(images)):                # for image in the whole collection
                             last_index = current_index                  # update
+
                             image_ref = re.search(
                                 "(?<=\({1})(.)*(?=\){1})",
                                 images[index]) \
-                                .group()  # get the image location
+                                .group()                                # get the image location
+
                             alt = re.search(
                                 "(?<=\[{1})(.)*(?=\]{1})",
                                 images[index]
-                            ).group()  # get the text
-                            if image_ref.startswith("/images/temp/"):  # if the location is in our temp folder...
-                                image_ref = move(image_ref, date)  # ... move and resize photos
-                            album += "[%s](%s)" % (alt, image_ref)  # album
-                            if index != len(images) - 1:  # if this isn't the last image in the set...
-                                album += "-\n"  # ... then make room for another image
+                            ).group()                                   # get the text
+
+                            if image_ref.startswith("/images/temp/"):   # if the location is in our temp folder...
+                                image_ref = move(image_ref, date)       # ... move and resize photos
+                            album += "[%s](%s)" % (alt, image_ref)      # album
+                            if index != len(images) - 1:                # if this isn't the last image in the set...
+                                album += "-\n"                          # ... then make room for another image
+
                         current_index = last_index
-                        if album is not "":  # if the album isn't empty
+
+                        if album is not "":                             # if the album isn't empty
                             text = '%s\n@@@\n%s\n@@@\n%s' % (text[:collection.start()],  # sub it into where the old images were
                                                    album,
                                                    text[collection.end():])
@@ -110,6 +116,5 @@ def run(lines, date=None):
         else:
             finished = True
             break
-    print text
     return text
 
