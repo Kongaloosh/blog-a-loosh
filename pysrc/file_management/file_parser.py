@@ -65,22 +65,52 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     if not os.path.exists(os.path.dirname(to_blog_location)):                    # if the blog's directory doesn't exist
        os.makedirs(os.path.dirname(to_blog_location))          # make it
     in_data = np.asarray(img, dtype=np.uint8)
-    print in_data
-    print in_data.shape
     img_file = open(to_blog_location, "w")
-    print img_file.tell()
     img.save(img_file, "JPEG")                                  # image save old_prefix
-    print img_file.tell()
     img_file.flush()
-    print img_file.tell()
     os.fsync(img_file)
-    print img_file.tell()
     img_file.close()
     img.close()
     # Result:
     # Scaled optimised thumbnail in the blog-source next to the post's json and md files
     # Original-size photos in the self-hosting image server directory
     os.remove(from_location)
+
+
+def save_to_two(image,  to_blog_location, to_copy):
+    to_blog_location = to_blog_location.lower()
+    to_copy = to_copy.lower()
+
+    if not os.path.exists(os.path.dirname(to_copy)):  # if the target directory doesn't exist ...
+        os.makedirs(os.path.dirname(to_copy))  # ... make it.
+    img = Image.open(image)  # open the image from the temp
+    img_file = open(to_copy, "w")
+    img.save(img_file, "JPEG")  # open the new location
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+
+    img = Image.open(image)  # open the image from the temp
+    max_height = 500  # maximum height
+    h_percent = (max_height / float(img.size[1]))  # calculate what percentage the new height is of the old
+    if h_percent >= 1:
+        w_size = 1
+    else:
+        w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
+    img = img.resize((w_size, max_height), Image.ANTIALIAS)  # translate the image
+    if not os.path.exists(os.path.dirname(to_blog_location)):  # if the blog's directory doesn't exist
+        os.makedirs(os.path.dirname(to_blog_location))  # make it
+    in_data = np.asarray(img, dtype=np.uint8)
+    img_file = open(to_blog_location, "w")
+    img.save(img_file, "JPEG")  # image save old_prefix
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+    # Result:
+    # Scaled optimised thumbnail in the blog-source next to the post's json and md files
+    # Original-size photos in the self-hosting image server directory
 
 
 def file_parser_json(filename, g=None, md=True):
@@ -154,12 +184,7 @@ def create_json_entry(data, g, draft=False, update=False):
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
                     print type(data[key]) == unicode, type(data[key])
-                    print(
-                        new_prefix[:-1] + data[key],
-                        total_path  +extension,
-                        new_prefix + total_path+ extension
-                    )
-                    if type(data[key]) == unicode:
+                    if type(data[key]) == unicode and data[key].startswith("/images/"):
                         move_and_resize(
                             new_prefix[:-1] + data[key],
                             total_path + extension,
@@ -167,8 +192,9 @@ def create_json_entry(data, g, draft=False, update=False):
                             new_prefix + total_path + extension
 
                         )
-                    data[key] = total_path + extension
-                elif os.path.isfile(total_path + extension):
+                    else:
+                        print "MAKING}"
+                        save_to_two(data[key], total_path + extension, new_prefix + total_path + extension)
                     data[key] = total_path + extension              # update the dict to a location refrence
             except KeyError:
                 pass

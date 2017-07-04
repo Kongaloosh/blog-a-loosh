@@ -803,6 +803,8 @@ def handle_micropub():
             app.logger.info('acccess [%s]' % request)
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
+                app.logger.info(request.data)
+                app.logger.info(request.files)
                 data = {
                     'h': None,
                     'title': None,
@@ -829,6 +831,10 @@ def handle_micropub():
                     except KeyError:
                         pass
 
+                if type(data['category']) == unicode:
+                    data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+
+
                 if not data['published']:  # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
@@ -838,7 +844,7 @@ def handle_micropub():
                 for key, name in [('photo', 'image'), ('audio', 'audio'), ('video', 'video')]:
                     try:
                         if request.files.get(key):
-                            img = request.files.get(key).read()
+                            img = request.files.get(key)
                             data[key] = img
                             data['category'].append(name)  # we've added an image, so append it
                     except KeyError:
