@@ -617,7 +617,7 @@ def edit(year, month, day, name):
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
-            data['content'] = run(data['content'], date=data['published'])
+            # data['content'] = run(data['content'], date=data['published'])
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, ['/e/' + location])
@@ -644,12 +644,12 @@ def profile(year, month, day, name):
 
     entry = file_parser_json(file_name + ".json")
 
-    if os.path.exists(file_name + ".jpg"):
-        entry['photo'] = file_name + ".jpg"  # get the actual file
-    if os.path.exists(file_name + ".mp4"):
-        entry['video'] = file_name + ".mp4"  # get the actual file
-    if os.path.exists(file_name + ".mp3"):
-        entry['audio'] = file_name + ".mp3"  # get the actual file
+    # if os.path.exists(file_name + ".jpg"):
+    #     entry['photo'] = file_name + ".jpg"  # get the actual file
+    # if os.path.exists(file_name + ".mp4"):
+    #     entry['video'] = file_name + ".mp4"  # get the actual file
+    # if os.path.exists(file_name + ".mp3"):
+    #     entry['audio'] = file_name + ".mp3"  # get the actual file
 
     mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
