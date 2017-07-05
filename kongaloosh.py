@@ -384,7 +384,7 @@ def mobile_upload():
         for uploaded_file in request.files.getlist('files[]'):
             app.logger.info("file " + uploaded_file.filename)
             file_loc = file_path + "{0}".format(uploaded_file.filename)
-            image = Image.open(uploaded_file.read())
+            image = Image.open(uploaded_file)
             for orientation in ExifTags.TAGS.keys():
                 if ExifTags.TAGS[orientation] == 'Orientation':
                     break
