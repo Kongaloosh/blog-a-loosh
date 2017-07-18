@@ -617,7 +617,7 @@ def edit(year, month, day, name):
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
-            # data['content'] = run(data['content'], date=data['published'])
+            data['content'] = run(data['content'], date=data['published'])
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, ['/e/' + location])
@@ -833,6 +833,8 @@ def handle_micropub():
 
                 if type(data['category']) == unicode:
                     data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+                else:
+                    data['category'] = []
 
 
                 if not data['published']:  # if we don't have a timestamp, make one now
