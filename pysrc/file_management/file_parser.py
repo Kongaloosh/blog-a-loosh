@@ -127,8 +127,10 @@ def file_parser_json(filename, g=None, md=True):
         print "no file publish time"
         pass
 
-    if md:
+    if md and entry['content']:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
+    else:
+        entry['content'] = ''
 
     return entry
 
@@ -146,8 +148,14 @@ def create_json_entry(data, g, draft=False, update=False):
         if data['title']:                           # is it an article?
             slug = slugify(data['title'])
         else:                                       # otherwise we make a slug from post content
-            slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
-            slug = slugify(slug)                    # slugify the slug
+            try:
+                slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
+                slug = slugify(slug)                    # slugify the slug
+            except AttributeError:
+                slug = slugify("{year}-{month}-{day}".format(
+                        year=str(data['published'].year),
+                        month=str(data['published'].month),
+                        day=str(data['published'].day)))             # turn date into file-path)
         data['u-uid'] = slug
         data['slug'] = slug
 
