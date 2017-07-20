@@ -129,8 +129,8 @@ def file_parser_json(filename, g=None, md=True):
 
     if md and entry['content']:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
-    else:
-        entry['content'] = ''
+    elif entry['content'] is None:          # if we have no text for this
+        entry['content'] = ''               # give it an empty string so it renders the post properly
 
     return entry
 
