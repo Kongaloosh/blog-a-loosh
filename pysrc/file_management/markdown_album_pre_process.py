@@ -1,4 +1,5 @@
 __author__ = 'kongaloosh'
+
 from markdown import Extension
 from markdown.preprocessors import Preprocessor
 import re
@@ -117,4 +118,3 @@ def run(lines, date=None):
             finished = True
             break
     return text
-
