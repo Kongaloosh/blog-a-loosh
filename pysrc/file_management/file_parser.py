@@ -11,9 +11,12 @@ sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
 from pysrc.file_management.markdown_album_extension import AlbumExtension
 from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
+from pysrc.file_management.markdown_album_pre_process import new_prefix
 import logging
+from PIL import Image
+import numpy as np
 
-__author__ = 'alex'
+__author__ = 'kongaloosh'
 
 config = ConfigParser.ConfigParser()
 config.read('config.ini')
@@ -31,39 +34,131 @@ GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
 
 
-def file_parser_json(filename, md=True):
+def move_and_resize(from_location, to_blog_location, to_copy):
+    """"
+        Moves an image, scales it and stores a low-res with the blog post and a high-res in a long-term storage folder.
+        :param loc: the location of an image
+        :param loc: the date folder to which an image should be moved
+        """
+
+    to_blog_location = to_blog_location.lower()
+    to_copy = to_copy.lower()
+
+    if not os.path.exists(os.path.dirname(to_copy)):            # if the target directory doesn't exist ...
+        os.makedirs(os.path.dirname(to_copy))                   # ... make it.
+    img = Image.open(from_location)                             # open the image from the temp
+    img_file = open(to_copy, "w")
+    img.save(img_file, "JPEG")                                  # open the new location
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+
+    img = Image.open(from_location)  # open the image from the temp
+    max_height = 500                                            # maximum height
+    h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
+    if h_percent >= 1:
+        w_size = 1
+    else:
+        w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
+    img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
+    if not os.path.exists(os.path.dirname(to_blog_location)):                    # if the blog's directory doesn't exist
+       os.makedirs(os.path.dirname(to_blog_location))          # make it
+    in_data = np.asarray(img, dtype=np.uint8)
+    img_file = open(to_blog_location, "w")
+    img.save(img_file, "JPEG")                                  # image save old_prefix
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+    # Result:
+    # Scaled optimised thumbnail in the blog-source next to the post's json and md files
+    # Original-size photos in the self-hosting image server directory
+    os.remove(from_location)
+
+
+def save_to_two(image,  to_blog_location, to_copy):
+    to_blog_location = to_blog_location.lower()
+    to_copy = to_copy.lower()
+
+    if not os.path.exists(os.path.dirname(to_copy)):  # if the target directory doesn't exist ...
+        os.makedirs(os.path.dirname(to_copy))  # ... make it.
+    img = Image.open(image)  # open the image from the temp
+    img_file = open(to_copy, "w")
+    img.save(img_file, "JPEG")  # open the new location
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+
+    img = Image.open(image)  # open the image from the temp
+    max_height = 500  # maximum height
+    h_percent = (max_height / float(img.size[1]))  # calculate what percentage the new height is of the old
+    if h_percent >= 1:
+        w_size = 1
+    else:
+        w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
+    img = img.resize((w_size, max_height), Image.ANTIALIAS)  # translate the image
+    if not os.path.exists(os.path.dirname(to_blog_location)):  # if the blog's directory doesn't exist
+        os.makedirs(os.path.dirname(to_blog_location))  # make it
+    in_data = np.asarray(img, dtype=np.uint8)
+    img_file = open(to_blog_location, "w")
+    img.save(img_file, "JPEG")  # image save old_prefix
+    img_file.flush()
+    os.fsync(img_file)
+    img_file.close()
+    img.close()
+    # Result:
+    # Scaled optimised thumbnail in the blog-source next to the post's json and md files
+    # Original-size photos in the self-hosting image server directory
+
+
+def file_parser_json(filename, g=None, md=True):
     entry = json.loads(open(filename, 'rb').read())
     try:
         entry['published'] = parse(entry['published'])
+        if g:
+            entry['published'] = parse(g.db.execute("""
+            SELECT published
+            FROM entries
+            WHERE slug = '{0}'
+            """.format(entry['slug'])).fetchall()[0][0])
     except ValueError:
+        print "no file publish time"
         pass
 
-    if md:
+    if md and entry['content']:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
-
+    elif entry['content'] is None:          # if we have no text for this
+        entry['content'] = ''               # give it an empty string so it renders the post properly
     return entry
 
 
-def create_json_entry(data, g, draft=False, update=False,):
+def create_json_entry(data, g, draft=False, update=False):
     """
     creates a json entry based on recieved dictionary, then creates a human-readable .md alongisde it.
-    :
     """
-    slug = None
-    if data['slug']:
-        slug = data['slug']
-    else:
-        if data['title']:                            # is it an article?
-            slug = slugify(data['title'])
-        else:                                       # otherwise we make a slug from post content
-            slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
-            slug = slugify(slug)                        # slugify the slug
+
+    if data['slug']:                                # if there's already a slug
+        slug = data['slug']                         # ... just use the slug
+    else:                                           # ... otherwise make a slug
+        if data['title']:                           # is it an article?
+            slug = slugify(data['title'])           # ... grab the slug
+        else:                                       # ... otherwise we make a slug from post content
+            try:
+                slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
+                slug = slugify(slug)                    # slugify the slug
+            except AttributeError:                      # if no content exists use the date
+                slug = slugify("{year}-{month}-{day}".format(
+                        year=str(data['published'].year),
+                        month=str(data['published'].month),
+                        day=str(data['published'].day)))             # turn date into file-path)
         data['u-uid'] = slug
         data['slug'] = slug
 
-    try:
-        if data['category']:
-            data['category'] = [i.strip() for i in data['category'].lower().split(",")]  # comes in as a string, so we need to parse it
+    try:                                            # if we have a category in the
+        if data['category']:                        # comes in as a string, so we need to parse it
+            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
     except AttributeError:
         pass
 
@@ -75,7 +170,7 @@ def create_json_entry(data, g, draft=False, update=False,):
         date_location = "{year}/{month}/{day}/".format(
                         year=str(data['published'].year),
                         month=str(data['published'].month),
-                        day=str(data['published'].day))             # turn date into filepath
+                        day=str(data['published'].day))             # turn date into file-path
         file_path = "data/" + date_location
         data['url'] = '/e/' + date_location + slug
 
@@ -83,10 +178,9 @@ def create_json_entry(data, g, draft=False, update=False,):
         os.makedirs(os.path.dirname(file_path))
 
     total_path = file_path+"{slug}".format(slug=slug)
-    logger.info("printing the stuff ", total_path)
+
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
-
         # Find all the multimedia files which were added with the posts
         for (key, extension) in [
                 # (data['video'], '.mp4'),
@@ -94,21 +188,27 @@ def create_json_entry(data, g, draft=False, update=False,):
                 ('photo', '.jpg')]:
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
-                    file_writer = open(total_path + extension, 'w')           # find a location to put the media
-                    file_writer.write(data[key])                              # write the media to a file
-                    file_writer.close()
-                    data[key] = total_path + extension
-                elif os.path.isfile(total_path + extension):
-                    data[key] = total_path + extension                            # update the dict to a location refrence
+                    if type(data[key]) == unicode and data[key].startswith("/images/"):
+                        move_and_resize(
+                            new_prefix[:-1] + data[key],
+                            total_path + extension,
+                            # new_prefix + total_path + "B" + extension,
+                            new_prefix + total_path + extension
+
+                        )
+                    else:
+                        save_to_two(data[key], total_path + extension, new_prefix + total_path + extension)
+                    data[key] = total_path + extension              # update the dict to a location refrence
             except KeyError:
                 pass
 
         data['published'] = data['published'].__str__()
+
         file_writer = open(total_path+".json", 'w')                # open and dump the actual post meta-data
         file_writer.write(json.dumps(data))
         file_writer.close()
 
-        if not draft and not update and g:                                          # if this isn't a draft, put it in the dbms
+        if not draft and not update and g:                         # if this isn't a draft, put it in the dbms
             g.db.execute(
                 """
                 insert into entries
@@ -125,37 +225,52 @@ def create_json_entry(data, g, draft=False, update=False,):
             create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
         return data['url']
     else:
-        return "/already_made"                                      # a post of this name already exists
+        return "/already_made"                                     # a post of this name already exists
 
 
 def update_json_entry(data, old_entry, g, draft=False):
     """
     Update entry based on edits recieved
     :param data: the new entry
-    :param old_entry: the old entry to be updated
     :param g: dbms cursor
     :param draft: flag indicating whether we're updating a draft or an alredy submitted post
     """
+    # file_path = "data/" + data['url'][:3]
+    # total_path = file_path + data['slug'] +  ".json"
+    # old_entry = file
+
+    print "new", data['published'], "old", old_entry['published']
+
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
     if data['category']:                                            # if categories exist, update them
         if not draft:
             data['category'] = [i.strip() for i in data['category'].lower().split(",")]
-            for c in old_entry['category']:
-                g.db.execute(
-                    '''
-                    DELETE FROM Categories
-                    WHERE slug = '{0}' AND category = '{1}'
-                    '''.format(data['slug'], c)
-                )
+
+            try:
+                for c in old_entry['category']:
+                    g.db.execute(
+                        '''
+                        DELETE FROM categories
+                        WHERE slug = '{0}' AND category = '{1}';
+                        '''.format(data['slug'], c)
+                    )
+            except TypeError:
+                pass
+
             for c in data['category']:      # parse the categories into a list and add to dbms
-                g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                print c
+                g.db.execute('''
+                    insert into categories (slug, published, category) values (?, ?, ?)''',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
+
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
-    create_json_entry(old_entry, g, draft, update=True)
+
+    print old_entry
+    create_json_entry(data=old_entry, g=g, draft=draft, update=True)
 
 
 def create_entry_markdown(data, path):
