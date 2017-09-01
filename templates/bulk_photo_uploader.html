@@ -23,8 +23,6 @@
 <body>
 <section id="wrapper">
 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
-
-    <div id="carbonads-container"><div class="carbonad"><div id="azcarbon"></div><script type="text/javascript">var z = document.createElement("script"); z.type = "text/javascript"; z.async = true; z.src = "http://engine.carbonads.com/z/14060/azcarbon_2_1_0_VERT"; var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(z, s);</script></div></div>
     <header>
       <h1>Drag and drop, automatic upload</h1>
     </header>
@@ -42,7 +40,9 @@
     <article>
       <div id="holder">
       </div>
-      <p id="upload" class="hidden"><label>Drag & drop not supported, but you can still upload via this input field:<br><input type="file"></label></p>
+      <p id="upload">
+           <input type="file" name="files[]" multiple>
+      </p><button onclick="readfiles()">Click me</button>
       <p id="filereader">File API & FileReader API not supported</p>
       <p id="formdata">XHR2's FormData is not supported</p>
       <p id="progress">XHR2's upload progress isn't supported</p>
@@ -73,7 +73,6 @@ var holder = document.getElementById('holder'),
 
     progress = document.getElementById('uploadprogress'),
     fileupload = document.getElementById('upload');
-
     "filereader formdata progress".split(' ').forEach(function (api) {
     if (tests[api] === false) {
         support[api].className = 'fail';
@@ -145,7 +144,9 @@ if (tests.dnd) {
     readfiles(this.files);
   };
 }
-
+fileupload.querySelector('input').onchange = function () {
+    readfiles(this.files);
+};
 </script>
 </section>
 

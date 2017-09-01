@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, jsonify
 from contextlib import closing
 import os
 import math
@@ -23,6 +23,7 @@ import ConfigParser
 import re
 import requests
 from pysrc.file_management.markdown_album_pre_process import move, run
+from PIL import Image, ExifTags
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -113,6 +114,82 @@ def show_entries():
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
 
 
+@app.route('/rss.xml')
+def show_rss():
+    """ The rss view: presents entries in rss form. """
+
+    entries = []                            # store the entries which will be presented
+    cur = g.db.execute(                     # grab in order of newest
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+
+    for (row,) in cur.fetchall():           # iterate over the results
+        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+            entries.append(file_parser_json(row + ".json"))
+
+    try:
+        entries = entries[:10]              # get the 10 newest
+    except IndexError:
+        entries = None                      # there are no entries
+
+    template = render_template('rss.xml', entries=entries)
+    response = make_response(template)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+
+@app.route('/json.feed')
+def show_json():
+    """ The rss view: presents entries in json feed form. """
+
+    entries = []                            # store the entries which will be presented
+    cur = g.db.execute(                     # grab in order of newest
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+
+    for (row,) in cur.fetchall():           # iterate over the results
+        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+            entries.append(file_parser_json(row + ".json"))
+
+    try:
+        entries = entries[:10]              # get the 10 newest
+    except IndexError:
+        entries = None                      # there are no entries
+    
+    feed_items = []
+
+    for entry in entries:
+        feed_item = {
+                        'id': entry['url'],
+                        'url': entry['url'],
+                        'content_text': entry['summary'] if entry['summary'] else entry['content'],
+                        'date_published': entry['published'],
+                        'author': {
+                            'name': 'Alex Kearney'
+                        }
+
+                    }
+        feed_items.append(feed_item)
+
+    feed_json = {
+        'version': 'https://jsonfeed.org/version/1',
+        'home_page_url' : 'https://kongaloosh.com/',
+        'feed_url' : 'https://kongaloosh.com/json.feed',
+        'title' : 'kongaloosh',
+        'items' : feed_items
+    }
+    
+    return jsonify(feed_json)
+
+
 @app.route('/page/<number>')
 def pagination(number):
     """gets the posts for a page number"""
@@ -137,6 +214,7 @@ def pagination(number):
     before = int(number) + 1
 
     return render_template('blog_entries.html', entries=entries, before=before)
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -184,7 +262,7 @@ def add():
                )ORDER BY count DESC
            """)
 
-        tags = [row for (row,) in cur.fetchall()]
+        tags = [row for (row,) in cur.fetchall()][:10]
         for element in ["None", "image", "album", "bookmark", "note"]:
             try:
                 tags.remove(element)
@@ -289,6 +367,39 @@ def bulk_upload():
         return redirect('/')
     else:
         return redirect('/404'), 404
+
+
+@app.route('/mobile_upload', methods=['GET', 'POST'])
+def mobile_upload():
+    if request.method == 'GET':
+        return render_template('mobile_upload.html')
+    elif request.method == 'POST':
+        if not session.get('logged_in'):
+            abort(401)
+
+        file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
+        app.logger.info("uploading at" + file_path)
+        app.logger.info(request.files)
+        app.logger.info(request.files.getlist('files[]'))
+        for uploaded_file in request.files.getlist('files[]'):
+            app.logger.info("file " + uploaded_file.filename)
+            file_loc = file_path + "{0}".format(uploaded_file.filename)
+            image = Image.open(uploaded_file)
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = dict(image._getexif().items())
+
+            if exif[orientation] == 3:
+                image = image.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                image = image.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                image = image.rotate(90, expand=True)
+            image.save(file_loc)
+        return redirect('/')
+    else:
+        return redirect('/404')
 
 
 @app.route('/recent_uploads', methods=['GET', 'POST'])
@@ -463,11 +574,12 @@ def post_from_request(request):
         'syndication': None,
         'photo': None
     }
-    for title in request.form:
-        data[title] = request.form[title]
 
     for title in request.files:
         data[title] = request.files[title].read()
+
+    for title in request.form:
+        data[title] = request.form[title]
 
     for key in data:
         if data[key] == "None" or data[key] == '':
@@ -505,6 +617,8 @@ def edit(year, month, day, name):
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
 
+            data['content'] = run(data['content'], date=data['published'])
+
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, ['/e/' + location])
                 t.start()
@@ -514,7 +628,7 @@ def edit(year, month, day, name):
                 t.start()
 
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json")
+            entry = file_parser_json(file_name + ".json", g=g)
             update_json_entry(data, entry, g=g)
             return redirect("/e/" + location)
         return redirect("/")
@@ -530,12 +644,12 @@ def profile(year, month, day, name):
 
     entry = file_parser_json(file_name + ".json")
 
-    if os.path.exists(file_name + ".jpg"):
-        entry['photo'] = file_name + ".jpg"  # get the actual file
-    if os.path.exists(file_name + ".mp4"):
-        entry['video'] = file_name + ".mp4"  # get the actual file
-    if os.path.exists(file_name + ".mp3"):
-        entry['audio'] = file_name + ".mp3"  # get the actual file
+    # if os.path.exists(file_name + ".jpg"):
+    #     entry['photo'] = file_name + ".jpg"  # get the actual file
+    # if os.path.exists(file_name + ".mp4"):
+    #     entry['video'] = file_name + ".mp4"  # get the actual file
+    # if os.path.exists(file_name + ".mp3"):
+    #     entry['audio'] = file_name + ".mp3"  # get the actual file
 
     mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
@@ -689,39 +803,67 @@ def handle_micropub():
             app.logger.info('acccess [%s]' % request)
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
-                data = {}
+                app.logger.info(request.data)
+                app.logger.info(request.files)
+                data = {
+                    'h': None,
+                    'title': None,
+                    'summary': None,
+                    'content': None,
+                    'published': None,
+                    'updated': None,
+                    'category': None,
+                    'slug': None,
+                    'location': None,
+                    'location_name': None,
+                    'location_id': None,
+                    'in_reply_to': None,
+                    'repost-of': None,
+                    'syndication': None,
+                    'photo': None
+                }
 
                 for key in (
-                        'h', 'name', 'summary', 'content', 'published', 'updated', 'category',
-                        'slug', 'location', 'in_reply_to', 'repost-of', 'syndication', 'syndicate-to[]'):
-                    data[key] = request.form.get(key)
+                        'name', 'summary', 'content', 'published', 'updated', 'category',
+                        'slug', 'location', 'place_name', 'in_reply_to', 'repost-of', 'syndication', 'syndicate-to[]'):
+                    try:
+                        data[key] = request.form.get(key)
+                    except KeyError:
+                        pass
 
-                if data['syndication']:
-                    data['syndication'] += ","  # TODO: add twitter keywords
+                if type(data['category']) == unicode:
+                    data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+                else:
+                    data['category'] = []
+
 
                 if not data['published']:  # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
 
+
                 for key, name in [('photo', 'image'), ('audio', 'audio'), ('video', 'video')]:
                     try:
                         if request.files.get(key):
-                            img = request.files.get(key).read()
+                            img = request.files.get(key)
                             data[key] = img
-                            data['category'] += ',' + name  # we've added an image, so append it
+                            data['category'].append(name)  # we've added an image, so append it
                     except KeyError:
                         pass
 
-                try:
-                    if data['location']:
-                        app.logger.info(data['location'])
+                if data['location'] is not None and data['location'].startswith("geo:"):
+                    if data['place_name']:
+                        data['location_name'] = data['place_name']
+                    elif data['location'].startswith("geo:"):
                         (place_name, geo_id) = resolve_placename(data['location'])
                         data['location_name'] = place_name
                         data['location_id'] = geo_id
-                except KeyError:
-                    pass
+
                 location = create_json_entry(data, g=g)
+
+                if data['in_reply_to']:
+                    send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
@@ -744,7 +886,7 @@ def handle_micropub():
                 resp = Response(status='unauthorized')
                 resp.status_code = 401
                 return resp
-        else:
+        else:    
             resp = Response(status='unauthorized')
             resp.status_code = 401
 
@@ -850,18 +992,6 @@ def handle_inbox():
 @app.route('/inbox/send/', methods=['GET', 'POST'])
 def notifier():
     return 501
-
-
-"""{
-  "@context": "https://www.w3.org/ns/activitystreams",
-  "@id": "",
-  "@type": "Announce",
-  "actor": "https://rhiaro.co.uk/#me",
-  "object": "http://example.net/note",
-  "target": "http://example.org/article",
-  "updated": "2016-06-28T19:56:20.114Z"
-}"""
-
 
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):

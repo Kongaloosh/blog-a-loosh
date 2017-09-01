@@ -450,14 +450,18 @@ body {
 
 
 a.tag {
-    border: 1px solid #c5edc5;
+/*    border: 1px solid #c5edc5;*/
+    border: 1px solid rgba(143, 188, 143, 0) !important;
     color: #c5edc5 !important;
     text-decoration: none !important;
     cursor:default;
+    padding-left: 1px;
+    padding-right: 1px;
 }
 
 a.tag:hover {
-    border: 1px solid #8fbc8f !important;
+    border: 1px solid rgba(143, 188, 143, 1) !important;
+    border-radius: 10px;
     background: rgb(143, 188, 143, 0.5) !important;
     text-decoration: none !important;
     color: #8fbc8f !important;
@@ -466,4 +470,8 @@ a.tag:hover {
 .img-thumbnail{
     background-color: white;
     border: 1px solid #d8f3d8;
+}
+
+.intro-head{
+    padding-top: 10%;
 }
