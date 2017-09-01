@@ -131,27 +131,24 @@ def file_parser_json(filename, g=None, md=True):
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
     elif entry['content'] is None:          # if we have no text for this
         entry['content'] = ''               # give it an empty string so it renders the post properly
-
     return entry
 
 
 def create_json_entry(data, g, draft=False, update=False):
     """
     creates a json entry based on recieved dictionary, then creates a human-readable .md alongisde it.
-    :
     """
 
-    slug = None                                     # check if we can find the slug in the given data ...
-    if data['slug']:
-        slug = data['slug']
+    if data['slug']:                                # if there's already a slug
+        slug = data['slug']                         # ... just use the slug
     else:                                           # ... otherwise make a slug
         if data['title']:                           # is it an article?
-            slug = slugify(data['title'])
-        else:                                       # otherwise we make a slug from post content
+            slug = slugify(data['title'])           # ... grab the slug
+        else:                                       # ... otherwise we make a slug from post content
             try:
                 slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
                 slug = slugify(slug)                    # slugify the slug
-            except AttributeError:
+            except AttributeError:                      # if no content exists use the date
                 slug = slugify("{year}-{month}-{day}".format(
                         year=str(data['published'].year),
                         month=str(data['published'].month),
@@ -160,8 +157,8 @@ def create_json_entry(data, g, draft=False, update=False):
         data['slug'] = slug
 
     try:                                            # if we have a category in the
-        if data['category']:
-            data['category'] = [i.strip() for i in data['category'].lower().split(",")]  # comes in as a string, so we need to parse it
+        if data['category']:                        # comes in as a string, so we need to parse it
+            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
     except AttributeError:
         pass
 
@@ -191,7 +188,6 @@ def create_json_entry(data, g, draft=False, update=False):
                 ('photo', '.jpg')]:
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
-                    print type(data[key]) == unicode, type(data[key])
                     if type(data[key]) == unicode and data[key].startswith("/images/"):
                         move_and_resize(
                             new_prefix[:-1] + data[key],
@@ -201,7 +197,6 @@ def create_json_entry(data, g, draft=False, update=False):
 
                         )
                     else:
-                        print "MAKING}"
                         save_to_two(data[key], total_path + extension, new_prefix + total_path + extension)
                     data[key] = total_path + extension              # update the dict to a location refrence
             except KeyError:
