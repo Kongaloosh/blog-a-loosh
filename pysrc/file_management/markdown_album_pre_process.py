@@ -33,6 +33,7 @@ def move(loc, date):
     file_name = loc[13:]                                                    # remove the '/images/temp/'
     target_file_path = new_prefix + loc[1:]
     if not os.path.exists(new_prefix+'images/' + date_suffix):              # if the target directory doesn't exist ...
+        print new_prefix
         os.makedirs(os.path.dirname(new_prefix+'images/'+date_suffix))      # ... make it.
     img = Image.open(target_file_path)                                      # open the image from the temp
     img.save(new_prefix+'images/'+date_suffix+file_name.lower())            # open the new location
@@ -82,6 +83,7 @@ def run(lines, date=None):
                             "(?<=\){1})[ ,\n]*-*[ ,\n]*(?=\[{1})",
                             collection.group('album')
                         )
+                        print images
                         album = ""                                      # where we place reformatted images
                         for index in range(len(images)):                # for image in the whole collection
                             last_index = current_index                  # update
@@ -97,7 +99,9 @@ def run(lines, date=None):
                             ).group()                                   # get the text
 
                             if image_ref.startswith("/images/temp/"):   # if the location is in our temp folder...
-                                image_ref = move(image_ref, date)       # ... move and resize photos
+                                print "MOVE IT"
+                                image_ref = "movie"
+                                # image_ref = move(image_ref, date)       # ... move and resize photos
                             album += "[%s](%s)" % (alt, image_ref)      # album
                             if index != len(images) - 1:                # if this isn't the last image in the set...
                                 album += "-\n"                          # ... then make room for another image
@@ -118,3 +122,63 @@ def run(lines, date=None):
             finished = True
             break
     return text
+
+if __name__ == "__main__":
+    lines = """
+    @@@[](/images/temp/IMG_6813.JPG)@@@
+
+coffee
+
+@@@
+[](/images/temp/IMG_6774.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6828.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6840.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6770.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6802.JPG)-
+@@@
+
+Robot shop
+
+@@@
+[](/images/temp/IMG_6768.JPG)-
+[](/images/temp/IMG_6806.JPG)-
+[](/images/temp/IMG_6820.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6778.JPG)-
+[](/images/temp/IMG_6805.JPG)-
+[](/images/temp/IMG_6797.JPG)-
+[](/images/temp/IMG_6819.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6816.JPG)-
+[](/images/temp/IMG_6782.JPG)-
+[](/images/temp/IMG_6837.JPG)
+@@@
+
+@@@
+[](/images/temp/IMG_6767.JPG)-
+[](/images/temp/IMG_6794.JPG)-
+[](/something else/temp/IMG_6801.JPG)
+@@@
+
+
+@@@
+[](/images/temp/IMG_6808.JPG)
+@@@
+"""
+    print run(lines, date=None)
