@@ -99,9 +99,7 @@ def run(lines, date=None):
                             ).group()                                   # get the text
 
                             if image_ref.startswith("/images/temp/"):   # if the location is in our temp folder...
-                                print "MOVE IT"
-                                image_ref = "movie"
-                                # image_ref = move(image_ref, date)       # ... move and resize photos
+                                image_ref = move(image_ref, date)       # ... move and resize photos
                             album += "[%s](%s)" % (alt, image_ref)      # album
                             if index != len(images) - 1:                # if this isn't the last image in the set...
                                 album += "-\n"                          # ... then make room for another image
