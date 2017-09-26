@@ -527,6 +527,8 @@ def bridgy_twitter(location):
     app.logger.info("recieved {0} {1}".format(syndication['url'], syndication['id']))
     data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
     if data['syndication']:
+        if type(data['syndication']) is unicode:
+            data['syndication'] = data['syndication'].split(',')
         data['syndication'].append(syndication['url'])
     else:
         data['syndication'] = [syndication['url']]
