@@ -835,9 +835,8 @@ def handle_micropub():
 
                 if type(data['category']) == unicode:
                     data['category'] = [i.strip() for i in data['category'].lower().split(",")]
-                else:
-                    data['category'] = []
-
+                elif type(data['category']) == list:
+                    data['category'] = data['category']
 
                 if not data['published']:  # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
