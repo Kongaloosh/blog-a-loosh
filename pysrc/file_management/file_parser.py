@@ -218,7 +218,7 @@ def create_json_entry(data, g, draft=False, update=False):
             g.db.commit()
             if data['category']:
                 for c in data['category']:
-                    g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
+                    g.db.execute('insert or replace into categories (slug, published, category) values (?, ?, ?)',
                                  [slug, data['published'], c])
                     g.db.commit()
 
@@ -261,7 +261,7 @@ def update_json_entry(data, old_entry, g, draft=False):
             for c in data['category']:      # parse the categories into a list and add to dbms
                 print c
                 g.db.execute('''
-                    insert into categories (slug, published, category) values (?, ?, ?)''',
+                    insert or replace into categories (slug, published, category) values (?, ?, ?)''',
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
 
