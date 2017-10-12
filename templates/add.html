@@ -31,7 +31,7 @@
                     <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"></textarea>
                 </p>
                 <p>
-                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">note</textarea>
+                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input"></textarea>
                 </p>
                 <hr>
                 <p>
@@ -40,13 +40,11 @@
 
                 <p>
                     <label>Tags</label>
-                    <input type="text" style="width: 100%" name="category">
+                    <input type="text" style="width: 100%" id="tags" name="category">
                 </p>
                 {% if popular_tags %}
-                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}">{{tag}}</a> {% if not loop.last %} ,
-{% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
-                    </p>
-                    {%endif%}
+                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}" onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a> {% if not loop.last %} , {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
+                {%endif%}
                 <p>
                     <label>Reply-to</label>
                     <input type="text" style="width: 100%" name="in_reply_to">
