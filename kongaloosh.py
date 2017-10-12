@@ -489,7 +489,7 @@ def send_mention(source, target, endpoint=None):
         app.logger.info(payload)
         r = requests.post(endpoint, data=payload, headers=headers)
         return r
-    except:  # TODO: add a scope to the exception
+    except:  # TODO: add a scope to the exception 
         pass
 
 
@@ -808,6 +808,7 @@ def handle_micropub():
             if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
                 app.logger.info('authed')
                 app.logger.info(request.data)
+                app.logger.info(request.form.keys())
                 app.logger.info(request.files)
                 data = {
                     'h': None,
@@ -835,16 +836,22 @@ def handle_micropub():
                     except KeyError:
                         pass
 
-                if type(data['category']) == unicode:
+                cat = request.form.get('category[]')
+                if cat:
+                    app.logger.info(request.form.get('category[]'))
+                    data['category'] = cat
+
+                if type(data['category']) is unicode:
                     data['category'] = [i.strip() for i in data['category'].lower().split(",")]
-                elif type(data['category']) == list:
+                elif type(data['category']) is list:
                     data['category'] = data['category']
+                elif data['category'] is None:
+                    data['category'] = []
 
                 if not data['published']:  # if we don't have a timestamp, make one now
                     data['published'] = datetime.today()
                 else:
                     data['published'] = parse(data['published'])
-
 
                 for key, name in [('photo', 'image'), ('audio', 'audio'), ('video', 'video')]:
                     try:
