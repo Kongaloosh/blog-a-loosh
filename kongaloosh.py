@@ -39,6 +39,7 @@ PASSWORD = config.get('SiteAuthentication', 'password')
 DOMAIN_NAME = config.get('Global', 'DomainName')
 GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
+GOOGLE_MAPS_KEY = config.get('GoogleMaps', 'key')
 
 print(DATABASE, USERNAME, PASSWORD, DOMAIN_NAME)
 
@@ -163,7 +164,7 @@ def show_json():
         entries = entries[:10]              # get the 10 newest
     except IndexError:
         entries = None                      # there are no entries
-    
+
     feed_items = []
 
     for entry in entries:
@@ -189,6 +190,29 @@ def show_json():
     
     return jsonify(feed_json)
 
+
+@app.route('/map')
+def map():
+    """"""
+    geo_coords = []
+    cur = g.db.execute(  # grab in order of newest
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+
+    for (row,) in cur.fetchall():  # iterate over the results
+        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
+            entry = file_parser_json(row + ".json")
+            try:
+                geo_coords.append(entry['location'][4:].split(';')[0])
+            except (AttributeError, TypeError):
+                pass
+
+    app.logger.info(geo_coords)
+    return render_template('map.html', geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
 
 @app.route('/page/<number>')
 def pagination(number):
