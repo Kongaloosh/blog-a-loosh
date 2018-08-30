@@ -451,14 +451,6 @@ def md_to_html():
     """
     print request.method
     if request.method == "POST":
-        # print dir(request)
-
-        print "form", request.form,
-        # print "json"/
-        # print "\n\n\n\n\njson", request.json
-        # print request.json
-        # return "asdfasd"
-        # app.logger.info(request.form.keys())
         return jsonify({"html":markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension()])})
 
         # return request.json()
@@ -671,6 +663,9 @@ def edit(year, month, day, name):
                 entry['category'] = ', '.join(entry['category'])
             except TypeError:
                 entry['category'] = ''
+
+            if entry['published']:
+                entry['published'] = entry['published'].strftime('%Y-%m-%d')
             return render_template('edit_entry.html', entry=entry)
         except IOError:
             return redirect('/404')
@@ -1144,7 +1139,10 @@ def show_draft(name):
         entry = file_parser_json(draft_location, md=False)
         if entry['category']:
             entry['category'] = ', '.join(entry['category'])
-        return render_template('add.html', entry=entry)
+
+        if entry['published']:
+            entry['published'] = entry['published'].strftime('%Y-%m-%d')
+        return render_template('edit_entry.html', entry=entry, draft=True)
 
     if request.method == 'POST':
         if not session.get('logged_in'):
