@@ -45,6 +45,8 @@ DOMAIN_NAME = config.get('Global', 'DomainName')
 GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
 GOOGLE_MAPS_KEY = config.get('GoogleMaps', 'key')
+ORIGINAL_PHOTOS_DIR = config.get('PhotoLocations', 'BulkUploadLocation')
+PHOTOS_URL = config.get('PhotoLocations', 'URLPhotos')
 
 print(DATABASE, USERNAME, PASSWORD, DOMAIN_NAME)
 
@@ -386,25 +388,31 @@ def bulk_upload():
         if not session.get('logged_in'):
             abort(401)
 
-        file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
-        app.logger.info("uploading at" + file_path)
+        file_path = ORIGINAL_PHOTOS_DIR
+
+        app.logger.info("uploading at " + file_path)
         app.logger.info(request.files)
-        # app.logger.info(request.files.getlist('files[]'))
         for uploaded_file in request.files.getlist('file'):
-            app.logger.info("file " + uploaded_file.filename)
             file_loc = file_path + "{0}".format(uploaded_file.filename)
             image = Image.open(uploaded_file)
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
-            exif = dict(image._getexif().items())
-
-            if exif[orientation] == 3:
-                image = image.rotate(180, expand=True)
-            elif exif[orientation] == 6:
-                image = image.rotate(270, expand=True)
-            elif exif[orientation] == 8:
-                image = image.rotate(90, expand=True)
+            try:
+                for orientation in ExifTags.TAGS.keys():
+                    if ExifTags.TAGS[orientation] == 'Orientation':
+                        break
+                exif = dict(image._getexif().items())
+                try:
+                    if exif[orientation] == 3:
+                        image = image.rotate(180, expand=True)
+                    elif exif[orientation] == 6:
+                        image = image.rotate(270, expand=True)
+                    elif exif[orientation] == 8:
+                        image = image.rotate(90, expand=True)
+                except KeyError:
+                    app.logger.error("exif orientation key error: key was {0}, not in keys {1}".format(orientation,exif.keys()))
+            except AttributeError:
+                # could be a png or something without exif
+                pass
+            app.logger.info("saved at "+file_loc)
             image.save(file_loc)
         return redirect('/')
     else:
@@ -419,7 +427,7 @@ def mobile_upload():
         if not session.get('logged_in'):
             abort(401)
 
-        file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
+        file_path = ORIGINAL_PHOTOS_DIR
         app.logger.info("uploading at" + file_path)
         app.logger.info(request.files)
         app.logger.info(request.files.getlist('files[]'))
@@ -483,11 +491,11 @@ def recent_uploads():
 
             '''
 
-        directory = "/mnt/volume-nyc1-01/images/temp"
+        directory = ORIGINAL_PHOTOS_DIR
 
         file_list = []
         for file in os.listdir(directory):
-            path = ("/images/temp/" + file)
+            path = (PHOTOS_URL + file)
             file_list.append(path)
 
         preview = ""
