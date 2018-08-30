@@ -24,6 +24,11 @@ import re
 import requests
 from pysrc.file_management.markdown_album_pre_process import move, run
 from PIL import Image, ExifTags
+from pysrc.file_management.markdown_album_extension import AlbumExtension
+from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
+from pysrc.file_management.markdown_album_pre_process import new_prefix
+import markdown
+
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -438,20 +443,22 @@ def mobile_upload():
         return redirect('/404')
 
 
-@app.route('/md_to_html', methods=['GET'])
+@app.route('/md_to_html', methods=['POST'])
 def md_to_html():
     """
     :returns mar
     """
-    if request.method =='GET':
-        print dir(request)
-        print "data", request.data
-        print "val", request.values
-        print "form", request.form
-        print "files", request.files
-        print "args", request.args
-        print "json", request.json
-        return "asdfasd"
+    print request.method
+    if request.method == "POST":
+        # print dir(request)
+
+        print "form", request.form,
+        # print "json"/
+        # print "\n\n\n\n\njson", request.json
+        # print request.json
+        # return "asdfasd"
+        # app.logger.info(request.form.keys())
+        return jsonify({"html":markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension()])})
 
         # return request.json()
     else:
