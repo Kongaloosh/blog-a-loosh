@@ -20,9 +20,9 @@
     </div>
 </header>
 {% if session.logged_in %}
-<div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12">
     <div class="row">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
+        <div class="col-lg-6 col-md-5 col-sm-12">
             <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
                 <p>
                     <label>Title:</label> <input type="text" style="width: 100%"  name="title">
@@ -70,10 +70,29 @@
                 </p>
             </form>
             <button onclick="getRecentPhotos()">Show Recent Photos</button>
-
+        </div>
+        <div class="col-lg-6 col-md-5 col-sm-12">
+            <div id="wysiwyg"></div>
         </div>
     </div>
 </div>
+
+<script>
+var text = "";
+
+
+setInterval(function(){
+	var x = document.getElementById("text_input").value;
+   	if (x === text) {
+
+    } else {
+
+    	document.getElementById("wysiwyg").innerHTML = x;
+    }
+    text = x
+}, 1000);
+</script>
+
 
 <script src="/static/js/jquery.js"></script>
 
