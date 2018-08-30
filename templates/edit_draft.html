@@ -61,10 +61,10 @@
                     <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
                     <textarea style="width: 100%" type="text" name="location" id="geo_coord">{{entry.location}}</textarea>
                 </p>
-                <p>
-                    <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save">
-                    <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit">
-                </p>
+                <div class="row">
+                    <input style="width:49%" formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save" >
+                    <input style="width:49%" formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit">
+                </div>
             </form>
             <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
 
