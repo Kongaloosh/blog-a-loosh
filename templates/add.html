@@ -43,7 +43,7 @@
                     <input type="text" style="width: 100%" id="tags" name="category">
                 </p>
                 {% if popular_tags %}
-                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}" onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a> {% if not loop.last %} , {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
+                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}" onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
                 {%endif%}
                 <p>
                     <label>Reply-to</label>
