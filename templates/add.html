@@ -85,7 +85,6 @@
 var text = "";
 
 function getHTMLFromMD(val) {
-    alert(val)
     fetch('/md_to_html', {
             method: 'POST',
             headers: {
@@ -94,7 +93,6 @@ function getHTMLFromMD(val) {
             },
             body: val
         }).then(function (response) {
-                console.log(response);
                 return response.json();
 
             })
@@ -105,23 +103,6 @@ function getHTMLFromMD(val) {
         .catch(function(error) {
     // If there is any error you will catch them here
     });
-
-
-    //var xhttp = new XMLHttpRequest();
-    //xhttp.onreadystatechange = function() {
-    //    if (xhttp.readyState == 4 && xhttp.status == 200) {
-    //        document.getElementById("wysiwyg").innerHTML = xhttp.responseText;
-    //    }
-    //};
-    //xhttp.open("POST", "/md_to_html", true);
-    //xhttp.open("POST", "/json-handler");
-    //xhttp.setRequestHeader("Content-Type", "application/json");
-    //var params = JSON.stringify({
-    //    "text":val,
-    //});
-    //alert(params);
-    //alert(typeof params);
-    //xhttp.send(params);
 }
 
 setInterval(function(){
