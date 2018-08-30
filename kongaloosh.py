@@ -381,16 +381,28 @@ def bulk_upload():
             abort(401)
 
         file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
-
+        app.logger.info("uploading at" + file_path)
+        app.logger.info(request.files)
+        # app.logger.info(request.files.getlist('files[]'))
         for uploaded_file in request.files.getlist('file'):
-            uploaded_file.save(
-                file_path + "{0}".format(
-                    uploaded_file.filename
-                )
-            )
+            app.logger.info("file " + uploaded_file.filename)
+            file_loc = file_path + "{0}".format(uploaded_file.filename)
+            image = Image.open(uploaded_file)
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = dict(image._getexif().items())
+
+            if exif[orientation] == 3:
+                image = image.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                image = image.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                image = image.rotate(90, expand=True)
+            image.save(file_loc)
         return redirect('/')
     else:
-        return redirect('/404'), 404
+        return redirect('/404')
 
 
 @app.route('/mobile_upload', methods=['GET', 'POST'])
@@ -424,6 +436,26 @@ def mobile_upload():
         return redirect('/')
     else:
         return redirect('/404')
+
+
+@app.route('/md_to_html', methods=['GET'])
+def md_to_html():
+    """
+    :returns mar
+    """
+    if request.method =='GET':
+        print dir(request)
+        print "data", request.data
+        print "val", request.values
+        print "form", request.form
+        print "files", request.files
+        print "args", request.args
+        print "json", request.json
+        return "asdfasd"
+
+        # return request.json()
+    else:
+        return redirect('/404'), 404
 
 
 @app.route('/recent_uploads', methods=['GET', 'POST'])
