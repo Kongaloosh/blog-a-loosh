@@ -25,7 +25,7 @@
             <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
         </div>
         <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
+            <div class="col-lg-6 col-md-5 col-sm-12">
                 <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
                     <p>
                         <label>Title:</label> <input type="text" style="width: 100%" name="title"
@@ -67,9 +67,7 @@
                     <p>
                         <label>facebook </label><input type="checkbox" name="facebook" value="facebook"> <br>
                         <label>twitter </label><input type="checkbox" name="twitter" value="twitter"> <br>
-
-                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check"
-                                                  checked>
+                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
                         <textarea style="width: 100%" type="text" name="location"
                                   id="geo_coord">{{entry.location}}</textarea>
                     </p>
@@ -80,14 +78,33 @@
                 </form>
                 <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
             </div>
+
+            <div class="col-lg-6 col-md-5 col-sm-12">
+                <div id="wysiwyg"></div>
+        </div>
         </div>
     </div>
 </div>
 
 <script src="/static/js/jquery.js"></script>
 
-<script>
+<script src="/static/js/wysiwyg.js"></script>
 
+<script>
+var text = "";
+setInterval(function(){
+	var x = document.getElementById("text_input").value;
+   	if (x === text) {
+
+    } else {
+    	document.getElementById("wysiwyg").innerHTML = x;
+    }
+    text = x
+}, 1000);
+</script>
+
+
+<script>
 var x = document.getElementById("geo_coord");
 
 function getLocation() {
