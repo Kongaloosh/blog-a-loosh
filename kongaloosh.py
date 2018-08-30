@@ -307,7 +307,8 @@ def add():
         data = post_from_request(request)
 
         if "Submit" in request.form:  # we're publishing it now; give it the present time
-            data['published'] = datetime.now()
+            if data['published'] == None:
+                data['published'] = datetime.now()
 
             data['content'] = run(data['content'], date=data['published'])
 
@@ -611,6 +612,7 @@ def resolve_placename(location):
             long = re.search('(.)*(?=;)', long).group(0)
         geo_results = requests.get(
             'http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat=' + lat + '&lng=' + long + '&username=' + GEONAMES)
+        print geo_results.json()
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
             place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
@@ -651,6 +653,9 @@ def post_from_request(request):
     for key in data:
         if data[key] == "None" or data[key] == '':
             data[key] = None
+
+    if data['published']:
+        data['published'] = parse(data['published'])
 
     return data
 
@@ -1139,7 +1144,7 @@ def show_draft(name):
         entry = file_parser_json(draft_location, md=False)
         if entry['category']:
             entry['category'] = ', '.join(entry['category'])
-        return render_template('edit_draft.html', entry=entry)
+        return render_template('add.html', entry=entry)
 
     if request.method == 'POST':
         if not session.get('logged_in'):
