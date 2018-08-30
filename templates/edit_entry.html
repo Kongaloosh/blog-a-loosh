@@ -53,6 +53,11 @@
                     </p>
 
                     <p>
+                        <input type="date" name="published" value="{{entry.published}}" style="width:100%">
+
+                    </p>
+
+                    <p>
                         <label>Reply-to</label>
                         <input type="text" style="width: 100%" name="in_reply_to" value="{{entry.in_reply_to}}">
 
@@ -73,7 +78,12 @@
                     </p>
 
                     <p>
+                        {% if draft %}
+                            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save" style="width:49%">
+                            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit" style="width:49%">
+                        {% else %}
                         <input type="submit" style="width:49%" value="Submit" name="Submit">
+                        {% endif %}
                     </p>
                 </form>
                 <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
