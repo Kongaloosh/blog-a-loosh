@@ -80,6 +80,22 @@
 <script>
 var text = "";
 
+function getHTMLFromMD(val) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+            document.getElementById("wysiwyg").innerHTML = xhttp.responseText;
+        }
+    };
+
+    
+    xhttp.open("GET", "/md_to_html", true);
+    var params = {
+        "text":val,
+    }
+    alert(val);
+    xhttp.send(val);
+}
 
 setInterval(function(){
 	var x = document.getElementById("text_input").value;
@@ -87,7 +103,7 @@ setInterval(function(){
 
     } else {
 
-    	document.getElementById("wysiwyg").innerHTML = x;
+        getHTMLFromMD(x)
     }
     text = x
 }, 1000);
