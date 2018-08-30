@@ -1,6 +1,3 @@
-# IndieAnndroid
-
-
 ### What the heckbicuit is this?
 
 I built this as a little hacked-together example of a flask [indieweb site](http://indiewebcamp.com/). 
