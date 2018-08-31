@@ -1,5 +1,14 @@
 
 var text = "";
+var img = "";
+var title = "";
+var summary = "";
+
+function setIMG(loc){
+    loc = "/" + loc
+    $('#blah').attr('src', loc);
+}
+
 
 function getHTMLFromMD(val) {
     fetch('/md_to_html', {
@@ -24,11 +33,34 @@ function getHTMLFromMD(val) {
 
 setInterval(function(){
 	var x = document.getElementById("text_input").value;
-   	if (x === text) {
-
-    } else {
-
+   	if (x !== text) {
         getHTMLFromMD(x)
     }
     text = x
+}, 1000);
+
+setInterval(function(){
+	var x = document.getElementById("img_loc").value;
+   	if (x !== img) {
+        setIMG(x)
+    }
+    img = x
+}, 1000);
+
+
+setInterval(function(){
+	var x = document.getElementById("title_form").value;
+    if (x !== title && x !== 'None') {
+        document.getElementById("title_format").innerHTML = x;
+    }
+    title = x
+}, 1000);
+
+
+setInterval(function(){
+	var x = document.getElementById("summary_form").value;
+   	if (x !== summary && x !== 'None') {
+        document.getElementById("summary_format").innerHTML = x;
+    }
+    img = summary
 }, 1000);
