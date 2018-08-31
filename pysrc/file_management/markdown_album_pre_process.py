@@ -83,10 +83,9 @@ def run(lines, date=None):
                     if current_index > last_index:
                         # split a daisy chain of images in an album
                         images = re.split(  # split the collection into images
-                            "(?<=\){1})[ ,\n]*-*[ ,\n]*(?=\[{1})",
+                            "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})",
                             collection.group('album')
                         )
-                        print images
                         album = ""                                      # where we place reformatted images
                         for index in range(len(images)):                # for image in the whole collection
                             last_index = current_index                  # update
@@ -110,7 +109,7 @@ def run(lines, date=None):
                         current_index = last_index
 
                         if album is not "":                             # if the album isn't empty
-                            text = '%s\n@@@\n%s\n@@@\n%s' % (text[:collection.start()],  # sub it into where the old images were
+                            text = '%s@@@%s@@@%s' % (text[:collection.start()],  # sub it into where the old images were
                                                    album,
                                                    text[collection.end():])
                         last_index = current_index
@@ -125,65 +124,9 @@ def run(lines, date=None):
     return text
 
 if __name__ == "__main__":
-    lines = """
-    @@@[](/images/temp/IMG_6813.JPG)@@@
+    lines = u'@@@\r\n[](/data/2017/7/4/img_6817.jpg)-\r\n[](/data/2017/7/4/img_0281.jpg)-\r\n[](/data/2017/7/4/img_6786.jpg)\r\n@@@'
 
-coffee
-
-@@@
-[](/images/temp/IMG_6774.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6828.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6840.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6770.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6802.JPG)-
-@@@
-
-Robot shop
-
-@@@
-[](/images/temp/IMG_6768.JPG)-
-[](/images/temp/IMG_6806.JPG)-
-[](/images/temp/IMG_6820.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6778.JPG)-
-[](/images/temp/IMG_6805.JPG)-
-[](/images/temp/IMG_6797.JPG)-
-[](/images/temp/IMG_6819.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6816.JPG)-
-[](/images/temp/IMG_6782.JPG)-
-[](/images/temp/IMG_6837.JPG)
-@@@
-
-@@@
-[](/images/temp/IMG_6767.JPG)-
-[](/images/temp/IMG_6794.JPG)-
-[](/something else/temp/IMG_6801.JPG)
-@@@
-
-
-@@@
-[](/images/temp/IMG_6808.JPG)
-@@@
-"""
-
-    lines = """
+    lines_3 = """
         I flew down to Wyoming on the weekend to go see the Solar Eclipse. This was a spur of the moment trip; a family friend is an amateur astronomer and was planning on driving down on the weekend to be able to catch the eclipse. One problem with their plan: motel rooms within driving distance of the totality were going for $1200 or more on the evening before the eclipse. One solution: motel rooms within flying distance of the totality were going for 90$ a night the evening before the eclipse. 
 
         @@@[](/data/2017/8/25/img_6838.jpg)-[](/data/2017/8/25/img_6834.jpg)-[](/data/2017/8/25/img_6837.jpg)@@@
@@ -219,9 +162,92 @@ To view the eclipse we brought a number of welders glasses which we could layer 
 @@@
 [](/data/2017/8/25/img_6859.jpg)
 @@@
-
-
-
-    
     """
+
+    lines_2 = """
+This year I went to DLSS and RLSS in Toronto. The introductory talks were probably the best intro to neural nets talks I'd seen: the talks were tight and intuitive without having to water down the technical details. 
+
+
+@@@
+[](/data/2018/8/1/8b4d24be-139a-4a28-ace3-7f9b78123729.jpeg)-
+[](/data/2018/8/1/71f72258-1977-4253-8578-dd338f9f9f7f.jpeg)
+@@@
+
+
+The number of people cramming in for the summer school was surprising. It's really great to see how interest in Reinforcement Learning has picked up in recent years.
+
+
+@@@
+[](/data/2018/8/1/373ffed9-98f4-4f4d-8c40-54eca75fbe83.jpeg)
+@@@
+
+
+Being back in Toronto for the summer means that I had I had the chance to wander around kensington market again. This time, sans persistent summer flu. With a few fellow students in tow, Anna and I hit up [Yarns Untangled](http://yarnsuntangled.com/), the first LYS I ever visited. We picked up needles and yarn to teach some people how to knit while sharing a pitcher of beer on the patio across the street. 
+
+Against my better judgement, I picked up a few indie-dyed skeins of yarn. One from [lichen and lace](https://lichenandlace.com/)---a dyer on the east coast---and one from [fiesty fibers](https://www.instagram.com/feistyfibres)---a local Torontonian who happened to be having a trunk sale while we were in town.
+
+Who knows what the skeins will end up being. I suppose I can always teach myself how to knit socks.
+
+
+@@@
+[](/data/2018/8/1/55397df7-bf7f-47b1-aac1-e04c53d043ef.jpeg)-
+[](/data/2018/8/1/img_2326.jpg)
+@@@
+
+
+Having the chance to hit up local yarn stores with active communities reminds me of what I'm missing out on in Edmonton. YU felt like a community hub. People would would  gather on their couches, chatting with each other while they worked on whatever project they were carrying with them. 
+
+While I was waiting for a few people I sat myself down next two a couple of women and felt right at home chatting with them about how they originally started knitting and what they were currently working on. It's really refreshing to have these spaces which people can come into and join without any introduction: it's really healthy to have these communities where people can just feel at home.
+
+
+@@@
+[](/data/2018/8/1/59fcad57-4bae-4e51-837a-9c7914c5e6a0.jpeg)-
+[](/data/2018/8/1/71bdf3e8-6738-4baf-acc9-15d57be47366.jpeg)-
+[](/data/2018/8/1/16df597c-2df1-49f6-b846-9c2fa7dc745d.jpeg)
+@@@
+
+
+I have no regrets about wandering into [Little Pebbles](http://little-pebbles.com/) to have Japanese dessert _before_ meeting with some of the other students for brunch. I had this little matcha tiramisu which was carefully constructed in this little box which reminded me of sake drinking vessels. Interestingly, instead of a brandy base, at the bottom of the tiramisu was a bit of red bean paste to sweeten and balance out the earthy matcha flavours.
+
+The whole place was bright and funky without being overwhelmingly ornate. It was an unusual and pleasant surprise to see the little signs up on the tables which politely notified people that they had to put their electronics away during peak hours--an attempt to foster community and conversation.
+
+
+@@@
+[](/data/2018/8/1/8c1074f6-311e-414a-aa7b-deea9673f242.jpeg)-
+[](/data/2018/8/1/b9e2e7cf-0ef4-49e0-a2af-642d4001f865.jpeg)
+@@@
+
+
+When wandering around the city I found a whole bunch of cute ceramics, which make me regret not having kept up with pottery after highschool. Maybe I'll need to eventually fix that and take a course at Edmonton's  city arts centre.
+
+
+@@@
+[](/data/2018/8/1/69394683-9d8d-4611-9dec-0c342f1cd66b.jpeg)-
+[](/data/2018/8/1/af489a04-505b-44f9-831d-72c95efe8b00.jpeg)
+@@@
+
+
+The closest coffee shop to where I was staying was [Hopper](https://www.instagram.com/hopper_coffee_toronto). It was a cute little place with great snacks and even better espresso. In spite of being fairly spartan in terms of quantity of furniture, what they had was really funky---i.e., campbell's soup can tables. 
+
+
+@@@
+[](/data/2018/8/1/9b0b8b39-6c6e-4b3e-9f1e-30c96a4db4b1.jpeg)-
+[](/data/2018/8/1/afad5904-695c-4693-9d23-4c3d802b56a5.jpeg)
+@@@
+
+
+I finally managed to try [goldstruck](http://www.goldstruck.ca/)--a place I wanted to visit while I was interning in Toronto, but never quite had the chance to. They definitely themed the place appropriately. Walking down the stairs into the sub-terrainian coffeeshop, you're greeted by the warm glow of industrial lighting and mining-inspired decor. Even the bathroom has these massive wooden barn-doors which slide open.
+
+
+@@@
+[](/data/2018/8/1/2ab058cc-44a7-433c-a0d1-f0fbef36f2e5.jpeg)-
+[](/data/2018/8/1/5b727404-10fe-4c98-938b-7dd08eff4bd0.jpeg)-
+[](/data/2018/8/1/cfecd0dd-474c-40a6-a370-966ba79c647a.jpeg)
+@@@
+
+
+Of course, my favourite little cafe was _sorry_: a little gem that's tucked away in a corner, unapologetically making great espresso and pastries.
+"""
+
     print run(lines, date=None)
+    print run(lines_2, date=None)
