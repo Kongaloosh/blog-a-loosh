@@ -78,6 +78,15 @@ def move_and_resize(from_location, to_blog_location, to_copy):
 
 
 def save_to_two(image,  to_blog_location, to_copy):
+    """
+    Saves two images: one image which is scaled down to optimize serving images, one which is put in a folder at 
+    original resolution for storage. 
+    args:
+    :param image: 
+    :param to_blog_location: 
+    :param to_copy: 
+    :return: 
+    """
     to_blog_location = to_blog_location.lower()
     to_copy = to_copy.lower()
 
@@ -231,7 +240,8 @@ def create_json_entry(data, g, draft=False, update=False):
 def update_json_entry(data, old_entry, g, draft=False):
     """
     Update entry based on edits recieved
-    :param data: the new entry
+    :param data: the new entry the old entry is updated with
+    :param old_entry: the old entry which is being updated
     :param g: dbms cursor
     :param draft: flag indicating whether we're updating a draft or an alredy submitted post
     """
@@ -243,11 +253,13 @@ def update_json_entry(data, old_entry, g, draft=False):
 
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
-    if data['category']:                                            # if categories exist, update them
-        if not draft:
-            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
 
+    if data['category']:                                            # if categories exist, update them
+        if not draft:                                               # if this is not a draft
+            # parse the categories into a list
+            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
             try:
+                # remove all previous categories from the db
                 for c in old_entry['category']:
                     g.db.execute(
                         '''
@@ -258,6 +270,7 @@ def update_json_entry(data, old_entry, g, draft=False):
             except TypeError:
                 pass
 
+            # put the new categories into the db
             for c in data['category']:      # parse the categories into a list and add to dbms
                 print c
                 g.db.execute('''
@@ -265,6 +278,7 @@ def update_json_entry(data, old_entry, g, draft=False):
                      [old_entry['slug'], old_entry['published'], c])
                 g.db.commit()
 
+    # for all the remaining data, update the old entry with the new entry.
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
