@@ -197,11 +197,12 @@ def create_json_entry(data, g, draft=False, update=False):
                 ('photo', '.jpg')]:
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
+                    # if the image is a location ref
                     if type(data[key]) == unicode and data[key].startswith("/images/"):
+                        # move the
                         move_and_resize(
-                            new_prefix[:-1] + data[key],
+                            new_prefix + data[key][1:],  # we remove the head to get rid of preceeding "/"
                             total_path + extension,
-                            # new_prefix + total_path + "B" + extension,
                             new_prefix + total_path + extension
 
                         )
