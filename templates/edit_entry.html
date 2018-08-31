@@ -20,24 +20,19 @@
 </header>
 {% if session.logged_in %}
 <div class="container">
-    <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <div class="row pull-right">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12">
+        <div class="row pull-right"  style="padding 10px">
             <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-5 col-sm-12">
                 <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
                     <p>
-                        <label>Title:</label> <input type="text" style="width: 100%" name="title"
-                                                     value="{{entry.title}}">
+                        <label>Title:</label> <input type="text" style="width: 100%"  name="title" id="title_form" value="{{entry.title}}">
                     </p>
-
                     <p>
-                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2
-                                                         name="summary">{{entry.summary}}</textarea>
+                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary" id="summary_form">{{entry.summary}}</textarea>
                     </p>
-
-                    <p>
                         <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{{entry.content}}</textarea>
                     </p>
                     <hr>
@@ -65,9 +60,10 @@
 
                     <p>
                         <label>Photo</label>
-                        <input type="file" name="photo" id="img_input" accept="image/*">
-                        <img id="blah" src="#" class="img-responsive center-block img-thumbnail" alt="your image"/>
+                        <input type="file" name="photo" id="img_input" accept="image/*"/>
+                        <input type="text" style="width:100%" name="photo" id="img_loc" value="{{entry.photo}}">
                     </p>
+
 
                     <p>
                         <label>facebook </label><input type="checkbox" name="facebook" value="facebook"> <br>
@@ -89,9 +85,16 @@
                 <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
             </div>
 
-            <div class="col-lg-6 col-md-5 col-sm-12">
-                <div id="wysiwyg"></div>
-        </div>
+            <div class="col-lg-6 col-md-5 col-sm-12" style="box-shadow: 0px 0px 10px 5px #aaaaaa;">
+                <div class="row clearfix" style="overflow-y: scroll; height:100%">
+                    <h2 class="post-title p-name" id="title_format"></h2>
+                    <div><img id="blah" src="#" class="img-responsive center-block img-thumbnail img-rounded u-photo" style="image-orientation: from-image; max-height:300px" alt="your image" /></div>
+                    <div class="post-subtitle p-summary">
+                    <p><i id="summary_format"></i></p>
+                    </div>
+                    <div id="wysiwyg"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

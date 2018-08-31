@@ -25,10 +25,10 @@
         <div class="col-lg-6 col-md-5 col-sm-12">
             <form enctype="multipart/form-data" action="/add" method="post" class="input-large" id="input">
                 <p>
-                    <label>Title:</label> <input type="text" style="width: 100%"  name="title">
+                    <label>Title:</label> <input type="text" style="width: 100%"  name="title" id="title_form">
                 </p>
                 <p>
-                    <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"></textarea>
+                    <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary" id="summary_form"></textarea>
                 </p>
                 <p>
                     <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input"></textarea>
@@ -57,8 +57,7 @@
                 <p>
                     <label>Photo</label>
                     <input type="file" name="photo" id="img_input" accept="image/*">
-                    <img id="blah" src="#" class="img-responsive center-block img-thumbnail" alt="your image" />
-                    <input type="text" style="width:100%" name="photo">
+                    <input type="text" style="width:100%" name="photo" id="img_loc">
                 </p>
 
                 <p>
@@ -74,9 +73,15 @@
             </form>
             <button onclick="getRecentPhotos()">Show Recent Photos</button>
         </div>
-        <div class="col-lg-6 col-md-5 col-sm-12">
-            <div id="wysiwyg" style="overflow: scroll; height:100%"></div>
-        </div>
+        <div class="col-lg-6 col-md-5 col-sm-12" style="box-shadow: 0px 0px 10px 5px #aaaaaa;">
+            <div style="overflow: scroll; height:100%">
+                <h2 class="post-title p-name" id="title_format"></h2>
+                <div><img id="blah" src="#" class="img-responsive center-block img-thumbnail img-rounded u-photo" style="image-orientation: from-image; max-height:300px" alt="your image" /></div>
+                <div class="post-subtitle p-summary">
+                <p><i id="summary_format"></i></p>
+                </div>
+                <div id="wysiwyg"></div>
+            </div>
     </div>
 </div>
 
