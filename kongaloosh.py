@@ -259,7 +259,7 @@ def page_not_found(e):
 
 def move_photos(text):
 
-    file_path = "/mnt/volume-nyc1-01/images/temp/"  # todo: factor this out so that it's generalized
+    file_path = ORIGINAL_PHOTOS_DIR  # todo: factor this out so that it's generalized
 
     file_path = "data/{0}/{1}/{2}/".format(
         date.year,
@@ -304,8 +304,6 @@ def add():
     elif request.method == 'POST':  # if we're adding a new post
         if not session.get('logged_in'):
             abort(401)
-        app.logger.info(request.form)
-
         data = post_from_request(request)
 
         if "Submit" in request.form:  # we're publishing it now; give it the present time
@@ -612,7 +610,6 @@ def resolve_placename(location):
             long = re.search('(.)*(?=;)', long).group(0)
         geo_results = requests.get(
             'http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat=' + lat + '&lng=' + long + '&username=' + GEONAMES)
-        print geo_results.json()
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
             place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
@@ -645,18 +642,28 @@ def post_from_request(request):
     }
 
     for title in request.files:
-        data[title] = request.files[title].read()
+        data[title] = request.files[title]
+        data[title].seek(0,2)
+        if data[title].tell() < 1:
+            data[title] = None
 
     for title in request.form:
-        data[title] = request.form[title]
+        try:
+            # check if the element is already written
+            # we privilege files over location refs
+            if data[title] is None:
+                data[title] = request.form[title]
+        except KeyError:
+            data[title] = request.form[title]
+
 
     for key in data:
         if data[key] == "None" or data[key] == '':
             data[key] = None
 
+
     if data['published']:
         data['published'] = parse(data['published'])
-
     return data
 
 
@@ -691,7 +698,6 @@ def edit(year, month, day, name):
                 data['location_id'] = geo_id
 
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-
             data['content'] = run(data['content'], date=data['published'])
 
             if request.form.get('twitter'):
@@ -703,7 +709,7 @@ def edit(year, month, day, name):
                 t.start()
 
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json", g=g)
+            entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
             update_json_entry(data, entry, g=g)
             return redirect("/e/" + location)
         return redirect("/")
