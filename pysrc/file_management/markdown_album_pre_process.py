@@ -6,9 +6,16 @@ import re
 from PIL import Image
 from datetime import datetime
 import os
+import ConfigParser
 
-old_prefix = '/home/deploy/kongaloosh/'
-new_prefix = '/mnt/volume-nyc1-01/'
+config = ConfigParser.ConfigParser()
+config.read('config.ini')
+
+ORIGINAL_PHOTOS_DIR = config.get('PhotoLocations', 'BulkUploadLocation')
+PHOTOS_URL = config.get('PhotoLocations', 'URLPhotos')
+
+old_prefix = config.get('PhotoLocations', 'BlogStorage')
+new_prefix = config.get('PhotoLocations', 'PermStorage')
 
 # the regular expression to find albums
 ALBUM_GROUP_RE = re.compile(
@@ -33,7 +40,6 @@ def move(loc, date):
     file_name = loc[13:]                                                    # remove the '/images/temp/'
     target_file_path = new_prefix + loc[1:]
     if not os.path.exists(new_prefix+'images/' + date_suffix):              # if the target directory doesn't exist ...
-        print new_prefix
         os.makedirs(os.path.dirname(new_prefix+'images/'+date_suffix))      # ... make it.
     img = Image.open(target_file_path)                                      # open the image from the temp
     img.save(new_prefix+'images/'+date_suffix+file_name.lower())            # open the new location
