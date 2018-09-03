@@ -5,7 +5,9 @@ var title = "";
 var summary = "";
 
 function setIMG(loc){
-    loc = "/" + loc
+    if (!loc.startsWith("/")) {
+        loc = "/" + loc
+    }
     $('#blah').attr('src', loc);
 }
 

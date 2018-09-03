@@ -46,6 +46,7 @@ GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
 GOOGLE_MAPS_KEY = config.get('GoogleMaps', 'key')
 ORIGINAL_PHOTOS_DIR = config.get('PhotoLocations', 'BulkUploadLocation')
+# the url to use for showing recent bulk uploads
 PHOTOS_URL = config.get('PhotoLocations', 'URLPhotos')
 
 print(DATABASE, USERNAME, PASSWORD, DOMAIN_NAME)
@@ -455,7 +456,6 @@ def md_to_html():
     """
     :returns mar
     """
-    print request.method
     if request.method == "POST":
         return jsonify({"html":markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension()])})
 

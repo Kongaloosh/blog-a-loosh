@@ -201,12 +201,14 @@ def create_json_entry(data, g, draft=False, update=False):
                     if type(data[key]) == unicode and data[key].startswith("/images/"):
                         # move the
                         move_and_resize(
-                            new_prefix + data[key][1:],  # we remove the head to get rid of preceeding "/"
+                            new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
                             total_path + extension,
                             new_prefix + total_path + extension
 
                         )
                     else:
+                        print type(data[key])
+                        # print data[key]
                         save_to_two(data[key], total_path + extension, new_prefix + total_path + extension)
                     data[key] = total_path + extension              # update the dict to a location refrence
             except KeyError:
