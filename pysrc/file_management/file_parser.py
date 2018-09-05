@@ -9,6 +9,7 @@ import json
 from dateutil.parser import parse
 sys.path.insert(0, os.getcwd())
 from pysrc.webmention.mentioner import send_mention
+from pysrc.webmention.extractor import get_entry_content
 from pysrc.file_management.markdown_album_extension import AlbumExtension
 from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
 from pysrc.file_management.markdown_album_pre_process import new_prefix
@@ -140,6 +141,23 @@ def file_parser_json(filename, g=None, md=True):
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
     elif entry['content'] is None:          # if we have no text for this
         entry['content'] = ''               # give it an empty string so it renders the post properly
+
+    if entry['in_reply_to']:
+        reply_to = []
+        if type(entry['in_reply_to']) != list:
+            entry['in_reply_to'] = [entry['in_reply_to']]
+        for i in entry['in_reply_to']:  # for all the replies we have...
+            if type(i) == dict:  # which are not images on our site...
+                reply_to.append(i)
+            elif i.startswith('http://127.0.0.1:5000'):
+                reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
+            elif i.startswith('https://kongaloosh.com/'):
+                reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
+            elif i.startswith('http'):  # which are not data resources on our site...
+                reply_to.append(get_entry_content(i))
+        entry['in_reply_to'] = reply_to
+
+
     return entry
 
 

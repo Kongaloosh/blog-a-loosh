@@ -26,33 +26,28 @@
     {% endif %}
 
     {% if entry.title %}
-
     <h2 class="post-title p-name">
         <a href="{{entry.url}}">{{ entry.title }}</a>
     </h2>
 
     {% endif %}
-
-    {% if entry.in_reply_to != 'None' and entry.in_reply_to is string %}
-    <h class="post-subtitle u-in-reply-to">
-        {{entry.in_reply_to}}
-    </h>
-    {% endif%}
-
-    {% if entry.in_reply_to is sequence %}
-    {% for site in entry.in_reply_to %}
-    {% if site.photo is defined %}
-    <a href="{{site.url}}">
-        <img
-                class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                style="image-orientation: from-image; max-height:300px"
-                src="/{{site.photo}}"
-                >
-    </a>
-    {% else %}
+    {% if entry.in_reply_to is sequence%}
+    <div class="reply reply-header reply-topper reply-footer">
+            {% for site in entry.in_reply_to %}
+            {% if site.photo is defined %}
+            <a href="{{site.url}}">
+                <img
+                        class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                        style="image-orientation: from-image; max-height:300px"
+                        src="/{{site.photo}}"
+                        >
+            </a>
+            {% endif %}
+            In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{% if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
+            {% endfor %}
+    </div>
     {% endif %}
-    {% endfor %}
-    {% endif %}
+
     <div class="e-content {% if not entry.title %}p-name{% endif %}">
         {% if entry.photo%}
         <a href="{{entry.url}}">

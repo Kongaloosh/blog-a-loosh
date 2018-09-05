@@ -8,7 +8,7 @@ import math
 from datetime import datetime
 from jinja2 import Environment
 from dateutil.parser import parse
-from pysrc.webmention.extractor import get_entry_content
+
 from pysrc.posse_scripts import tweeter
 from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.authentication.indieauth import checkAccessToken
@@ -730,6 +730,7 @@ def edit(year, month, day, name):
         if "Submit" in request.form:
             data = post_from_request(request)
             if data['location'] is not None and data['location'].startswith("geo:"):
+                # get the place name for the item in the data.
                 (place_name, geo_id) = resolve_placename(data['location'])
                 data['location_name'] = place_name
                 data['location_id'] = geo_id
@@ -739,6 +740,7 @@ def edit(year, month, day, name):
 
             app.logger.info(request.form.get('twitter'))
             if request.form.get('twitter'):
+                #  if twitter is checked in the form, ask bridgy to syndicate out to twitter
                 app.logger.info("syndicating to twitter")
                 t = Timer(30, bridgy_twitter, ['/e/' + location])
                 t.start()
@@ -780,19 +782,6 @@ def profile(year, month, day, name):
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []  # where we store our replies so we can fetch their info
-    if entry['in_reply_to']:
-        if type(entry['in_reply_to']) != list:
-            entry['in_reply_to'] = [entry['in_reply_to']]
-        for i in entry['in_reply_to']:  # for all the replies we have...
-            if type(i) == dict:  # which are not images on our site...
-                reply_to.append(i)
-            elif i.startswith('http://127.0.0.1:5000'):
-                reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
-            elif i.startswith('https://kongaloosh.com/'):
-                reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
-            elif i.startswith('http'):  # which are not data resources on our site...
-                reply_to.append(get_entry_content(i))
-    entry['in_reply_to'] = reply_to
 
     app.logger.info("replying to {0}".format(reply_to))
     # if entry['syndication']:
