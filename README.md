@@ -13,6 +13,7 @@ Spaghetti.
 Right now, to varying degrees of effectiveness, it can:
   
   * what-you-see-is-what-you-get posting interface [NEW AND IMPROVED!]
+  * RSS and ATOM feed support
   * recieve entries via a micropub endpoint using indieauth
   * syndicate out to twitter and facebook using [bridgy](https://brid.gy/)
   * bulk upload images (including mobile upload)
@@ -55,4 +56,4 @@ The data is kept in a human-readable format as .md files, and a more machine-rea
 2. testing
 3. Search-bar
 4. Better and more complete integration of Linked-Data Notifications and Activity Streams
-5. Better integration of twitter (auto-lookup for handles, etc)
+5. Better integration of twitter for posting from my site (auto-lookup for handles, etc)
