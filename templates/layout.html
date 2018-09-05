@@ -32,8 +32,20 @@
     <link rel="authorization_endpoint" href="https://indieauth.com/auth"> <!-- Auth point for Quill -->
     <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
     <link rel="micropub" href="https://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
+
+    <link rel="alternate" type="application/atom+xml" title="Kongaloosh's Blogroll"
+      href="https://kongaloosh.com/atom.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Kongaloosh's Blogroll" href="http://kongaloosh.com/rss.xml">
+    <!--<link rel="alternate" type="application/as2+json" title="title-of-the-page" href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=http://kgl.superfeedr.com/">-->
+    <link rel="self" href="http://kongaloosh.com/">
+    <link rel="hub" href="https://switchboard.p3k.io//">
+
+    <!--<link rel="hub" href="http://kgl.superfeedr.com/">-->
+    <!--<link rel="hub" href="https://switchboard.p3k.io/">-->
+
     <link rel="webmention" href="https://webmention.io/kongaloosh.com/webmention" />
     <meta name="viewport" content="initial-scale=1">
+
     <title>kongaloosh</title>
 
     <link rel="https://www.w3.org/ns/ldp#inbox" href="https://kongaloosh.com/inbox">
@@ -129,9 +141,9 @@
 <!-- Footer -->
 <footer>
 <div class = "container">
-    <div class="row h-card p-author">
+    <div class="row h-card">
 	<data class="p-name" value="Alex Kearney"></data>
-        <data class="p-url p-uid u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
+        <data class="u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
         <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-centered">
             <img src="{{ url_for('static', filename='img/profile.jpg') }}"
                  class="u-photo u-url u-uid img-responsive center-block img-thumbnail img-circle"
