@@ -85,6 +85,9 @@ def teardown_request(exception):
 def show_entries():
     """ The main view: presents author info and entries. """
 
+    if 'application/atom+xml' in request.headers.get('Accept'):
+        return show_atom()
+
     entries = []                            # store the entries which will be presented
     cur = g.db.execute(                     # grab in order of newest
         """
@@ -135,19 +138,49 @@ def show_rss():
         ORDER BY published DESC
         """
     )
-
+    updated=None
     for (row,) in cur.fetchall():           # iterate over the results
         if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
             entries.append(file_parser_json(row + ".json"))
 
     try:
         entries = entries[:10]              # get the 10 newest
+
     except IndexError:
         entries = None                      # there are no entries
 
-    template = render_template('rss.xml', entries=entries)
+    template = render_template('rss.xml', entries=entries, updated=updated)
     response = make_response(template)
     response.headers['Content-Type'] = 'application/xml'
+    return response
+
+
+@app.route('/atom.xml')
+def show_atom():
+    """ The atom view: presents entries in atom form. """
+
+    entries = []                            # store the entries which will be presented
+    cur = g.db.execute(                     # grab in order of newest
+        """
+        SELECT location
+        FROM entries
+        ORDER BY published DESC
+        """
+    )
+    updated = None
+    for (row,) in cur.fetchall():           # iterate over the results
+        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+            entries.append(file_parser_json(row + ".json"))
+
+    try:
+        entries = entries[:10]              # get the 10 newest
+        updated = entries[0]['published']
+    except IndexError:
+        entries = None                      # there are no entries
+
+    template = render_template('atom.xml', entries=entries, updated=updated)
+    response = make_response(template)
+    response.headers['Content-Type'] = 'application/atom+xml'
     return response
 
 
@@ -333,7 +366,7 @@ def add():
             if request.form.get('facebook'):
                 t = Timer(30, bridgy_facebook, [location])
                 t.start()
-
+            app.logger.info(request.form)
         if "Save" in request.form:  # if we're simply saving the post as a draft
             location = create_json_entry(data, g=g, draft=True)
 
@@ -548,8 +581,9 @@ def send_mention(source, target, endpoint=None):
             endpoint = find_end_point(target)
         payload = {'source': source, 'target': target}
         headers = {'Accept': 'text/html, application/json'}
-        app.logger.info(payload)
+        app.logger.info("Reply-to request: \n {0}".format(payload))
         r = requests.post(endpoint, data=payload, headers=headers)
+        app.logger.info("Reply-to response: \n {0}".format(r))
         return r
     except:  # TODO: add a scope to the exception 
         pass
@@ -588,7 +622,10 @@ def bridgy_twitter(location):
     )
     syndication = r.json()
     app.logger.info(syndication)
-    app.logger.info("recieved {0} {1}".format(syndication['url'], syndication['id']))
+    try:
+        app.logger.info("recieved {0} {1}".format(syndication['url'], syndication['id']))
+    except KeyError:
+        app.logger.info(r)
     data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
     if data['syndication']:
         if type(data['syndication']) is unicode:
@@ -700,7 +737,9 @@ def edit(year, month, day, name):
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             data['content'] = run(data['content'], date=data['published'])
 
+            app.logger.info(request.form.get('twitter'))
             if request.form.get('twitter'):
+                app.logger.info("syndicating to twitter")
                 t = Timer(30, bridgy_twitter, ['/e/' + location])
                 t.start()
 
@@ -711,6 +750,11 @@ def edit(year, month, day, name):
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
             update_json_entry(data, entry, g=g)
+
+            if data['in_reply_to']:
+                app.logger.info("sending mention from {0} to {1}".format('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to']))
+                send_mention('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to'])
+
             return redirect("/e/" + location)
         return redirect("/")
 
@@ -732,18 +776,25 @@ def profile(year, month, day, name):
     # if os.path.exists(file_name + ".mp3"):
     #     entry['audio'] = file_name + ".mp3"  # get the actual file
 
-    mentions = get_mentions('http://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
+    mentions,likes,reposts = get_mentions('https://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
     reply_to = []  # where we store our replies so we can fetch their info
     if entry['in_reply_to']:
+        if type(entry['in_reply_to']) != list:
+            entry['in_reply_to'] = [entry['in_reply_to']]
         for i in entry['in_reply_to']:  # for all the replies we have...
             if type(i) == dict:  # which are not images on our site...
                 reply_to.append(i)
             elif i.startswith('http://127.0.0.1:5000'):
                 reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
+            elif i.startswith('https://kongaloosh.com/'):
+                reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
             elif i.startswith('http'):  # which are not data resources on our site...
                 reply_to.append(get_entry_content(i))
+    entry['in_reply_to'] = reply_to
+
+    app.logger.info("replying to {0}".format(reply_to))
     # if entry['syndication']:
     #     for i in entry['syndication'].split(','):               # look at all the syndication links
     #         if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
@@ -755,7 +806,7 @@ def profile(year, month, day, name):
     #         if i.startswith('https://www.facebook.com/'):
     #             entry['facebook'] = {'link':i}
 
-    return render_template('entry.html', entry=entry, mentions=mentions, reply_to=reply_to)
+    return render_template('entry.html', entry=entry, mentions=mentions, likes=likes, reposts=reposts)
 
 
 @app.route('/t/<category>')
@@ -950,7 +1001,7 @@ def handle_micropub():
                 location = create_json_entry(data, g=g)
 
                 if data['in_reply_to']:
-                    send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
+                    send_mention('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to'])
 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
