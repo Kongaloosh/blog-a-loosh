@@ -27,6 +27,7 @@
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
     <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
@@ -163,20 +164,21 @@
 
         <div class="hentry h-entry col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
 
-            {% if entry.in_reply_to %}
-            {% for site in entry.in_reply_to %}
-            {% if site.photo is defined %}
-            <a href="{{site.url}}">
-                <img
-                        class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                        style="image-orientation: from-image; max-height:300px"
-                        src="/{{site.photo}}"
-                        >
-            </a>
-            {% endif %}
-                <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{{site.url}}</a>
-            {% endfor %}
-                <hr>
+               {% if entry.in_reply_to is sequence%}
+            <div class="reply reply-header reply-topper reply-footer">
+                {% for site in entry.in_reply_to %}
+                {% if site.photo is defined %}
+                <a href="{{site.url}}">
+                    <img
+                            class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                            style="image-orientation: from-image; max-height:300px"
+                            src="/{{site.photo}}"
+                            >
+                </a>
+                {% endif %}
+                In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{% if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
+                {% endfor %}
+            </div>
             {% endif %}
             <div class="e-content p-note">
                 <!-- The title of an entry -->
