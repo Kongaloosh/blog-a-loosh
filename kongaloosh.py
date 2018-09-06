@@ -149,7 +149,7 @@ def show_entries():
             entries = None                  # there are no entries
     # otherwise there are < 10 entries and we'll just display what we have ...
     before = 1                              # holder which tells us which page we're on
-    tags = get_most_popular_tags()
+    tags = get_most_popular_tags()[:10]
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
 
 
@@ -316,43 +316,11 @@ def page_not_found(e):
     return render_template('server_error.html'), 500
 
 
-def move_photos(text):
-
-    file_path = ORIGINAL_PHOTOS_DIR  # todo: factor this out so that it's generalized
-
-    file_path = "data/{0}/{1}/{2}/".format(
-        date.year,
-        date.month,
-        date.day
-    )
-
-    if not os.path.exists(file_path):
-        os.makedirs(os.path.dirname(file_path))
-
-    for uploaded_file in request.files.getlist('file'):
-        uploaded_file.save(
-            file_path + "{0}".format(
-                uploaded_file.filename
-            )
-        )
-        small_path = '/home/deploy/kongaloosh/data/'
-        uploaded_file = open(file_path + '{0}'.format(uploaded_file.filename), 'r')
-
-
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     """ The form for user-submission """
     if request.method == 'GET':
-        cur = g.db.execute("""
-               SELECT category
-               FROM (
-                   SELECT category as category, count(category) as count
-                   FROM categories
-                   GROUP BY category
-               )ORDER BY count DESC
-           """)
-
-        tags = [row for (row,) in cur.fetchall()][:10]
+        tags = get_most_popular_tags()[:10]
         for element in ["None", "image", "album", "bookmark", "note"]:
             try:
                 tags.remove(element)
@@ -365,39 +333,33 @@ def add():
             abort(401)
         data = post_from_request(request)
 
-        if "Submit" in request.form:  # we're publishing it now; give it the present time
-            if data['published'] == None:
+        if "Submit" in request.form:
+            if data['published'] is None:           # we're publishing it now; give it the present time
                 data['published'] = datetime.now()
+            data['content'] = run(data['content'], date=data['published'])  # find all images in albums and move them
 
-            data['content'] = run(data['content'], date=data['published'])
+            if data['location'] is not None and data['location'].startswith("geo:"):    # if we were given a geotag
+                (place_name, geo_id) = resolve_placename(data['location'])              # get the placename
+                data['location_name'] = place_name
+                data['location_id'] = geo_id
+                # todo: you'll be left with a rogue 'location' in the dict... should clean that...
 
-            if data['location'] is not None and data['location'].startswith("geo:"):
-                if data['location'].startswith("geo:"):
-                    app.logger.info(data['location'])
-                    (place_name, geo_id) = resolve_placename(data['location'])
-                    data['location_name'] = place_name
-                    data['location_id'] = geo_id
-
-            location = create_json_entry(data, g=g)
+            location = create_json_entry(data, g=g)     # create the entry
 
             if data['in_reply_to']:
-                send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
+                # if it's a response...
+                for reply_to in data['in_reply_to'].split(','):
+                    # split in case post is in reply to many and send mention
+                    send_mention('http://' + DOMAIN_NAME + location, reply_to)
 
-            app.logger.info("posted at {0}".format(location))
             if request.form.get('twitter'):
-                t = Timer(30, bridgy_twitter, [location])
+                # if we're syndicating to twitter, spin off a thread and send the request.
+                t = Timer(2, bridgy_twitter, [location])
                 t.start()
 
-            if request.form.get('facebook'):
-                t = Timer(30, bridgy_facebook, [location])
-                t.start()
-            app.logger.info(request.form)
         if "Save" in request.form:  # if we're simply saving the post as a draft
             location = create_json_entry(data, g=g, draft=True)
-
-        return redirect(location)
-    else:
-        return redirect('/404'), 404
+        return redirect(location)   # send the user to the newly created post
 
 
 @app.route('/delete_draft/<name>', methods=['GET'])
