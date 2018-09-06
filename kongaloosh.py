@@ -401,16 +401,18 @@ def add():
 
 
 @app.route('/delete_draft/<name>', methods=['GET'])
-def delete_drafts(year, month, day, name):
-    app.logger.info("delete requested")
-    if not session.get('logged_in'):
+def delete_drafts():
+    """Deletes a given draft and associated files based on the name."""
+    # todo: should have a 404 or something if the post doesn't actually exist.
+    if not session.get('logged_in'):                # check permissions before deleting
         abort(401)
+    totalpath = "drafts/{name}"                     # the file will be located in drafts under the slug name
+    for extension in [".md", '.json', '.jpg']:      # for all of the files associated with a post
+        if os.path.isfile(totalpath + extension):   # if there's an associated file...
+            os.remove(totalpath + extension)        # ... delete it
 
-    totalpath = "drafts/{name}"
-    for extension in [".md", '.json', '.jpg']:
-        if os.path.isfile(totalpath + extension):
-            os.remove(totalpath + extension)
-        return redirect('/', 200)
+    # note: because this is a draft, the images associated with the post will still be in the temp folder
+    return redirect('/', 200)
 
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
@@ -588,16 +590,6 @@ def recent_uploads():
         return preview
     else:
         return redirect('/404'), 404
-
-
-def find_end_point(target):
-    """Uses regular expressions to find a site's webmention endpoint"""
-    html = requests.get(target)
-    search_result = re.search('(rel(\ )*=(\ )*(")*webmention)(")*(.)*', html.content).group()
-    url = re.search('((?<=href=)(\ )*(")*(.)*(")*)(?=/>)', search_result).group()
-    url = re.sub('["\ ]', '', url)
-    return url
-
 
 def resolve_placename(location):
     try:
