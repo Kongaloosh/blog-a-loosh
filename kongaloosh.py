@@ -8,8 +8,9 @@ import math
 from datetime import datetime
 from jinja2 import Environment
 from dateutil.parser import parse
-
+from pysrc.webmention.mentioner import send_mention
 from pysrc.posse_scripts import tweeter
+from pysrc.posse_scripts.bridgy import *
 from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.webmention.webemention_checking import get_mentions
@@ -81,13 +82,41 @@ def teardown_request(exception):
         db.close()
 
 
+def get_entries():
+    pass
+
+def get_most_popular_tags():
+    """gets the tags (excluding post type declarations) and returns them in descending order of usage.
+    
+    Returns:
+        List of tags in descending order by usage.
+    """
+    cur = g.db.execute("""
+        SELECT category
+        FROM (
+            SELECT category as category, count(category) as count
+            FROM categories
+            GROUP BY category
+        )ORDER BY count DESC
+    """)
+    tags = [row for (row,) in cur.fetchall()]
+    # strip type declarations
+    for element in ["None", "image", "album", "bookmark", "note"]:
+        try:
+            tags.remove(element)
+        except ValueError:
+            pass
+    return tags
+
 @app.route('/')
 def show_entries():
     """ The main view: presents author info and entries. """
 
     if 'application/atom+xml' in request.headers.get('Accept'):
+        # if the header is requesting an xml or atom feed, simply return it
         return show_atom()
 
+    # getting the entries we want to display.
     entries = []                            # store the entries which will be presented
     cur = g.db.execute(                     # grab in order of newest
         """
@@ -98,31 +127,17 @@ def show_entries():
     )
 
     for (row,) in cur.fetchall():           # iterate over the results
-        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
-            entries.append(file_parser_json(row + ".json"))
+        if os.path.exists(row + ".json"):   # if the file fetched exists...
+            entries.append(file_parser_json(row + ".json"))     # parse the json and add it to the list of entries.
 
     try:
         entries = entries[:10]              # get the 10 newest
     except IndexError:
-        entries = None                      # there are no entries
-
+        if len(entries) == 0:               # if there's an index error and the len is low..
+            entries = None                  # there are no entries
+    # otherwise there are < 10 entries and we'll just display what we have ...
     before = 1                              # holder which tells us which page we're on
-
-    cur = g.db.execute("""
-        SELECT category
-        FROM (
-            SELECT category as category, count(category) as count
-            FROM categories
-            GROUP BY category
-        )ORDER BY count DESC
-    """)
-
-    tags = [row for (row,) in cur.fetchall()]
-    for element in ["None", "image", "album", "bookmark", "note"]:
-        try:
-            tags.remove(element)
-        except ValueError:
-            pass
+    tags = get_most_popular_tags()
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
 
 
@@ -265,11 +280,9 @@ def pagination(number):
         ORDER BY entries.published DESC
         """.format(datetime=datetime)
     )
-
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
-
     try:
         start = int(number) * 10
         entries = entries[start:start + 10]
@@ -574,70 +587,6 @@ def find_end_point(target):
     return url
 
 
-def send_mention(source, target, endpoint=None):
-    """Sends a webmention to a target site from our source link"""
-    try:
-        if not endpoint:
-            endpoint = find_end_point(target)
-        payload = {'source': source, 'target': target}
-        headers = {'Accept': 'text/html, application/json'}
-        app.logger.info("Reply-to request: \n {0}".format(payload))
-        r = requests.post(endpoint, data=payload, headers=headers)
-        app.logger.info("Reply-to response: \n {0}".format(r))
-        return r
-    except:  # TODO: add a scope to the exception 
-        pass
-
-
-def bridgy_facebook(location):
-    """send a facebook mention to brid.gy"""
-    # send the mention
-    r = send_mention(
-        'http://' + DOMAIN_NAME + location,
-        'https://brid.gy/publish/facebook',
-        endpoint='https://brid.gy/publish/webmention'
-    )
-    # get the response from the send
-    syndication = r.json()
-    data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
-    app.logger.info(syndication)
-    if data['syndication']:
-        if type(data['syndication']) is unicode:
-            data['syndication'] = data['syndication'].split(',')
-        data['syndication'].append(syndication['url'])
-    else:
-        data['syndication'] = [syndication['url']]
-    data['facebook'] = {'url': syndication['url']}
-    create_json_entry(data, g=None, update=True)
-
-
-def bridgy_twitter(location):
-    """send a twitter mention to brid.gy"""
-    location = 'http://' + DOMAIN_NAME + location
-    app.logger.info("bridgy sent to {0}".format(location))
-    r = send_mention(
-        location,
-        'https://brid.gy/publish/twitter',
-        endpoint='https://brid.gy/publish/webmention'
-    )
-    syndication = r.json()
-    app.logger.info(syndication)
-    try:
-        app.logger.info("recieved {0} {1}".format(syndication['url'], syndication['id']))
-    except KeyError:
-        app.logger.info(r)
-    data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
-    if data['syndication']:
-        if type(data['syndication']) is unicode:
-            data['syndication'] = data['syndication'].split(',')
-        data['syndication'].append(syndication['url'])
-    else:
-        data['syndication'] = [syndication['url']]
-    data['twitter'] = {'url': syndication['url'],
-                       'id': syndication['id']}
-    create_json_entry(data, g=None, update=True)
-
-
 def resolve_placename(location):
     try:
         (lat, long) = location[4:].split(',')
@@ -693,11 +642,9 @@ def post_from_request(request):
         except KeyError:
             data[title] = request.form[title]
 
-
     for key in data:
         if data[key] == "None" or data[key] == '':
             data[key] = None
-
 
     if data['published']:
         data['published'] = parse(data['published'])
@@ -717,7 +664,10 @@ def edit(year, month, day, name):
                 entry['category'] = ''
 
             if entry['published']:
+                print entry['published']
                 entry['published'] = entry['published'].strftime('%Y-%m-%d')
+
+            if
             return render_template('edit_entry.html', entry=entry)
         except IOError:
             return redirect('/404')
@@ -781,9 +731,6 @@ def profile(year, month, day, name):
     mentions,likes,reposts = get_mentions('https://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
                             format(year=year, month=month, day=day, name=name))
 
-    reply_to = []  # where we store our replies so we can fetch their info
-
-    app.logger.info("replying to {0}".format(reply_to))
     # if entry['syndication']:
     #     for i in entry['syndication'].split(','):               # look at all the syndication links
     #         if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
@@ -1195,7 +1142,11 @@ def show_draft(name):
             entry['category'] = ', '.join(entry['category'])
 
         if entry['published']:
-            entry['published'] = entry['published'].strftime('%Y-%m-%d')
+            print entry['published'], type(entry['published'])
+            try:
+                entry['published'] = entry['published'].strftime('%Y-%m-%d')
+            except AttributeError:
+                entry['published'] = None
         return render_template('edit_entry.html', entry=entry, draft=True)
 
     if request.method == 'POST':
