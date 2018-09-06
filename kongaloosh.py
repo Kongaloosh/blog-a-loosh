@@ -289,8 +289,9 @@ def pagination(number):
         number: the page number we're currently on.
     """
     entries = get_entries_by_date()
-    # beginning of page group is the page number * 10
-    start = int(number) * 10
+
+    start = int(number) * 10    # beginning of page group is the page number * 10
+    before = int(number) + 1    # increment the page group
     try:
         # get the next 10 entries starting at the page grouping
         entries = entries[start:start + 10]
@@ -300,10 +301,8 @@ def pagination(number):
             # try to get the remaining entries
             entries = entries[start:len(entries)]
         except IndexError:
-            #  if this still produces an index error, we are at the end and return no entries.
-            entries = None
-    before = int(number) + 1
-
+            entries = None  #  if this still produces an index error, we are at the end and return no entries.
+            before = 0      # set before so that we know we're at the end
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
