@@ -43,7 +43,7 @@ setInterval(function(){
 
 setInterval(function(){
 	var x = document.getElementById("img_loc").value;
-   	if (x !== img) {
+   	if (x !== img && x !== 'None') {
         setIMG(x)
     }
     img = x
