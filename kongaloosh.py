@@ -4,20 +4,13 @@ import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, jsonify
 from contextlib import closing
 import os
-import math
 from datetime import datetime
 from jinja2 import Environment
 from dateutil.parser import parse
-from pysrc.webmention.mentioner import send_mention
-from pysrc.posse_scripts import tweeter
 from pysrc.posse_scripts.bridgy import *
 from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.authentication.indieauth import checkAccessToken
-from pysrc.webmention.webemention_checking import get_mentions
-from rdflib import Graph, plugin
-import pickle
 from threading import Timer
-import requests
 import json
 from slugify import slugify
 import ConfigParser
@@ -25,10 +18,10 @@ import re
 import requests
 from pysrc.file_management.markdown_album_pre_process import move, run
 from PIL import Image, ExifTags
-from pysrc.file_management.markdown_album_extension import AlbumExtension
-from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
-from pysrc.file_management.markdown_album_pre_process import new_prefix
+from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
+from markdown_albums.markdown_album_extension import AlbumExtension
 import markdown
+from python_webmention.mentioner import send_mention, get_mentions
 
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])

@@ -1,12 +1,11 @@
-__author__ = 'kongaloosh'
-
-from markdown import Extension
-from markdown.preprocessors import Preprocessor
 import re
 from PIL import Image
 from datetime import datetime
 import os
 import ConfigParser
+
+__author__ = 'kongaloosh'
+
 
 config = ConfigParser.ConfigParser()
 config.read('config.ini')
@@ -20,6 +19,7 @@ new_prefix = config.get('PhotoLocations', 'PermStorage')
 ALBUM_GROUP_RE = re.compile(
     r'''(@{3,})(?P<album>((.)|(\n))*?)(@{3,})'''
 )
+
 
 def move(loc, date):
     """"
