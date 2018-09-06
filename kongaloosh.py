@@ -97,6 +97,7 @@ def get_entries_by_date():
 
     return entries
 
+
 def get_most_popular_tags():
     """gets the tags (excluding post type declarations) and returns them in descending order of usage.
     
@@ -119,6 +120,73 @@ def get_most_popular_tags():
         except ValueError:
             pass
     return tags
+
+
+def resolve_placename(location):
+    try:
+        (lat, long) = location[4:].split(',')
+        try:
+            float(long)
+        except ValueError:
+            long = re.search('(.)*(?=;)', long).group(0)
+        geo_results = requests.get(
+            'http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat=' + lat + '&lng=' + long + '&username=' + GEONAMES)
+        place_name = geo_results.json()['geonames'][0]['name']
+        if geo_results.json()['geonames'][0]['adminName2']:
+            place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
+        elif geo_results.json()['geonames'][0]['adminName1']:
+            place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
+        else:
+            place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+        return place_name, geo_results.json()['geonames'][0]['geonameId']
+    except IndexError:
+        return None, None
+
+
+def post_from_request(request):
+    data = {
+        'h': None,
+        'title': None,
+        'summary': None,
+        'content': None,
+        'published': None,
+        'updated': None,
+        'category': None,
+        'slug': None,
+        'location': None,
+        'location_name': None,
+        'location_id': None,
+        'in_reply_to': None,
+        'repost-of': None,
+        'syndication': None,
+        'photo': None
+    }
+
+    for title in request.files:
+        data[title] = request.files[title]
+        data[title].seek(0,2)
+        if data[title].tell() < 1:
+            data[title] = None
+
+    for title in request.form:
+        try:
+            # check if the element is already written
+            # we privilege files over location refs
+            if data[title] is None:
+                data[title] = request.form[title]
+        except KeyError:
+            data[title] = request.form[title]
+
+    for key in data:
+        if data[key] == "None" or data[key] == '':
+            data[key] = None
+
+    if data['published']:
+        data['published'] = parse(data['published'])
+    return data
+
+def action_stream_parser(filename):
+    return NotImplementedError("this doesn't exist yet")
 
 @app.route('/')
 def show_entries():
@@ -281,6 +349,7 @@ def map():
 
     app.logger.info(geo_coords)
     return render_template('map.html', geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
+
 
 @app.route('/page/<number>')
 def pagination(number):
@@ -553,69 +622,6 @@ def recent_uploads():
     else:
         return redirect('/404'), 404
 
-def resolve_placename(location):
-    try:
-        (lat, long) = location[4:].split(',')
-        try:
-            float(long)
-        except ValueError:
-            long = re.search('(.)*(?=;)', long).group(0)
-        geo_results = requests.get(
-            'http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat=' + lat + '&lng=' + long + '&username=' + GEONAMES)
-        place_name = geo_results.json()['geonames'][0]['name']
-        if geo_results.json()['geonames'][0]['adminName2']:
-            place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
-        elif geo_results.json()['geonames'][0]['adminName1']:
-            place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
-        else:
-            place_name += ", " + geo_results.json()['geonames'][0]['countryName']
-        return place_name, geo_results.json()['geonames'][0]['geonameId']
-    except IndexError:
-        return None, None
-
-
-def post_from_request(request):
-    data = {
-        'h': None,
-        'title': None,
-        'summary': None,
-        'content': None,
-        'published': None,
-        'updated': None,
-        'category': None,
-        'slug': None,
-        'location': None,
-        'location_name': None,
-        'location_id': None,
-        'in_reply_to': None,
-        'repost-of': None,
-        'syndication': None,
-        'photo': None
-    }
-
-    for title in request.files:
-        data[title] = request.files[title]
-        data[title].seek(0,2)
-        if data[title].tell() < 1:
-            data[title] = None
-
-    for title in request.form:
-        try:
-            # check if the element is already written
-            # we privilege files over location refs
-            if data[title] is None:
-                data[title] = request.form[title]
-        except KeyError:
-            data[title] = request.form[title]
-
-    for key in data:
-        if data[key] == "None" or data[key] == '':
-            data[key] = None
-
-    if data['published']:
-        data['published'] = parse(data['published'])
-    return data
-
 
 @app.route('/edit/e/<year>/<month>/<day>/<name>', methods=['GET', 'POST'])
 def edit(year, month, day, name):
@@ -633,7 +639,6 @@ def edit(year, month, day, name):
                 print entry['published']
                 entry['published'] = entry['published'].strftime('%Y-%m-%d')
 
-            if
             return render_template('edit_entry.html', entry=entry)
         except IOError:
             return redirect('/404')
@@ -654,20 +659,15 @@ def edit(year, month, day, name):
             location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             data['content'] = run(data['content'], date=data['published'])
 
-            app.logger.info(request.form.get('twitter'))
-            if request.form.get('twitter'):
-                #  if twitter is checked in the form, ask bridgy to syndicate out to twitter
-                app.logger.info("syndicating to twitter")
-                t = Timer(30, bridgy_twitter, ['/e/' + location])
-                t.start()
-
-            if request.form.get('facebook'):
-                t = Timer(30, bridgy_facebook, ['/e/' + location])
-                t.start()
-
             file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
             entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
             update_json_entry(data, entry, g=g)
+
+            if request.form.get('twitter'):
+                #  if twitter is checked in the form, ask bridgy to syndicate out to twitter
+                app.logger.info("syndicating to twitter")
+                t = Timer(2, bridgy_twitter, ['/e/' + location])
+                t.start()
 
             if data['in_reply_to']:
                 app.logger.info("sending mention from {0} to {1}".format('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to']))
@@ -676,6 +676,9 @@ def edit(year, month, day, name):
             return redirect("/e/" + location)
         return redirect("/")
 
+
+def submit_post():
+    pass
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
@@ -912,12 +915,6 @@ def handle_micropub():
                         t.start()
                 except KeyError:
                     pass
-                try:
-                    if request.form.get('facebook') or data['photo']:
-                        t = Timer(30, bridgy_facebook, [location])
-                        t.start()
-                except KeyError:
-                    pass
 
                 resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
                 resp.status_code = 201
@@ -1123,22 +1120,17 @@ def show_draft(name):
         if "Save" in request.form:  # if we're updating a draft
             file_name = "drafts/{0}".format(name)
             entry = file_parser_json(file_name + ".json")
-            location = update_json_entry(data, entry, g=g, draft=True)
+            update_json_entry(data, entry, g=g, draft=True)
             return redirect("/drafts")
 
         if "Submit" in request.form:  # if we're publishing it now
             data['published'] = datetime.now()
-
             location = create_json_entry(data, g=g)
             if data['in_reply_to']:
                 send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
 
             if request.form.get('twitter'):
                 t = Timer(30, bridgy_twitter, [location])
-                t.start()
-
-            if request.form.get('facebook'):
-                t = Timer(30, bridgy_facebook, [location])
                 t.start()
 
             if os.path.isfile("drafts/" + name + ".json"):  # this won't always be the slug generated
