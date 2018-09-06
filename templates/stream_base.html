@@ -26,7 +26,6 @@
     <div class="container">
         <div class="">
             <div class="row site-heading jumbotron" style="display: block;">
-
                 <div class="col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
                         <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
                          class="u-photo img-responsive img-thumbnail img-circle profile-image">
@@ -55,15 +54,32 @@
 </header>
 <!-- Main Content -->
 <div class="container">
-    <div>
         {% block body %}
         {% endblock %}
         <!-- Pager -->
-        <ul class="pager">
+        {% if before %}
+        <div class="row">
+            <div class="pull-left col">
+                <ul class="pager">
+                    {% if before > 1 %}
+                    <li class="next">
+                        <a href="/page/{{before - 2}}">&larr; Newer Posts </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="pull-right col">
+            <ul class="pager">
+            {% if before > 0 %}
             <li class="next">
                 <a href="/page/{{before}}">Older Posts &rarr;</a>
             </li>
-        </ul>
-    </div>
+            {% endif %}
+            </ul>
+            </div>
+        </div>
+        {% endif %}
+
+
 </div>
 {% endblock %}
