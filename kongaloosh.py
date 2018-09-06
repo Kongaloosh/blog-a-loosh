@@ -82,8 +82,20 @@ def teardown_request(exception):
         db.close()
 
 
-def get_entries():
-    pass
+def get_entries_by_date():
+    entries = []
+    cur = g.db.execute(
+        """
+        SELECT entries.location FROM entries
+        ORDER BY entries.published DESC
+        """.format(datetime=datetime)
+    )
+
+    for (row,) in cur.fetchall():
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
+
+    return entries
 
 def get_most_popular_tags():
     """gets the tags (excluding post type declarations) and returns them in descending order of usage.
@@ -272,23 +284,24 @@ def map():
 
 @app.route('/page/<number>')
 def pagination(number):
-    """gets the posts for a page number"""
-    entries = []
-    cur = g.db.execute(
-        """
-        SELECT entries.location FROM entries
-        ORDER BY entries.published DESC
-        """.format(datetime=datetime)
-    )
-    for (row,) in cur.fetchall():
-        if os.path.exists(row + ".json"):
-            entries.append(file_parser_json(row + ".json"))
+    """Gets the posts for a page number. Posts are grouped in 10s.
+    Args:
+        number: the page number we're currently on.
+    """
+    entries = get_entries_by_date()
+    # beginning of page group is the page number * 10
+    start = int(number) * 10
     try:
-        start = int(number) * 10
+        # get the next 10 entries starting at the page grouping
         entries = entries[start:start + 10]
     except IndexError:
-        entries = None
-
+        #  if there is an index error, it might be that there are fewer than 10 posts left...
+        try:
+            # try to get the remaining entries
+            entries = entries[start:len(entries)]
+        except IndexError:
+            #  if this still produces an index error, we are at the end and return no entries.
+            entries = None
     before = int(number) + 1
 
     return render_template('blog_entries.html', entries=entries, before=before)
