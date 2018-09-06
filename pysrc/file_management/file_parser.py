@@ -1,5 +1,4 @@
 import ConfigParser
-import pickle
 import re
 import os
 import sys
@@ -7,15 +6,15 @@ import markdown
 from slugify import slugify
 import json
 from dateutil.parser import parse
-sys.path.insert(0, os.getcwd())
-from pysrc.webmention.mentioner import send_mention
-from pysrc.webmention.extractor import get_entry_content
-from pysrc.file_management.markdown_album_extension import AlbumExtension
-from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
+from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.file_management.markdown_album_pre_process import new_prefix
 import logging
 from PIL import Image
 import numpy as np
+from python_webmention.mentioner import get_entry_content
+from markdown_albums.markdown_album_extension import AlbumExtension
+
+sys.path.insert(0, os.getcwd()) # todo: this is bad.
 
 __author__ = 'kongaloosh'
 
@@ -151,24 +150,30 @@ def file_parser_json(filename, g=None, md=True):
 
     if entry['in_reply_to']:
         # if the post is a response,
-        reply_to = []
+        in_reply_to = []
+        if type(entry['in_reply_to']) is unicode:
+            entry['in_reply_to'] = str(entry['in_reply_to'])
         if type(entry['in_reply_to']) != list:  # if the reply_tos isn't a list
             entry['in_reply_to'] = [reply_to.strip() for reply_to in entry['in_reply_to'].split(',')]  # split reply_tos
+        print (entry['in_reply_to'])
         for i in entry['in_reply_to']:      # for all the replies we have...
             if type(i) == dict:             # which are not images on our site...
-                reply_to.append(i)
+                in_reply_to.append(i)
             elif i.startswith('http://127.0.0.1:5000'):     # if localhost self-reference, parse the entry
-                reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
+                in_reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
             elif i.startswith('https://kongaloosh.com/'):   # if self-reference, parse the entry
-                reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
+                in_reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
             elif i.startswith('http'):                  # which are not data resources on our site...
-                reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
-        entry['in_reply_to'] = reply_to
+                print get_entry_content(i)
+                in_reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
+        entry['in_reply_to'] = in_reply_to
 
     return entry
 
 
 def create_post_from_data(data):
+    """cleans a dictionary based on posted form info and preps for json dump."""
+    # 1. slugify
     if data['slug']:                                # if there's already a slug
         slug = data['slug']                         # ... just use the slug
     else:                                           # ... otherwise make a slug
@@ -185,13 +190,13 @@ def create_post_from_data(data):
                         day=str(data['published'].day)))             # turn date into file-path)
         data['u-uid'] = slug
         data['slug'] = slug
-
+    # 2. parse categories
     try:                                            # if we have a category in the
         if data['category']:                        # comes in as a string, so we need to parse it
             data['category'] = [i.strip() for i in data['category'].lower().split(",")]
     except AttributeError:
         pass
-
+    # 3. parse reply tos
     if isinstance(data['in_reply_to'], basestring):
         data['in_reply_to'] = [reply.strip() for reply in data['in_reply_to'].split(',')]  # turn it into a list
     return data
@@ -265,7 +270,7 @@ def create_json_entry(data, g, draft=False, update=False):
                                  [data['slug'], data['published'], c])
                     g.db.commit()
 
-            create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
+            create_entry_markdown(data, total_path)                 # also create md version.
         return data['url']
     else:
         return "/already_made"                                     # a post of this name already exists
@@ -273,43 +278,45 @@ def create_json_entry(data, g, draft=False, update=False):
 
 def update_json_entry(data, old_entry, g, draft=False):
     """
-    Update entry based on edits recieved
-    :param data: the new entry the old entry is updated with
-    :param old_entry: the old entry which is being updated
-    :param g: dbms cursor
-    :param draft: flag indicating whether we're updating a draft or an alredy submitted post
+    Update old entry based on differences in new entry and saves file.
+    Calls create_json_entry after the appropriate dbms manipulation is finished to actually save the entry.
+    
+    Args:
+        data: the new entry the old entry is updated with
+        old_entry: the old entry which is being updated
+        g: dbms cursor
+        draft: flag indicating whether we're updating a draft or an already submitted post
     """
 
-    print "new", data['published'], "old", old_entry['published']
-
+    # 1. ensure that privileged old info isn't over-written
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
 
-    if data['category']:                                            # if categories exist, update them
-        if not draft:                                               # if this is not a draft
-            # parse the categories into a list
-            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
-            try:
-                # remove all previous categories from the db
-                for c in old_entry['category']:
-                    g.db.execute(
-                        '''
-                        DELETE FROM categories
-                        WHERE slug = '{0}' AND category = '{1}';
-                        '''.format(data['slug'], c)
-                    )
-            except TypeError:
-                pass
+    # 2. remove categories if they exist and replace (if not draft)
+    if data['category'] and not draft:                              # if categories exist, update them
+        # parse the categories into a list
+        data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+        try:
+            # remove all previous categories from the db
+            for c in old_entry['category']:
+                g.db.execute(
+                    '''
+                    DELETE FROM categories
+                    WHERE slug = '{0}' AND category = '{1}';
+                    '''.format(data['slug'], c)
+                )
+        except TypeError:
+            pass
 
-            # put the new categories into the db
-            for c in data['category']:      # parse the categories into a list and add to dbms
-                print c
-                g.db.execute('''
-                    insert or replace into categories (slug, published, category) values (?, ?, ?)''',
-                     [old_entry['slug'], old_entry['published'], c])
-                g.db.commit()
+        # put the new categories into the db
+        for c in data['category']:      # parse the categories into a list and add to dbms
+            print c
+            g.db.execute('''
+                insert or replace into categories (slug, published, category) values (?, ?, ?)''',
+                 [old_entry['slug'], old_entry['published'], c])
+            g.db.commit()
 
-    # for all the remaining data, update the old entry with the new entry.
+    # 3. for all the remaining data, update the old entry with the new entry.
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]

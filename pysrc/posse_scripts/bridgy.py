@@ -1,5 +1,5 @@
 from pysrc.file_management.file_parser import create_json_entry, file_parser_json, update_json_entry
-from pysrc.webmention.mentioner import send_mention
+from python_webmention.mentioner import send_mention
 import ConfigParser
 
 config = ConfigParser.ConfigParser()
