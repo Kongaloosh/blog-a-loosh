@@ -1,4 +1,18 @@
-sudo pip install pyasn1;
-sudo pip install ndg-httpsclient;
-
-
+numpy==1.14.3
+MarkdownAlbums==0.1
+Flask==0.12.2
+html2text==2016.9.19
+tweepy==3.5.0
+markdown2==2.3.4
+PythonWebmention==0.1
+requests==2.14.2
+Jinja2==2.9.6
+selenium==3.4.3
+MarkdownHashtags==0.1
+Markdown==2.6.8
+Pillow==5.2.0
+python_dateutil==2.7.3
+oauth2==1.9.0.post1
+python==2.5
+pytumblr==0.0.8
+unicode_slugify==0.1.3
