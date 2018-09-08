@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # coding: utf-8
 import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, jsonify
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, \
+    jsonify
 from contextlib import closing
 import os
 from datetime import datetime
@@ -22,7 +23,6 @@ from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from markdown_albums.markdown_album_extension import AlbumExtension
 import markdown
 from python_webmention.mentioner import send_mention, get_mentions
-
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -159,7 +159,7 @@ def post_from_request(request=None):
 
         for title in request.files:
             data[title] = request.files[title]
-            data[title].seek(0,2)
+            data[title].seek(0, 2)
             if data[title].tell() < 1:
                 data[title] = None
 
@@ -180,8 +180,71 @@ def post_from_request(request=None):
             data['published'] = parse(data['published'])
     return data
 
+
+def get_post_for_editing(draft_location, md=False):
+    entry = file_parser_json(draft_location, md=False)
+    if entry['category']:
+        entry['category'] = ', '.join(entry['category'])
+
+    if entry['published']:
+        try:
+            entry['published'] = entry['published'].strftime('%Y-%m-%d')
+        except AttributeError:
+            entry['published'] = None
+    return entry
+
+
+def syndicate_from_form(creation_request, location, in_reply_to):
+    if in_reply_to:
+        # if it's a response...
+        for reply_to in in_reply_to.split(','):
+            # split in case post is in reply to many and send mention
+            send_mention('http://' + DOMAIN_NAME + location, reply_to)
+
+    if creation_request.form.get('twitter'):
+        # if we're syndicating to twitter, spin off a thread and send the request.
+        t = Timer(2, bridgy_twitter, [location])
+        t.start()
+
+
+def update_entry(update_request, year, month, day, name, draft=False):
+    data = post_from_request(update_request)
+    if data['location'] is not None and data['location'].startswith("geo:"):
+        # get the place name for the item in the data.
+        (place_name, geo_id) = resolve_placename(data['location'])
+        data['location_name'] = place_name
+        data['location_id'] = geo_id
+
+    location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+    data['content'] = run(data['content'], date=data['published'])
+
+    file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+    entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
+    update_json_entry(data, entry, g=g, draft=draft)
+    syndicate_from_form(update_request, location, data['in_reply_to'])
+    return location
+
+
+def add_entry(creation_request, draft=False):
+    data = post_from_request(creation_request)
+    if data['published'] is None:  # we're publishing it now; give it the present time
+        data['published'] = datetime.now()
+    data['content'] = run(data['content'], date=data['published'])  # find all images in albums and move them
+
+    if data['location'] is not None and data['location'].startswith("geo:"):  # if we were given a geotag
+        (place_name, geo_id) = resolve_placename(data['location'])  # get the placename
+        data['location_name'] = place_name
+        data['location_id'] = geo_id
+        # todo: you'll be left with a rogue 'location' in the dict... should clean that...
+
+    location = create_json_entry(data, g=g)  # create the entry
+    syndicate_from_form(creation_request, location, data['in_reply_to'])
+    return location
+
+
 def action_stream_parser(filename):
     return NotImplementedError("this doesn't exist yet")
+
 
 @app.route('/')
 def show_entries():
@@ -192,8 +255,8 @@ def show_entries():
         return show_atom()
 
     # getting the entries we want to display.
-    entries = []                            # store the entries which will be presented
-    cur = g.db.execute(                     # grab in order of newest
+    entries = []  # store the entries which will be presented
+    cur = g.db.execute(  # grab in order of newest
         """
         SELECT location
         FROM entries
@@ -201,17 +264,17 @@ def show_entries():
         """
     )
 
-    for (row,) in cur.fetchall():           # iterate over the results
-        if os.path.exists(row + ".json"):   # if the file fetched exists...
-            entries.append(file_parser_json(row + ".json"))     # parse the json and add it to the list of entries.
+    for (row,) in cur.fetchall():  # iterate over the results
+        if os.path.exists(row + ".json"):  # if the file fetched exists...
+            entries.append(file_parser_json(row + ".json"))  # parse the json and add it to the list of entries.
 
     try:
-        entries = entries[:10]              # get the 10 newest
+        entries = entries[:10]  # get the 10 newest
     except IndexError:
-        if len(entries) == 0:               # if there's an index error and the len is low..
-            entries = None                  # there are no entries
+        if len(entries) == 0:  # if there's an index error and the len is low..
+            entries = None  # there are no entries
     # otherwise there are < 10 entries and we'll just display what we have ...
-    before = 1                              # holder which tells us which page we're on
+    before = 1  # holder which tells us which page we're on
     tags = get_most_popular_tags()[:10]
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
 
@@ -220,24 +283,24 @@ def show_entries():
 def show_rss():
     """ The rss view: presents entries in rss form. """
 
-    entries = []                            # store the entries which will be presented
-    cur = g.db.execute(                     # grab in order of newest
+    entries = []  # store the entries which will be presented
+    cur = g.db.execute(  # grab in order of newest
         """
         SELECT location
         FROM entries
         ORDER BY published DESC
         """
     )
-    updated=None
-    for (row,) in cur.fetchall():           # iterate over the results
-        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+    updated = None
+    for (row,) in cur.fetchall():  # iterate over the results
+        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
             entries.append(file_parser_json(row + ".json"))
 
     try:
-        entries = entries[:10]              # get the 10 newest
+        entries = entries[:10]  # get the 10 newest
 
     except IndexError:
-        entries = None                      # there are no entries
+        entries = None  # there are no entries
 
     template = render_template('rss.xml', entries=entries, updated=updated)
     response = make_response(template)
@@ -249,8 +312,8 @@ def show_rss():
 def show_atom():
     """ The atom view: presents entries in atom form. """
 
-    entries = []                            # store the entries which will be presented
-    cur = g.db.execute(                     # grab in order of newest
+    entries = []  # store the entries which will be presented
+    cur = g.db.execute(  # grab in order of newest
         """
         SELECT location
         FROM entries
@@ -258,15 +321,15 @@ def show_atom():
         """
     )
     updated = None
-    for (row,) in cur.fetchall():           # iterate over the results
-        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+    for (row,) in cur.fetchall():  # iterate over the results
+        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
             entries.append(file_parser_json(row + ".json"))
 
     try:
-        entries = entries[:10]              # get the 10 newest
+        entries = entries[:10]  # get the 10 newest
         updated = entries[0]['published']
     except IndexError:
-        entries = None                      # there are no entries
+        entries = None  # there are no entries
 
     template = render_template('atom.xml', entries=entries, updated=updated)
     response = make_response(template)
@@ -278,8 +341,8 @@ def show_atom():
 def show_json():
     """ The rss view: presents entries in json feed form. """
 
-    entries = []                            # store the entries which will be presented
-    cur = g.db.execute(                     # grab in order of newest
+    entries = []  # store the entries which will be presented
+    cur = g.db.execute(  # grab in order of newest
         """
         SELECT location
         FROM entries
@@ -287,38 +350,38 @@ def show_json():
         """
     )
 
-    for (row,) in cur.fetchall():           # iterate over the results
-        if os.path.exists(row + ".json"):   # if the file fetched exists, append the parsed details
+    for (row,) in cur.fetchall():  # iterate over the results
+        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
             entries.append(file_parser_json(row + ".json"))
 
     try:
-        entries = entries[:10]              # get the 10 newest
+        entries = entries[:10]  # get the 10 newest
     except IndexError:
-        entries = None                      # there are no entries
+        entries = None  # there are no entries
 
     feed_items = []
 
     for entry in entries:
         feed_item = {
-                        'id': entry['url'],
-                        'url': entry['url'],
-                        'content_text': entry['summary'] if entry['summary'] else entry['content'],
-                        'date_published': entry['published'],
-                        'author': {
-                            'name': 'Alex Kearney'
-                        }
+            'id': entry['url'],
+            'url': entry['url'],
+            'content_text': entry['summary'] if entry['summary'] else entry['content'],
+            'date_published': entry['published'],
+            'author': {
+                'name': 'Alex Kearney'
+            }
 
-                    }
+        }
         feed_items.append(feed_item)
 
     feed_json = {
         'version': 'https://jsonfeed.org/version/1',
-        'home_page_url' : 'https://kongaloosh.com/',
-        'feed_url' : 'https://kongaloosh.com/json.feed',
-        'title' : 'kongaloosh',
-        'items' : feed_items
+        'home_page_url': 'https://kongaloosh.com/',
+        'feed_url': 'https://kongaloosh.com/json.feed',
+        'title': 'kongaloosh',
+        'items': feed_items
     }
-    
+
     return jsonify(feed_json)
 
 
@@ -354,8 +417,8 @@ def pagination(number):
     """
     entries = get_entries_by_date()
 
-    start = int(number) * 10    # beginning of page group is the page number * 10
-    before = int(number) + 1    # increment the page group
+    start = int(number) * 10  # beginning of page group is the page number * 10
+    before = int(number) + 1  # increment the page group
     try:
         # get the next 10 entries starting at the page grouping
         entries = entries[start:start + 10]
@@ -365,8 +428,8 @@ def pagination(number):
             # try to get the remaining entries
             entries = entries[start:len(entries)]
         except IndexError:
-            entries = None  #  if this still produces an index error, we are at the end and return no entries.
-            before = 0      # set before so that we know we're at the end
+            entries = None  # if this still produces an index error, we are at the end and return no entries.
+            before = 0  # set before so that we know we're at the end
     return render_template('blog_entries.html', entries=entries, before=before)
 
 
@@ -385,57 +448,31 @@ def add():
     """ The form for user-submission """
     if request.method == 'GET':
         tags = get_most_popular_tags()[:10]
-        for element in ["None", "image", "album", "bookmark", "note"]:
-            try:
-                tags.remove(element)
-            except ValueError:
-                pass
         return render_template('edit_entry.html', entry=post_from_request(), popular_tags=tags, type="add")
 
     elif request.method == 'POST':  # if we're adding a new post
         if not session.get('logged_in'):
             abort(401)
-        data = post_from_request(request)
 
         if "Submit" in request.form:
-            if data['published'] is None:           # we're publishing it now; give it the present time
-                data['published'] = datetime.now()
-            data['content'] = run(data['content'], date=data['published'])  # find all images in albums and move them
-
-            if data['location'] is not None and data['location'].startswith("geo:"):    # if we were given a geotag
-                (place_name, geo_id) = resolve_placename(data['location'])              # get the placename
-                data['location_name'] = place_name
-                data['location_id'] = geo_id
-                # todo: you'll be left with a rogue 'location' in the dict... should clean that...
-
-            location = create_json_entry(data, g=g)     # create the entry
-
-            if data['in_reply_to']:
-                # if it's a response...
-                for reply_to in data['in_reply_to'].split(','):
-                    # split in case post is in reply to many and send mention
-                    send_mention('http://' + DOMAIN_NAME + location, reply_to)
-
-            if request.form.get('twitter'):
-                # if we're syndicating to twitter, spin off a thread and send the request.
-                t = Timer(2, bridgy_twitter, [location])
-                t.start()
+            location = add_entry(request)
 
         if "Save" in request.form:  # if we're simply saving the post as a draft
+            data = post_from_request(request)
             location = create_json_entry(data, g=g, draft=True)
-        return redirect(location)   # send the user to the newly created post
+        return redirect(location)  # send the user to the newly created post
 
 
 @app.route('/delete_draft/<name>', methods=['GET'])
 def delete_drafts():
     """Deletes a given draft and associated files based on the name."""
     # todo: should have a 404 or something if the post doesn't actually exist.
-    if not session.get('logged_in'):                # check permissions before deleting
+    if not session.get('logged_in'):  # check permissions before deleting
         abort(401)
-    totalpath = "drafts/{name}"                     # the file will be located in drafts under the slug name
-    for extension in [".md", '.json', '.jpg']:      # for all of the files associated with a post
-        if os.path.isfile(totalpath + extension):   # if there's an associated file...
-            os.remove(totalpath + extension)        # ... delete it
+    totalpath = "drafts/{name}"  # the file will be located in drafts under the slug name
+    for extension in [".md", '.json', '.jpg']:  # for all of the files associated with a post
+        if os.path.isfile(totalpath + extension):  # if there's an associated file...
+            os.remove(totalpath + extension)  # ... delete it
 
     # note: because this is a draft, the images associated with the post will still be in the temp folder
     return redirect('/', 200)
@@ -493,11 +530,12 @@ def bulk_upload():
                     elif exif[orientation] == 8:
                         image = image.rotate(90, expand=True)
                 except KeyError:
-                    app.logger.error("exif orientation key error: key was {0}, not in keys {1}".format(orientation,exif.keys()))
+                    app.logger.error(
+                        "exif orientation key error: key was {0}, not in keys {1}".format(orientation, exif.keys()))
             except AttributeError:
                 # could be a png or something without exif
                 pass
-            app.logger.info("saved at "+file_loc)
+            app.logger.info("saved at " + file_loc)
             image.save(file_loc)
         return redirect('/')
     else:
@@ -543,7 +581,8 @@ def md_to_html():
     :returns mar
     """
     if request.method == "POST":
-        return jsonify({"html":markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension()])})
+        return jsonify(
+            {"html": markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension()])})
 
         # return request.json()
     else:
@@ -622,21 +661,13 @@ def recent_uploads():
 def edit(year, month, day, name):
     """ The form for user-submission """
     if request.method == "GET":
-        try:
-            file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json", md=False)
-            try:
-                entry['category'] = ', '.join(entry['category'])
-            except TypeError:
-                entry['category'] = ''
-
-            if entry['published']:
-                print entry['published']
-                entry['published'] = entry['published'].strftime('%Y-%m-%d')
-
-            return render_template('edit_entry.html', type="edit", entry=entry)
-        except IOError:
-            return redirect('/404')
+        # try:
+        file_name = "data/{year}/{month}/{day}/{name}.json".format(year=year, month=month, day=day, name=name)
+        app.logger.info(file_name)
+        entry = get_post_for_editing(file_name)
+        return render_template('edit_entry.html', type="edit", entry=entry)
+        # except IOError:
+        #     return redirect('/404')
 
     elif request.method == "POST":
         if not session.get('logged_in'):
@@ -644,36 +675,14 @@ def edit(year, month, day, name):
         app.logger.info("updating. {0}".format(request.form))
 
         if "Submit" in request.form:
-            data = post_from_request(request)
-            if data['location'] is not None and data['location'].startswith("geo:"):
-                # get the place name for the item in the data.
-                (place_name, geo_id) = resolve_placename(data['location'])
-                data['location_name'] = place_name
-                data['location_id'] = geo_id
+            update_entry(request, year, month, day, name)
 
-            location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            data['content'] = run(data['content'], date=data['published'])
-
-            file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-            entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
-            update_json_entry(data, entry, g=g)
-
-            if request.form.get('twitter'):
-                #  if twitter is checked in the form, ask bridgy to syndicate out to twitter
-                app.logger.info("syndicating to twitter")
-                t = Timer(2, bridgy_twitter, ['/e/' + location])
-                t.start()
-
-            if data['in_reply_to']:
-                app.logger.info("sending mention from {0} to {1}".format('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to']))
-                send_mention('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to'])
-
-            return redirect("/e/" + location)
         return redirect("/")
 
 
 def submit_post():
     pass
+
 
 @app.route('/e/<year>/<month>/<day>/<name>')
 def profile(year, month, day, name):
@@ -685,26 +694,8 @@ def profile(year, month, day, name):
 
     entry = file_parser_json(file_name + ".json")
 
-    # if os.path.exists(file_name + ".jpg"):
-    #     entry['photo'] = file_name + ".jpg"  # get the actual file
-    # if os.path.exists(file_name + ".mp4"):
-    #     entry['video'] = file_name + ".mp4"  # get the actual file
-    # if os.path.exists(file_name + ".mp3"):
-    #     entry['audio'] = file_name + ".mp3"  # get the actual file
-
-    mentions,likes,reposts = get_mentions('https://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.
-                            format(year=year, month=month, day=day, name=name))
-
-    # if entry['syndication']:
-    #     for i in entry['syndication'].split(','):               # look at all the syndication links
-    #         if i.startswith('https://twitter.com/'):                    # if there's twitter syndication
-    #             twitter = dict()
-    #             vals = i.split('/')
-    #             twitter['id'] = vals[len(vals)-1]
-    #             twitter['link'] = i
-    #             entry['twitter'] = twitter
-    #         if i.startswith('https://www.facebook.com/'):
-    #             entry['facebook'] = {'link':i}
+    mentions, likes, reposts = get_mentions(
+        'https://' + DOMAIN_NAME + '/e/{year}/{month}/{day}/{name}'.format(year=year, month=month, day=day, name=name))
 
     return render_template('entry.html', entry=entry, mentions=mentions, likes=likes, reposts=reposts)
 
@@ -901,7 +892,7 @@ def handle_micropub():
                 location = create_json_entry(data, g=g)
 
                 if data['in_reply_to']:
-                    send_mention('https://' + DOMAIN_NAME + '/e/'+ location, data['in_reply_to'])
+                    send_mention('https://' + DOMAIN_NAME + '/e/' + location, data['in_reply_to'])
 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
@@ -918,7 +909,7 @@ def handle_micropub():
                 resp = Response(status='unauthorized')
                 resp.status_code = 401
                 return resp
-        else:    
+        else:
             resp = Response(status='unauthorized')
             resp.status_code = 401
 
@@ -950,7 +941,7 @@ def handle_inbox():
         entries = [
             f for f in os.listdir(inbox_location)
             if os.path.isfile(os.path.join(inbox_location, f))
-            and f.endswith('.json')]
+               and f.endswith('.json')]
 
         for_approval = [entry for entry in entries if entry.startswith("approval_")]
         entries = [entry for entry in entries if not entry.startswith("approval_")]
@@ -960,7 +951,8 @@ def handle_inbox():
             inbox_items = {}
             inbox_items['@context'] = "https://www.w3.org/ns/ldp"
             inbox_items['@id'] = "http://" + DOMAIN_NAME + "/inbox"
-            inbox_items['http://www.w3.org/ns/ldp#contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries]
+            inbox_items['http://www.w3.org/ns/ldp#contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for
+                                                                entry in entries]
             resp = Response(inbox_items, content_type="application/ld+json", status=200)
             resp.data = json.dumps(inbox_items)
             return resp
@@ -994,7 +986,7 @@ def handle_inbox():
             location = 'inbox/' + slugify(str(datetime.now())) + '.json'
             notification = open(location, 'w+')
             notification.write(request.data)
-            resp = Response(status=201, headers={'Location':location})
+            resp = Response(status=201, headers={'Location': location})
             return resp
         else:  # if the sender isn't whitelisted
             try:
@@ -1024,6 +1016,7 @@ def handle_inbox():
 @app.route('/inbox/send/', methods=['GET', 'POST'])
 def notifier():
     return 501
+
 
 @app.route('/inbox/<name>', methods=['GET'])
 def show_inbox_item(name):
@@ -1073,10 +1066,10 @@ def show_inbox_item(name):
             #     </inbox>
             #     """.format(str(entry))
             # return resp
-                inbox_items = {}
-                resp = Response(content_type="application/ld+json", status=200)
-                resp.data = json.dumps(entry)
-                return resp
+            inbox_items = {}
+            resp = Response(content_type="application/ld+json", status=200)
+            resp.data = json.dumps(entry)
+            return resp
 
 
 @app.route('/drafts', methods=['GET'])
@@ -1095,16 +1088,7 @@ def show_drafts():
 def show_draft(name):
     if request.method == 'GET':
         draft_location = 'drafts/' + name + ".json"
-        entry = file_parser_json(draft_location, md=False)
-        if entry['category']:
-            entry['category'] = ', '.join(entry['category'])
-
-        if entry['published']:
-            print entry['published'], type(entry['published'])
-            try:
-                entry['published'] = entry['published'].strftime('%Y-%m-%d')
-            except AttributeError:
-                entry['published'] = None
+        entry = get_post_for_editing(draft_location)
         return render_template('edit_entry.html', entry=entry, type="draft")
 
     if request.method == 'POST':
@@ -1119,18 +1103,9 @@ def show_draft(name):
             return redirect("/drafts")
 
         if "Submit" in request.form:  # if we're publishing it now
-            data['published'] = datetime.now()
-            location = create_json_entry(data, g=g)
-            if data['in_reply_to']:
-                send_mention('http://' + DOMAIN_NAME + location, data['in_reply_to'])
-
-            if request.form.get('twitter'):
-                t = Timer(30, bridgy_twitter, [location])
-                t.start()
-
+            location = add_entry(request, draft=True)
             if os.path.isfile("drafts/" + name + ".json"):  # this won't always be the slug generated
                 os.remove("drafts/" + name + ".json")
-
             return redirect(location)
 
 
