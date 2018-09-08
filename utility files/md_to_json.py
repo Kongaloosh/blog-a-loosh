@@ -135,16 +135,7 @@ def fix():
                     pass
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    # e = file_parser('data/2015/11/20/test-notes.md')
-    # print(e)
-    # e = file_parser('data/2015/7/25/albums.md')
-    # create_json_entry(e)
     fix()
-=======
     e = file_parser('data/2015/11/20/test-notes.md')
     print(e)
-    # e = file_parser('data/2015/7/25/albums.md')
-    # create_json_entry(e)
     fix()
->>>>>>> 27189e110eff027095c09330dff8a94b99f1fedd
