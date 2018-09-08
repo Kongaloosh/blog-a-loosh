@@ -136,7 +136,7 @@ def resolve_placename(location):
         return None, None
 
 
-def post_from_request(request):
+def post_from_request(request=None):
     data = {
         'h': None,
         'title': None,
@@ -155,27 +155,29 @@ def post_from_request(request):
         'photo': None
     }
 
-    for title in request.files:
-        data[title] = request.files[title]
-        data[title].seek(0,2)
-        if data[title].tell() < 1:
-            data[title] = None
+    if request:
 
-    for title in request.form:
-        try:
-            # check if the element is already written
-            # we privilege files over location refs
-            if data[title] is None:
+        for title in request.files:
+            data[title] = request.files[title]
+            data[title].seek(0,2)
+            if data[title].tell() < 1:
+                data[title] = None
+
+        for title in request.form:
+            try:
+                # check if the element is already written
+                # we privilege files over location refs
+                if data[title] is None:
+                    data[title] = request.form[title]
+            except KeyError:
                 data[title] = request.form[title]
-        except KeyError:
-            data[title] = request.form[title]
 
-    for key in data:
-        if data[key] == "None" or data[key] == '':
-            data[key] = None
+        for key in data:
+            if data[key] == "None" or data[key] == '':
+                data[key] = None
 
-    if data['published']:
-        data['published'] = parse(data['published'])
+        if data['published']:
+            data['published'] = parse(data['published'])
     return data
 
 def action_stream_parser(filename):
@@ -388,7 +390,7 @@ def add():
                 tags.remove(element)
             except ValueError:
                 pass
-        return render_template('add.html', popular_tags=tags)
+        return render_template('edit_entry.html', entry=post_from_request(), popular_tags=tags, type="add")
 
     elif request.method == 'POST':  # if we're adding a new post
         if not session.get('logged_in'):
@@ -632,7 +634,7 @@ def edit(year, month, day, name):
                 print entry['published']
                 entry['published'] = entry['published'].strftime('%Y-%m-%d')
 
-            return render_template('edit_entry.html', entry=entry)
+            return render_template('edit_entry.html', type="edit", entry=entry)
         except IOError:
             return redirect('/404')
 
@@ -1103,7 +1105,7 @@ def show_draft(name):
                 entry['published'] = entry['published'].strftime('%Y-%m-%d')
             except AttributeError:
                 entry['published'] = None
-        return render_template('edit_entry.html', entry=entry, draft=True)
+        return render_template('edit_entry.html', entry=entry, type="draft")
 
     if request.method == 'POST':
         if not session.get('logged_in'):

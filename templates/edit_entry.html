@@ -22,7 +22,12 @@
 <div class="container">
     <div class="col-lg-12 col-md-12 col-sm-12">
         <div class="row pull-right"  style="padding 10px">
-            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            {% if type == "edit"%}
+                <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            {% elif type == "draft" %}
+                <a href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            {%endif%}
+
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-6 col-sm-12">
@@ -51,7 +56,9 @@
                         <input type="date" name="published" value="{{entry.published}}" style="width:100%">
 
                     </p>
-
+                    {% if popular_tags %}
+                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}" onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
+                     {%endif%}
                     <p>
                         <label>Reply-to</label>
                         <input type="text" style="width: 100%" name="in_reply_to" value="{{entry.in_reply_to}}">
@@ -74,12 +81,15 @@
                     </p>
 
                     <p>
-                        {% if draft %}
+                        {% if type == "draft" %}
                             <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save" style="width:49%">
                             <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit" style="width:49%">
-                        {% else %}
-                        <input type="submit" style="width:49%" value="Submit" name="Submit">
+                        {% elif type == "edit"  %}
+                            <input type="submit" style="width:49%" value="Submit" name="Submit">
+                        {% elif type == "add"%}
+                            <input formaction="/add" type="submit" style="width:49%" value="Save" name="Save"> <input formaction="/add" type="submit" style="width:49%" value="Submit" name="Submit">
                         {% endif %}
+
                     </p>
                 </form>
                 <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
