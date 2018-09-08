@@ -36,9 +36,9 @@
                         <label>Title:</label> <input type="text" style="width: 100%"  name="title" id="title_form" value="{{entry.title}}">
                     </p>
                     <p>
-                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary" id="summary_form">{{entry.summary}}</textarea>
+                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary" id="summary_form">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
                     </p>
-                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{{entry.content}}</textarea>
+                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
                     </p>
                     <hr>
                     <p>
@@ -49,7 +49,7 @@
 
                     <p>
                         <label>Tags</label>
-                        <input type="text" style="width: 100%" name="category" value="{{entry.category}}">
+                        <input type="text" style="width: 100%" name="category" value="{%if entry.category%}{{entry.category}}{%endif%}">
                     </p>
 
                     <p>
@@ -57,18 +57,18 @@
 
                     </p>
                     {% if popular_tags %}
-                    <p> Common tags include: {% for tag in popular_tags%} <a href="/t/{{tag}}" onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
+                    <p> Common tags include: {% for tag in popular_tags%} <a onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
                      {%endif%}
                     <p>
                         <label>Reply-to</label>
-                        <input type="text" style="width: 100%" name="in_reply_to" value="{{entry.in_reply_to}}">
+                        <input type="text" style="width: 100%" name="in_reply_to" value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}">
 
                     </p>
 
                     <p>
                         <label>Photo</label>
                         <input type="file" name="photo" id="img_input" accept="image/*"/>
-                        <input type="text" style="width:100%" name="photo" id="img_loc" value="{{entry.photo}}">
+                        <input type="text" style="width:100%" name="photo" id="img_loc" value="{%if entry.photo%}{{entry.photo}}{%endif%}">
                     </p>
 
 
@@ -77,7 +77,7 @@
                         <label>twitter </label> <input type="checkbox" name="twitter" value="twitter"> <br>
                         <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
                         <textarea style="width: 100%" type="text" name="location"
-                                  id="geo_coord">{{entry.location}}</textarea>
+                                  id="geo_coord">{%if entry.location%}{{entry.location}}{%endif%}</textarea>
                     </p>
 
                     <p>
