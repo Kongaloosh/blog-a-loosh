@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Kongaloosh</title>
+    <subtitle>Alex's blogroll.</subtitle>
+    <link href="https://kongaloosh.com/atom.xml" rel="self" type="application/atom+xml" />
+    <link rel="hub" href="https://switchboard.p3k.io/" />
+    <!--<link rel="hub" href="https://kgl.superfeedr.com/" />-->
+    <id>http://demo.dotcms.com/</id>
+    <updated>{{updated.isoformat('T')}}</updated>
+    {% for entry in entries %}
+        <entry>
+            {% if entry.title %}
+		        <title>{{ entry.title }}</title>
+            {% else %}
+                <title>{{entry.content | striptags}}</title>
+		    {% endif %}
+            <link href="http://kongaloosh.com/{{entry.url}}" />
+            <id>http://kongaloosh.com{{entry.url}}</id>
+            <updated>{{entry.published.isoformat('T')}}</updated>
+            <author><name>Alex Kearney</name></author>
+            <summary>
+                {% if entry.summary %}
+				{{entry.summary}}
+		        {% else %}
+
+		        {{entry.content | striptags}}
+		        {% endif%}
+            </summary>
+             {% if entry.category %}
+            {% for c in entry.category %}
+                <category term="{{c}}"/>
+            {% endfor %}
+            {% endif %}
+        </entry>
+    {% endfor %}
+</feed>

@@ -1,5 +1,4 @@
 import ConfigParser
-import pickle
 import re
 import os
 import sys
@@ -7,14 +6,15 @@ import markdown
 from slugify import slugify
 import json
 from dateutil.parser import parse
-sys.path.insert(0, os.getcwd())
-from pysrc.webmention.mentioner import send_mention
-from pysrc.file_management.markdown_album_extension import AlbumExtension
-from pysrc.file_management.markdown_hashtag_extension import HashtagExtension
+from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.file_management.markdown_album_pre_process import new_prefix
 import logging
 from PIL import Image
 import numpy as np
+from python_webmention.mentioner import get_entry_content
+from markdown_albums.markdown_album_extension import AlbumExtension
+
+sys.path.insert(0, os.getcwd()) # todo: this is bad.
 
 __author__ = 'kongaloosh'
 
@@ -78,6 +78,15 @@ def move_and_resize(from_location, to_blog_location, to_copy):
 
 
 def save_to_two(image,  to_blog_location, to_copy):
+    """
+    Saves two images: one image which is scaled down to optimize serving images, one which is put in a folder at 
+    original resolution for storage. 
+    args:
+    :param image: 
+    :param to_blog_location: 
+    :param to_copy: 
+    :return: 
+    """
     to_blog_location = to_blog_location.lower()
     to_copy = to_copy.lower()
 
@@ -114,10 +123,18 @@ def save_to_two(image,  to_blog_location, to_copy):
 
 
 def file_parser_json(filename, g=None, md=True):
+    """Parses a json
+    Args:
+        filename: the filename (including path)
+        g: the database connection
+        md: boolean flag whether the markdown content should be parsed.
+    """
     entry = json.loads(open(filename, 'rb').read())
+
+
     try:
-        entry['published'] = parse(entry['published'])
-        if g:
+        entry['published'] = parse(entry['published'])      # parse the string for time
+        if g and entry['published'] is None:                # if for some reason it's missing, infer from dbms
             entry['published'] = parse(g.db.execute("""
             SELECT published
             FROM entries
@@ -125,20 +142,38 @@ def file_parser_json(filename, g=None, md=True):
             """.format(entry['slug'])).fetchall()[0][0])
     except ValueError:
         print "no file publish time"
-        pass
 
     if md and entry['content']:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
     elif entry['content'] is None:          # if we have no text for this
         entry['content'] = ''               # give it an empty string so it renders the post properly
+
+    if entry['in_reply_to']:
+        # if the post is a response,
+        in_reply_to = []
+        if type(entry['in_reply_to']) is unicode:
+            entry['in_reply_to'] = str(entry['in_reply_to'])
+        if type(entry['in_reply_to']) != list:  # if the reply_tos isn't a list
+            entry['in_reply_to'] = [reply_to.strip() for reply_to in entry['in_reply_to'].split(',')]  # split reply_tos
+        print (entry['in_reply_to'])
+        for i in entry['in_reply_to']:      # for all the replies we have...
+            if type(i) == dict:             # which are not images on our site...
+                in_reply_to.append(i)
+            elif i.startswith('http://127.0.0.1:5000'):     # if localhost self-reference, parse the entry
+                in_reply_to.append(file_parser_json(i.replace('http://127.0.0.1:5000/e/', 'data/', 1) + ".json"))
+            elif i.startswith('https://kongaloosh.com/'):   # if self-reference, parse the entry
+                in_reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
+            elif i.startswith('http'):                  # which are not data resources on our site...
+                print get_entry_content(i)
+                in_reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
+        entry['in_reply_to'] = in_reply_to
+
     return entry
 
 
-def create_json_entry(data, g, draft=False, update=False):
-    """
-    creates a json entry based on recieved dictionary, then creates a human-readable .md alongisde it.
-    """
-
+def create_post_from_data(data):
+    """cleans a dictionary based on posted form info and preps for json dump."""
+    # 1. slugify
     if data['slug']:                                # if there's already a slug
         slug = data['slug']                         # ... just use the slug
     else:                                           # ... otherwise make a slug
@@ -155,56 +190,69 @@ def create_json_entry(data, g, draft=False, update=False):
                         day=str(data['published'].day)))             # turn date into file-path)
         data['u-uid'] = slug
         data['slug'] = slug
-
+    # 2. parse categories
     try:                                            # if we have a category in the
         if data['category']:                        # comes in as a string, so we need to parse it
             data['category'] = [i.strip() for i in data['category'].lower().split(",")]
     except AttributeError:
         pass
+    # 3. parse reply tos
+    if isinstance(data['in_reply_to'], basestring):
+        data['in_reply_to'] = [reply.strip() for reply in data['in_reply_to'].split(',')]  # turn it into a list
+    return data
 
-    if draft:                                   # whether or not this is a draft changes the location saved
+
+def create_json_entry(data, g, draft=False, update=False):
+    """
+    creates a json entry based on recieved dictionary, then creates a human-readable .md alongisde it.
+    """
+
+    data = create_post_from_data(data)
+
+    if draft:   # whether or not this is a draft changes the location saved
         file_path = "drafts/"
-        data['url'] = '/drafts/' + slug
+        data['url'] = '/drafts/' + data['slug']
 
-    else:
+    else:       # if it's not a draft we need to prep for saving
         date_location = "{year}/{month}/{day}/".format(
                         year=str(data['published'].year),
                         month=str(data['published'].month),
                         day=str(data['published'].day))             # turn date into file-path
-        file_path = "data/" + date_location
-        data['url'] = '/e/' + date_location + slug
+        file_path = "data/" + date_location                         # where we'll save the new entry
+        data['url'] = '/e/' + date_location + data['slug']
 
     if not os.path.exists(file_path):                               # if the path doesn't exist, make it
         os.makedirs(os.path.dirname(file_path))
 
-    total_path = file_path+"{slug}".format(slug=slug)
+    total_path = file_path+"{slug}".format(slug=data['slug'])       # path including filename
 
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
         # Find all the multimedia files which were added with the posts
         for (key, extension) in [
-                # (data['video'], '.mp4'),
-                # (data['audio'], '.mp3'),
                 ('photo', '.jpg')]:
+            # todo: expand to other filetypes
             try:
                 if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
+                    # if the image is a location ref
                     if type(data[key]) == unicode and data[key].startswith("/images/"):
+                        # move the image and resize it
                         move_and_resize(
-                            new_prefix[:-1] + data[key],
+                            new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
                             total_path + extension,
-                            # new_prefix + total_path + "B" + extension,
                             new_prefix + total_path + extension
-
                         )
-                    else:
-                        save_to_two(data[key], total_path + extension, new_prefix + total_path + extension)
+                    else:   # if we have a buffer with the data already present, simply save and move it.
+                        save_to_two(
+                            data[key],
+                            total_path + extension,
+                            new_prefix + total_path + extension)
                     data[key] = total_path + extension              # update the dict to a location refrence
             except KeyError:
                 pass
 
-        data['published'] = data['published'].__str__()
-
-        file_writer = open(total_path+".json", 'w')                # open and dump the actual post meta-data
+        data['published'] = data['published'].__str__()             # dump to string for serialization
+        file_writer = open(total_path+".json", 'w')                 # open and dump the actual post meta-data
         file_writer.write(json.dumps(data))
         file_writer.close()
 
@@ -213,16 +261,16 @@ def create_json_entry(data, g, draft=False, update=False):
                 """
                 insert into entries
                 (slug, published, location) values (?, ?, ?)
-                """, [slug, data['published'], total_path]
+                """, [data['slug'], data['published'], total_path]
                          )
             g.db.commit()
             if data['category']:
                 for c in data['category']:
-                    g.db.execute('insert into categories (slug, published, category) values (?, ?, ?)',
-                                 [slug, data['published'], c])
+                    g.db.execute('insert or replace into categories (slug, published, category) values (?, ?, ?)',
+                                 [data['slug'], data['published'], c])
                     g.db.commit()
 
-            create_entry_markdown(data, total_path)                 # if this isn't a draft make a human-readable vers
+            create_entry_markdown(data, total_path)                 # also create md version.
         return data['url']
     else:
         return "/already_made"                                     # a post of this name already exists
@@ -230,46 +278,48 @@ def create_json_entry(data, g, draft=False, update=False):
 
 def update_json_entry(data, old_entry, g, draft=False):
     """
-    Update entry based on edits recieved
-    :param data: the new entry
-    :param g: dbms cursor
-    :param draft: flag indicating whether we're updating a draft or an alredy submitted post
+    Update old entry based on differences in new entry and saves file.
+    Calls create_json_entry after the appropriate dbms manipulation is finished to actually save the entry.
+    
+    Args:
+        data: the new entry the old entry is updated with
+        old_entry: the old entry which is being updated
+        g: dbms cursor
+        draft: flag indicating whether we're updating a draft or an already submitted post
     """
-    # file_path = "data/" + data['url'][:3]
-    # total_path = file_path + data['slug'] +  ".json"
-    # old_entry = file
 
-    print "new", data['published'], "old", old_entry['published']
-
+    # 1. ensure that privileged old info isn't over-written
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
-    if data['category']:                                            # if categories exist, update them
-        if not draft:
-            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
 
-            try:
-                for c in old_entry['category']:
-                    g.db.execute(
-                        '''
-                        DELETE FROM categories
-                        WHERE slug = '{0}' AND category = '{1}';
-                        '''.format(data['slug'], c)
-                    )
-            except TypeError:
-                pass
+    # 2. remove categories if they exist and replace (if not draft)
+    if data['category'] and not draft:                              # if categories exist, update them
+        # parse the categories into a list
+        data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+        try:
+            # remove all previous categories from the db
+            for c in old_entry['category']:
+                g.db.execute(
+                    '''
+                    DELETE FROM categories
+                    WHERE slug = '{0}' AND category = '{1}';
+                    '''.format(data['slug'], c)
+                )
+        except TypeError:
+            pass
 
-            for c in data['category']:      # parse the categories into a list and add to dbms
-                print c
-                g.db.execute('''
-                    insert into categories (slug, published, category) values (?, ?, ?)''',
-                     [old_entry['slug'], old_entry['published'], c])
-                g.db.commit()
+        # put the new categories into the db
+        for c in data['category']:      # parse the categories into a list and add to dbms
+            print c
+            g.db.execute('''
+                insert or replace into categories (slug, published, category) values (?, ?, ?)''',
+                 [old_entry['slug'], old_entry['published'], c])
+            g.db.commit()
 
+    # 3. for all the remaining data, update the old entry with the new entry.
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
-
-    print old_entry
     create_json_entry(data=old_entry, g=g, draft=draft, update=True)
 
 

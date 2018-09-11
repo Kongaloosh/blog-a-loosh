@@ -3,18 +3,24 @@
 		<title>kongaloosh</title>
 		<link>https://kongaloosh.com/</link>
 		<language>en</language>
+		<description>kongaloosh</description>
+		<!--PUBSUBHUBUB DISCOVERY-->
+		<!--<link rel="hub"  href="http://kgl.superfeedr.com/" xmlns="http://www.w3.org/2005/Atom" />-->
+		<link rel="hub"  href="https://switchboard.p3k.io/" xmlns="http://www.w3.org/2005/Atom" />
+  		<link rel="self" href="https://kongaloosh.com/rss.xml" xmlns="http://www.w3.org/2005/Atom" />
 		{% for entry in entries %}
 		<!-- START ENTRIES -->
 		<item>
 		    {% if entry.title %}
 		    <title>{{ entry.title }}</title>
 		    {% endif %}
-		    <link>{{entry.url}}</link>
+		    <link>http://kongaloosh.com{{entry.url}}</link>
 		    <pubDate>{{entry.published}}</pubDate>
 		    <description>
 		    	{% if entry.summary %}
 				{{entry.summary}}
 		        {% else %}
+
 		        {{entry.content | safe}}
 		        {% endif%}
 		    </description>
@@ -22,5 +28,7 @@
 		{% else %}
 		<p>No entries here so far </p> <!-- When we have nothing left -->
 		{% endfor %}
+
+
 	</channel>
 </rss>

@@ -11,8 +11,15 @@
     <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
     <link rel="micropub" href="http://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
     <link rel="webmention" href="https://webmention.io/kongaloosh.com/webmention" />
+    <link rel="alternate" type="application/atom+xml"
+      href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=http://kgl.superfeedr.com/" />
+    <link rel="self" href="http://kongaloosh.com/">
+    <link rel="hub" href="http://kgl.superfeedr.com/">
+
     <meta name="viewport" content="initial-scale=1">
     <title>kongaloosh</title>
+
+
 
     <link rel="https://www.w3.org/ns/ldp#inbox" href="http://kongaloosh.com/inbox">
 
@@ -20,6 +27,7 @@
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
     <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
@@ -114,7 +122,6 @@
         <div class="row text-center">
                 <!--<h1 style="color:black">Hi</h1>-->
                 <!--<hr class="small">-->
-                <span class="subheading"><i class="fa fa-paper-plane"></i></span>
         </div>
         {% if reply_to %}
         <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-xs-offset-1 col-md-10 col-xs-offset-1 align-center"> <!-- REPLY DECORATOR END -->
@@ -156,18 +163,22 @@
         {% endif %}
 
         <div class="hentry h-entry col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
-            {% if entry.in_reply_to %}
-            {% for site in entry.in_reply_to %}
-            {% if site.photo is defined %}
-            <a href="{{site.url}}">
-                <img
-                        class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                        style="image-orientation: from-image; max-height:300px"
-                        src="/{{site.photo}}"
-                        >
-            </a>
-            {% endif %}
-            {% endfor %}
+
+               {% if entry.in_reply_to is sequence%}
+            <div class="reply reply-header reply-topper reply-footer">
+                {% for site in entry.in_reply_to %}
+                {% if site.photo is defined %}
+                <a href="{{site.url}}">
+                    <img
+                            class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                            style="image-orientation: from-image; max-height:300px"
+                            src="/{{site.photo}}"
+                            >
+                </a>
+                {% endif %}
+                In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{% if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
+                {% endfor %}
+            </div>
             {% endif %}
             <div class="e-content p-note">
                 <!-- The title of an entry -->
@@ -199,7 +210,7 @@
             <div class="entry-footer clearfix">                         <!-- Footer -->
             <hr>
             <div class="row post-meta">
-                <div class="col-md-6 pull-left">
+                <div class="col-md-8 pull-left">
                     <p>
                     Posted by on
                     <a href="{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
@@ -214,8 +225,11 @@
                         {% endif %}
                     {% endif %}
                     </p>
+                    <p>
+                        {{reposts}}  <i class="fa fa-retweet"></i>'s | {{likes}} <i class="fa fa-star"></i>'s
+                    </p>
                 </div> <!-- END POST DETAILS -->
-                <div class="col-md-6 pull-right text-right">
+                <div class="col-md-4 pull-right text-right">
                         {% if entry.category %}
                             <i class="fa fa-tags"></i>
                             {% for c in entry.category %}
