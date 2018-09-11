@@ -131,7 +131,6 @@ def file_parser_json(filename, g=None, md=True):
     """
     entry = json.loads(open(filename, 'rb').read())
 
-
     try:
         entry['published'] = parse(entry['published'])      # parse the string for time
         if g and entry['published'] is None:                # if for some reason it's missing, infer from dbms
@@ -157,6 +156,7 @@ def file_parser_json(filename, g=None, md=True):
             entry['in_reply_to'] = [reply_to.strip() for reply_to in entry['in_reply_to'].split(',')]  # split reply_tos
         print (entry['in_reply_to'])
         for i in entry['in_reply_to']:      # for all the replies we have...
+            # todo: THIS SHOULD BE ASYNC!
             if type(i) == dict:             # which are not images on our site...
                 in_reply_to.append(i)
             elif i.startswith('http://127.0.0.1:5000'):     # if localhost self-reference, parse the entry
@@ -164,8 +164,8 @@ def file_parser_json(filename, g=None, md=True):
             elif i.startswith('https://kongaloosh.com/'):   # if self-reference, parse the entry
                 in_reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
             elif i.startswith('http'):                  # which are not data resources on our site...
-                print get_entry_content(i)
-                in_reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
+                pass
+                # in_reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
         entry['in_reply_to'] = in_reply_to
 
     return entry
