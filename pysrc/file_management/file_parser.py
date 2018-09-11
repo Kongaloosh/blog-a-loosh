@@ -164,7 +164,7 @@ def file_parser_json(filename, g=None, md=True):
             elif i.startswith('https://kongaloosh.com/'):   # if self-reference, parse the entry
                 in_reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
             elif i.startswith('http'):                  # which are not data resources on our site...
-                pass
+                in_reply_to.append(i)
                 # in_reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
         entry['in_reply_to'] = in_reply_to
 
