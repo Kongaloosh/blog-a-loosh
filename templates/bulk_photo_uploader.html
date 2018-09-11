@@ -77,10 +77,6 @@ var holder = document.getElementById('holder'),
     if (tests[api] === false) {
         support[api].className = 'fail';
     } else {
-        // FFS. I could have done el.hidden = true, but IE doesn't support
-        // hidden, so I tried to create a polyfill that would extend the
-        // Element.prototype, but then IE10 doesn't even give me access
-        // to the Element object. Brilliant.
         support[api].className = 'hidden';
     }
     });

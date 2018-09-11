@@ -1,6 +1,3 @@
-# IndieAnndroid
-
-
 ### What the heckbicuit is this?
 
 I built this as a little hacked-together example of a flask [indieweb site](http://indiewebcamp.com/). 
@@ -15,19 +12,22 @@ Spaghetti.
 
 Right now, to varying degrees of effectiveness, it can:
   
+  * what-you-see-is-what-you-get posting interface [NEW AND IMPROVED!]
+  * RSS and ATOM feed support
   * recieve entries via a micropub endpoint using indieauth
   * syndicate out to twitter and facebook using [bridgy](https://brid.gy/)
+  * bulk upload images (including mobile upload)
   * post images
   * post albums full of images
   * recieve webmentions using [webmention.io](https://webmention.io/)
   * send webmentions
   * delete posts
   * save and create drafts
-  * Indie-actions allowing people to auto-like, & auto-reply on Instagram
+  * Indie-actions allowing people to auto-like, & auto-reply on instagram and twitter
   * auto-add locations to posts, including placenames and geonames ids
-  * recieve linked data notifications [NEW AND IMPROVED!]
-  * Linking hashtags back to a stream using that tag [NEW AND IMPROVED!]
-  * Better posting interface
+  * recieve linked data notifications
+  * Linking hashtags back to a stream using that tag
+
 
 
 In short, it has most of the functionality of an indieweb site. 
@@ -56,4 +56,4 @@ The data is kept in a human-readable format as .md files, and a more machine-rea
 2. testing
 3. Search-bar
 4. Better and more complete integration of Linked-Data Notifications and Activity Streams
-5. Better integration of twitter (auto-lookup for handles, etc)
+5. Better integration of twitter for posting from my site (auto-lookup for handles, etc)
