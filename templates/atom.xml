@@ -3,7 +3,7 @@
     <title>Kongaloosh</title>
     <subtitle>Alex's blogroll.</subtitle>
     <link href="https://kongaloosh.com/atom.xml" rel="self" type="application/atom+xml" />
-    <link rel="hub" href="https://switchboard.p3k.io/" />
+    <link rel="hub" href="http://hub.kongaloosh.com" />
     <!--<link rel="hub" href="https://kgl.superfeedr.com/" />-->
     <id>http://demo.dotcms.com/</id>
     <updated>{{updated.isoformat('T')}}</updated>
