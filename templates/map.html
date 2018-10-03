@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Mapaloosh</title>
     <style>
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
@@ -52,7 +52,7 @@
 
       function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 5,
+          zoom: 3,
           center: {lat: 37.775, lng: -122.434},
           mapTypeId: 'satellite'
         });
@@ -61,11 +61,12 @@
 
           data: getPoints(),
           map: map,
-          "radius": 2,
+          "radius": 25,
           "maxOpacity": 1,
-        });
+          "scaleRadius": true,  
+      });
         // heatmap.set('opacity', 0.9);
-        // heatmap.set('radius', 20);
+        // heatmap.set('radius', 20000);
       }
 
       function toggleHeatmap() {
