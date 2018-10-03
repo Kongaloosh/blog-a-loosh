@@ -157,11 +157,10 @@ def post_from_request(request=None):
 
     if request:
 
-        for title in request.files:
-            data[title] = request.files[title]
-            data[title].seek(0, 2)
-            if data[title].tell() < 1:
-                data[title] = None
+        data['photo'] = request.files['photo_file']
+        data['photo'].seek(0,2)
+        if data['photo'].tell() < 1:
+            data['photo'] = None
 
         for title in request.form:
             try:
@@ -478,6 +477,29 @@ def delete_drafts():
     return redirect('/', 200)
 
 
+
+
+@app.route('/photo_stream', methods=['GET', 'POST'])
+def stream():
+    """ The form for user-submission """
+    pass
+    # if request.method == 'GET':
+    #     tags = get_most_popular_tags()[:10]
+    #     return render_template('edit_entry.html', entry=post_from_request(), popular_tags=tags, type="add")
+    #
+    # elif request.method == 'POST':  # if we're adding a new post
+    #     if not session.get('logged_in'):
+    #         abort(401)
+    #
+    #     if "Submit" in request.form:
+    #         location = add_entry(request)
+    #
+    #     if "Save" in request.form:  # if we're simply saving the post as a draft
+    #         data = post_from_request(request)
+    #         location = create_json_entry(data, g=g, draft=True)
+    #     return redirect(location)  # send the user to the newly created post
+
+
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
     app.logger.info(year)
@@ -678,10 +700,6 @@ def edit(year, month, day, name):
             update_entry(request, year, month, day, name)
 
         return redirect("/")
-
-
-def submit_post():
-    pass
 
 
 @app.route('/e/<year>/<month>/<day>/<name>')
