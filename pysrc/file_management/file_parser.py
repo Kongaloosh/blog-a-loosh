@@ -140,7 +140,7 @@ def file_parser_json(filename, g=None, md=True):
             WHERE slug = '{0}'
             """.format(entry['slug'])).fetchall()[0][0])
     except ValueError:
-        print "no file publish time"
+        raise ValueError("no file publish time")
 
     if md and entry['content']:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
@@ -154,7 +154,6 @@ def file_parser_json(filename, g=None, md=True):
             entry['in_reply_to'] = str(entry['in_reply_to'])
         if type(entry['in_reply_to']) != list:  # if the reply_tos isn't a list
             entry['in_reply_to'] = [reply_to.strip() for reply_to in entry['in_reply_to'].split(',')]  # split reply_tos
-        print (entry['in_reply_to'])
         for i in entry['in_reply_to']:      # for all the replies we have...
             # todo: THIS SHOULD BE ASYNC!
             if type(i) == dict:             # which are not images on our site...
@@ -164,7 +163,7 @@ def file_parser_json(filename, g=None, md=True):
             elif i.startswith('https://kongaloosh.com/'):   # if self-reference, parse the entry
                 in_reply_to.append(file_parser_json(i.replace('https://kongaloosh.com/e/', 'data/', 1) + ".json"))
             elif i.startswith('http'):                  # which are not data resources on our site...
-                in_reply_to.append(i)
+                in_reply_to.append({'url':i})
                 # in_reply_to.append(get_entry_content(i))   # try to get the content; at minimum returns url
         entry['in_reply_to'] = in_reply_to
 
@@ -178,11 +177,11 @@ def create_post_from_data(data):
         slug = data['slug']                         # ... just use the slug
     else:                                           # ... otherwise make a slug
         if data['title']:                           # is it an article?
-            slug = slugify(data['title'])           # ... grab the slug
+            slug = slugify(data['title'])[:10]      # ... grab the slug
         else:                                       # ... otherwise we make a slug from post content
             try:
                 slug = (data['content'].split('.')[0])  # we make the slug from the first sentance
-                slug = slugify(slug)                    # slugify the slug
+                slug = slugify(slug)[:10]               # slugify the slug
             except AttributeError:                      # if no content exists use the date
                 slug = slugify("{year}-{month}-{day}".format(
                         year=str(data['published'].year),
@@ -310,7 +309,6 @@ def update_json_entry(data, old_entry, g, draft=False):
 
         # put the new categories into the db
         for c in data['category']:      # parse the categories into a list and add to dbms
-            print c
             g.db.execute('''
                 insert or replace into categories (slug, published, category) values (?, ?, ?)''',
                  [old_entry['slug'], old_entry['published'], c])

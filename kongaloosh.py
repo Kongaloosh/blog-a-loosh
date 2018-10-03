@@ -21,6 +21,7 @@ from pysrc.file_management.markdown_album_pre_process import move, run
 from PIL import Image, ExifTags
 from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from markdown_albums.markdown_album_extension import AlbumExtension
+from pysrc.file_management.markdown_album_pre_process import new_prefix
 import markdown
 from python_webmention.mentioner import send_mention, get_mentions
 
@@ -484,22 +485,14 @@ def delete_drafts():
 @app.route('/photo_stream', methods=['GET', 'POST'])
 def stream():
     """ The form for user-submission """
-    pass
-    # if request.method == 'GET':
-    #     tags = get_most_popular_tags()[:10]
-    #     return render_template('edit_entry.html', entry=post_from_request(), popular_tags=tags, type="add")
-    #
-    # elif request.method == 'POST':  # if we're adding a new post
-    #     if not session.get('logged_in'):
-    #         abort(401)
-    #
-    #     if "Submit" in request.form:
-    #         location = add_entry(request)
-    #
-    #     if "Save" in request.form:  # if we're simply saving the post as a draft
-    #         data = post_from_request(request)
-    #         location = create_json_entry(data, g=g, draft=True)
-    #     return redirect(location)  # send the user to the newly created post
+    if request.method == 'GET':
+        tags = get_most_popular_tags()[:10]
+        return render_template('photo_stream.html')
+
+    elif request.method == 'POST':  # if we're adding a new post
+        if not session.get('logged_in'):
+            abort(401)
+
 
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
@@ -639,6 +632,17 @@ def recent_uploads():
             '''
 
         directory = ORIGINAL_PHOTOS_DIR
+        app.logger.info(request.args)
+        app.logger.info(request.url)
+
+        try:
+            if request.args.get('stream'):
+                insert_pattern = "%s"
+            else:
+                insert_pattern = "[](%s)"
+        except KeyError:
+            insert_pattern = "[](%s)"
+
 
         file_list = []
         for file in os.listdir(directory):
@@ -661,7 +665,7 @@ def recent_uploads():
                     return preview
 
                 image_location = file_list[image_index]
-                text_box_insert = "[](%s)" % image_location
+                text_box_insert = insert_pattern % image_location
                 row += \
                     '''
                         <a onclick="insertAtCaret('text_input','%s');return false;">
@@ -677,6 +681,20 @@ def recent_uploads():
             j += 1
 
         return preview
+
+    elif request.method == 'POST':
+        if not session.get('logged_in'):
+            abort(401)
+        try:
+            # app.logger.info(request.get_data())
+            to_delete = json.loads(request.get_data())['to_delete']
+
+            app.logger.info("deleting...." + new_prefix + to_delete[len('/images/'):])
+            if os.path.isfile(new_prefix + to_delete[len('/images/'):]):
+                os.remove(new_prefix + to_delete[len('/images/'):])
+                return "deleted"
+        except KeyError:
+            return abort(404)
     else:
         return redirect('/404'), 404
 
