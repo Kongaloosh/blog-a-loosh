@@ -67,7 +67,7 @@
 
                     <p>
                         <label>Photo</label>
-                        <input type="file" name="photo" id="img_input" accept="image/*"/>
+                        <input type="file" name="photo_file" id="img_input" accept="image/*"/>
                         <input type="text" style="width:100%" name="photo" id="img_loc" value="{%if entry.photo%}{{entry.photo}}{%endif%}">
                     </p>
 
@@ -113,21 +113,6 @@
 
 <script src="/static/js/jquery.js"></script>
 
-<script src="/static/js/wysiwyg.js"></script>
-
-<script>
-var text = "";
-setInterval(function(){
-	var x = document.getElementById("text_input").value;
-   	if (x === text) {
-
-    } else {
-    	document.getElementById("wysiwyg").innerHTML = x;
-    }
-    text = x
-}, 1000);
-</script>
-
 
 <script>
 var x = document.getElementById("geo_coord");
@@ -146,10 +131,6 @@ function showPosition(position) {
 }
 
 var form = document.getElementById("input");
-
-<!--document.getElementById("submit").addEventListener("click", function () {-->
-  <!--form.submit();-->
-<!--});-->
 
 function getRecentPhotos() {
     var xhttp = new XMLHttpRequest();
@@ -199,7 +180,6 @@ txtarea.scrollTop = scrollPos;
 if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
     getLocation()
 }
-
 </script>
 
 <script>
