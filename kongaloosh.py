@@ -532,7 +532,8 @@ def bulk_upload():
         app.logger.info("uploading at " + file_path)
         app.logger.info(request.files)
         for uploaded_file in request.files.getlist('file'):
-            file_loc = file_path + "{0}".format(uploaded_file.filename)
+            # file_loc = file_path + "{0}".format(uploaded_file.filename)
+            file_loc = file_path + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             image = Image.open(uploaded_file)
             try:
                 for orientation in ExifTags.TAGS.keys():
@@ -1113,6 +1114,8 @@ def show_inbox_item(name):
 @app.route('/drafts', methods=['GET'])
 def show_drafts():
     if request.method == 'GET':
+        if not session.get('logged_in'):
+            abort(401)
         drafts_location = "drafts/"
         entries = [
             drafts_location + f for f in os.listdir(drafts_location)
@@ -1125,6 +1128,8 @@ def show_drafts():
 @app.route('/drafts/<name>', methods=['GET', 'POST'])
 def show_draft(name):
     if request.method == 'GET':
+        if not session.get('logged_in'):
+            abort(401)
         draft_location = 'drafts/' + name + ".json"
         entry = get_post_for_editing(draft_location)
         return render_template('edit_entry.html', entry=entry, type="draft")
