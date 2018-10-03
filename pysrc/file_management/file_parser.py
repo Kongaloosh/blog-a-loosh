@@ -140,7 +140,7 @@ def file_parser_json(filename, g=None, md=True):
             WHERE slug = '{0}'
             """.format(entry['slug'])).fetchall()[0][0])
     except ValueError:
-        raise ValueError("no file publish time")
+        pass    # this is a draft, so we don't need the published date
 
     if md and entry['content']:
         entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
