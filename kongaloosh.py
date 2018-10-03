@@ -156,11 +156,13 @@ def post_from_request(request=None):
     }
 
     if request:
-
-        data['photo'] = request.files['photo_file']
-        data['photo'].seek(0,2)
-        if data['photo'].tell() < 1:
-            data['photo'] = None
+        try:
+            data['photo'] = request.files['photo_file']
+            data['photo'].seek(0,2)
+            if data['photo'].tell() < 1:
+                data['photo'] = None
+        except KeyError:
+            pass
 
         for title in request.form:
             try:
