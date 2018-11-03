@@ -842,7 +842,7 @@ def login():
             error = 'Invalid password'
         else:
             session['logged_in'] = True
-            return redirect('/add')
+            return redirect('/')
     return render_template('login.html', error=error)
 
 
