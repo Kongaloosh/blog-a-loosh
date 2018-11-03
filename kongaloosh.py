@@ -533,7 +533,8 @@ def bulk_upload():
         app.logger.info(request.files)
         for uploaded_file in request.files.getlist('file'):
             # file_loc = file_path + "{0}".format(uploaded_file.filename)
-            file_loc = file_path + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+	    
+            file_loc = file_path + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '.'  + uploaded_file.filename.split('.')[-1:][0]
             image = Image.open(uploaded_file)
             try:
                 for orientation in ExifTags.TAGS.keys():
