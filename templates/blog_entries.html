@@ -1,17 +1,18 @@
 {% extends "stream_base.html" %}
 {% block body %}
 {% if session.logged_in %}
-<div class="row center">
-        <a class="btn btn-success" style="width: 23%" href="/add">Add Post</a>
-        <a class="btn btn-success" style="width: 23%" href="/drafts">Drafts</a>
-        <a class="btn btn-success" style="width: 23%" href="/bulk_upload">Upload</a>
-        <a class="btn btn-success" style="width: 23%" href="/photo_stream">Photos</a>
+<div class="add-entry">
+    <div class="row center-block">
+        <a class="btn btn-success" style="width: 24%" href="/add">Add Post</a>
+        <a class="btn btn-success" style="width: 24%" href="/drafts">Drafts</a>
+        <a class="btn btn-success" style="width: 24%" href="/bulk_upload">Upload</a>
+        <a class="btn btn-success" style="width: 24%" href="/photo_stream">Photos</a>
     </div>
-</div>
+    <hr>
 {% endif %}
 {% for entry in entries %}
 <!-- START ENTRIES -->
-<div class="post-preview hentry h-entry">
+<div class="row post-preview hentry h-entry">
     {% if session.logged_in %}
         <div class="row">
             <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
@@ -146,4 +147,4 @@
 <p>No entries here so far </p> <!-- When we have nothing left -->
 {% endfor %}
 {% endblock %}
-
+</div>
