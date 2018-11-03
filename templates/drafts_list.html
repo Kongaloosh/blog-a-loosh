@@ -18,19 +18,21 @@
     </div>
 </header>
 
-{% for entry in entries %}
-<!-- START ENTRIES -->
-<div class="container">
-    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        {% if entry.title %}
-        <a href="/drafts/{{entry.slug}}">{{entry.title}}</a>
-        {% else %}
-            <a href="/drafts/{{entry.slug}}">{{entry.slug}}</a>
-        {% endif %}
-    </div>
-</div>
-<hr>
-{% endfor %}
 
+<div class="container">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            {% for entry in entries %}
+                    <!-- START ENTRIES -->
+            <div class="row">
+                {% if entry.title %}
+                    <a href="/drafts/{{entry.slug}}">{{entry.title}}</a>
+                {% else %}
+                    <a href="/drafts/{{entry.slug}}">{{entry.slug}}</a>
+                {% endif %}
+                <hr>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
 {% endblock %}
 
