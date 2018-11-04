@@ -25,7 +25,7 @@ def bridgy_twitter(location):
     )
     syndication = r.json()
     print("\n\n\n {0} \n\n\n".format(url))
-    data = file_parser_json('data/' + location + ".json", md=False)
+    data = file_parser_json('data' + location + ".json", md=False)
     old_entry = data
     if data['syndication']:
         print syndication
