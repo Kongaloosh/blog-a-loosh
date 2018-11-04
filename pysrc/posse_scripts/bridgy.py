@@ -17,14 +17,15 @@ DOMAIN_NAME = config.get('Global', 'DomainName')
 
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
-    location = 'http://' + DOMAIN_NAME + location
+    url = 'https://' + DOMAIN_NAME + "/e/" + location
     r = send_mention(
-        location,
+        url,
         'https://brid.gy/publish/twitter',
         endpoint='https://brid.gy/publish/webmention'
     )
     syndication = r.json()
-    data = file_parser_json('data/' + location.split('/e/')[1] + ".json", md=False)
+    print("\n\n\n {0} \n\n\n".format(url))
+    data = file_parser_json('data/' + location + ".json", md=False)
     old_entry = data
     if data['syndication']:
         print syndication
