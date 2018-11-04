@@ -293,8 +293,11 @@ def update_json_entry(data, old_entry, g, draft=False):
 
     # 2. remove categories if they exist and replace (if not draft)
     if data['category'] and not draft:                              # if categories exist, update them
-        # parse the categories into a list
-        data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+        # parse the categories into a list, but only if they're a string
+        try:
+            data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+        except AttributeError:
+            pass
         try:
             # remove all previous categories from the db
             for c in old_entry['category']:
