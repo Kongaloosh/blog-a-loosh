@@ -19,6 +19,7 @@ import re
 import requests
 from pysrc.file_management.markdown_album_pre_process import move, run
 from PIL import Image, ExifTags
+import threading
 from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.file_management.markdown_album_pre_process import new_prefix
@@ -159,7 +160,7 @@ def post_from_request(request=None):
     if request:
         try:
             data['photo'] = request.files['photo_file']
-            data['photo'].seek(0,2)
+            data['photo'].seek(0, 2)
             if data['photo'].tell() < 1:
                 data['photo'] = None
         except KeyError:
@@ -228,6 +229,7 @@ def update_entry(update_request, year, month, day, name, draft=False):
 
 
 def add_entry(creation_request, draft=False):
+
     data = post_from_request(creation_request)
     if data['published'] is None:  # we're publishing it now; give it the present time
         data['published'] = datetime.now()
@@ -457,6 +459,11 @@ def add():
             abort(401)
 
         if "Submit" in request.form:
+            thread = threading.Thread(target=add_entry, args=(request))  # we spin off a thread to create
+            # album processing can take time: we want to spin it off to avoid worker timeouts.
+            thread.start()
+            location = '/'
+
             location = add_entry(request)
 
         if "Save" in request.form:  # if we're simply saving the post as a draft
@@ -480,8 +487,6 @@ def delete_drafts():
     return redirect('/', 200)
 
 
-
-
 @app.route('/photo_stream', methods=['GET', 'POST'])
 def stream():
     """ The form for user-submission """
@@ -492,7 +497,6 @@ def stream():
     elif request.method == 'POST':  # if we're adding a new post
         if not session.get('logged_in'):
             abort(401)
-
 
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
@@ -532,9 +536,9 @@ def bulk_upload():
         app.logger.info("uploading at " + file_path)
         app.logger.info(request.files)
         for uploaded_file in request.files.getlist('file'):
-            # file_loc = file_path + "{0}".format(uploaded_file.filename)
-	    
-            file_loc = file_path + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '.'  + uploaded_file.filename.split('.')[-1:][0]
+
+            file_loc = file_path + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '.' + \
+                       uploaded_file.filename.split('.')[-1:][0]
             image = Image.open(uploaded_file)
             try:
                 for orientation in ExifTags.TAGS.keys():
@@ -644,7 +648,6 @@ def recent_uploads():
                 insert_pattern = "[](%s)"
         except KeyError:
             insert_pattern = "[](%s)"
-
 
         file_list = []
         for file in os.listdir(directory):
