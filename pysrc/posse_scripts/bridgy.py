@@ -17,7 +17,11 @@ DOMAIN_NAME = config.get('Global', 'DomainName')
 
 def bridgy_twitter(location):
     """send a twitter mention to brid.gy"""
+    if location.startswith('/e/'):
+        location = location[3:]
+
     url = 'https://' + DOMAIN_NAME + "/e/" + location
+
     r = send_mention(
         url,
         'https://brid.gy/publish/twitter',
@@ -25,7 +29,7 @@ def bridgy_twitter(location):
     )
     syndication = r.json()
     print("\n\n\n {0} \n\n\n".format(url))
-    data = file_parser_json('data' + location + ".json", md=False)
+    data = file_parser_json('data/' + location + ".json", md=False)
     old_entry = data
     if data['syndication']:
         print syndication
