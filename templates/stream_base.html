@@ -27,13 +27,13 @@
         <div class="">
             <div class="row site-heading jumbotron" style="display: block;">
                 <div class="col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
-                        <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
+                    <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
                          class="u-photo img-responsive img-thumbnail img-circle profile-image">
                 </div>
 
                 <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12 intro-text">
                     <p>
-                            I'm <a href="http://alexkearney.com" class="tag">Alex Kearney</a>, a PhD student studying Computer
+                        I'm <a href="http://alexkearney.com" class="tag">Alex Kearney</a>, a PhD student studying Computer
                         Science at the <a href="http://spaces.facsci.ualberta.ca/rlai/" class="tag">University of Alberta</a>. I focus on Artificial
                         Intelligence and Epistemology.
                     </p>
@@ -46,6 +46,35 @@
                         I talk a lot about {% for tag in popular_tags%} <a href="/t/{{tag}}" class="tag" >{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
                     </p>
                     {%endif%}
+
+                    <div class="row-lg-12 row-md-12 row-sm-12">
+                        {% for article in display_articles%}
+                        <div class="col-lg-4 col-md-4 col-xs-4">
+                            <h3><a href="{{article.url}}">{{article.title}}</a></h3>
+                            <hr>
+                            {% if article.category %}
+                            <i class="fa fa-tags"></i>
+                            {% for c in article.category %}
+                            <a class="category" href="/t/{{c}}">{{c}}</a>
+                            {% endfor %}
+                            {% endif %}
+
+                            {% if article.summary %}
+                            <div class="post-subtitle p-summary">
+                                <p>
+                                    <i>
+                                        {{article.summary}}
+                                    </i>
+                                </p>
+                            </div>
+                            {% else %}
+                            <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
+                            {% endif%}
+
+                        </div>
+
+                        {%endfor%}
+                    </div>
                 </div>
 
             </div>
@@ -54,31 +83,31 @@
 </header>
 <!-- Main Content -->
 <div class="container">
-        {% block body %}
-        {% endblock %}
-        <!-- Pager -->
-        {% if before %}
-        <div class="row">
-            <div class="pull-left col">
-                <ul class="pager">
-                    {% if before > 1 %}
-                    <li class="next">
-                        <a href="/page/{{before - 2}}">&larr; Newer Posts </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-            <div class="pull-right col">
+    {% block body %}
+    {% endblock %}
+    <!-- Pager -->
+    {% if before %}
+    <div class="row">
+        <div class="pull-left col">
             <ul class="pager">
-            {% if before > 0 %}
-            <li class="next">
-                <a href="/page/{{before}}">Older Posts &rarr;</a>
-            </li>
-            {% endif %}
+                {% if before > 1 %}
+                <li class="next">
+                    <a href="/page/{{before - 2}}">&larr; Newer Posts </a>
+                </li>
+                {% endif %}
             </ul>
-            </div>
         </div>
-        {% endif %}
+        <div class="pull-right col">
+            <ul class="pager">
+                {% if before > 0 %}
+                <li class="next">
+                    <a href="/page/{{before}}">Older Posts &rarr;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
 
 
 </div>

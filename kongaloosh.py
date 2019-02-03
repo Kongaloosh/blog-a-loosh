@@ -250,6 +250,23 @@ def action_stream_parser(filename):
     return NotImplementedError("this doesn't exist yet")
 
 
+def search_by_tag(category):
+    entries = []
+    cur = g.db.execute(
+        """
+         SELECT entries.location FROM categories
+         INNER JOIN entries ON
+         entries.slug = categories.slug AND
+         entries.published = categories.published
+         WHERE categories.category='{category}'
+         ORDER BY entries.published DESC
+        """.format(category=category))
+    for (row,) in cur.fetchall():
+        if os.path.exists(row + ".json"):
+            entries.append(file_parser_json(row + ".json"))
+    return entries
+
+
 @app.route('/')
 def show_entries():
     """ The main view: presents author info and entries. """
@@ -280,7 +297,15 @@ def show_entries():
     # otherwise there are < 10 entries and we'll just display what we have ...
     before = 1  # holder which tells us which page we're on
     tags = get_most_popular_tags()[:10]
-    return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
+
+    display_articles = search_by_tag("article")[:3]
+
+    return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10], display_articles=display_articles)
+
+
+@app.route('/webfinger')
+def finger():
+    return jsonify(json.loads(open('webfinger.json', 'r').read()))
 
 
 @app.route('/webfinger')
@@ -751,19 +776,7 @@ def profile(year, month, day, name):
 @app.route('/t/<category>')
 def tag_search(category):
     """ Get all entries with a specific tag """
-    entries = []
-    cur = g.db.execute(
-        """
-         SELECT entries.location FROM categories
-         INNER JOIN entries ON
-         entries.slug = categories.slug AND
-         entries.published = categories.published
-         WHERE categories.category='{category}'
-         ORDER BY entries.published DESC
-        """.format(category=category))
-    for (row,) in cur.fetchall():
-        if os.path.exists(row + ".json"):
-            entries.append(file_parser_json(row + ".json"))
+    entries = search_by_tag(category)
     return render_template('blog_entries.html', entries=entries)
 
 
