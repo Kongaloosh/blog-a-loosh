@@ -4,6 +4,27 @@
  * Licensed under Apache 2.0 (https://github.com/IronSummitMedia/startbootstrap/blob/gh-pages/LICENSE)
  */
 
+.entry-preview a {
+    /* border: 1px solid #c5edc5; */
+    border: 1px solid rgba(143, 188, 143, 0) !important;
+    color: #c5edc5 !important;
+    text-decoration: none !important;
+    cursor: default;
+    padding-left: 1px;
+    padding-right: 1px;
+}
+
+h3.preview:hover {
+    text-decoration: underline;
+    color: #8fbc8f !important;
+}
+
+.entry-preview h3 {
+    color: #c5edc5 !important;
+}
+
+
+
 body {
   font-family: 'Lora', 'Times New Roman', serif;
   font-size: 20px;
