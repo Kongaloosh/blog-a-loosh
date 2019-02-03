@@ -283,6 +283,11 @@ def show_entries():
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10])
 
 
+@app.route('/webfinger')
+def finger():
+    return jsonify(json.loads(open('webfinger.json', 'r').read()))
+
+
 @app.route('/rss.xml')
 def show_rss():
     """ The rss view: presents entries in rss form. """

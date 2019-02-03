@@ -269,7 +269,7 @@ def create_json_entry(data, g, draft=False, update=False):
                                  [data['slug'], data['published'], c])
                     g.db.commit()
 
-            create_entry_markdown(data, total_path)                 # also create md version.
+            # create_entry_markdown(data, total_path)                 # also create md version.
         return data['url']
     else:
         return "/already_made"                                     # a post of this name already exists
@@ -292,7 +292,7 @@ def update_json_entry(data, old_entry, g, draft=False):
         data[key] = old_entry[key]
 
     # 2. remove categories if they exist and replace (if not draft)
-    if data['category'] and not draft:                              # if categories exist, update them
+    if data['category'] and not draft and g:                        # if categories exist, update them
         # parse the categories into a list, but only if they're a string
         try:
             data['category'] = [i.strip() for i in data['category'].lower().split(",")]
