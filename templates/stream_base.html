@@ -27,12 +27,12 @@
         <div class="">
             <div class="row site-heading jumbotron" style="display: block;">
                 <div class="row">
-                    <div class="col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
+                    <div class="col col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
                         <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
                              class="u-photo img-responsive img-thumbnail img-circle profile-image">
                     </div>
 
-                    <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12 intro-text">
+                    <div class="col col-lg-8 col-md-8 col-sm-12 col-xs-12 intro-text">
                         <p>
                             I'm <a href="http://alexkearney.com" class="tag">Alex Kearney</a>, a PhD student studying Computer
                             Science at the <a href="http://spaces.facsci.ualberta.ca/rlai/" class="tag">University of Alberta</a>. I focus on Artificial
@@ -46,34 +46,6 @@
                         {%endif%}
                     </div>
                 </div>
-                <div class="row-lg-12 row-md-12 row-sm-12 entry-preview">
-                    {% for article in display_articles%}
-                    <div class="col-lg-4 col-md-4 col-xs-4">
-                        <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
-                        <hr>
-                        {% if article.category %}
-                        <div class="text-left categories">
-                            <i class="fa fa-tags"></i>
-                            {% for c in article.category %}
-                            <a class="tag category" href="/t/{{c}}">{{c}}</a>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        {% if article.summary %}
-                        <p class="post-subtitle p-summary">
-                            <i>
-                                {{article.summary}}
-                            </i>
-                        </p>
-                        {% else %}
-                        <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
-                        {% endif%}
-
-                    </div>
-
-                    {%endfor%}
-                </div>
 
             </div>
         </div>
@@ -81,6 +53,43 @@
 </header>
 <!-- Main Content -->
 <div class="container">
+    <div class="row row-lg-12 row-md-12 row-sm-12 row-xs-12 entry-preview">
+        {% for article in display_articles%}
+        <div class="col col-lg-4 col-md-4 col-sm-4 col-xs-12 article-preview">
+
+            <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
+
+            {% if article.photo%}
+            <a href="{{article.url}}">
+                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                     style="image-orientation: from-image; max-height:500px"
+                     src="/{{article.photo}}">
+            </a>
+            {% endif %}
+
+            {% if article.summary %}
+            <p class="post-subtitle p-summary">
+                <i>
+                    {{article.summary}}
+                </i>
+            </p>
+            {% else %}
+            <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
+            {% endif%}
+
+            {% if article.category %}
+            <div class="text-left categories">
+                <i class="fa fa-tags"></i>
+                {% for c in article.category %}
+                <a class="category" href="/t/{{c}}">{{c}}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+        {%endfor%}
+    </div>
+    <hr>
     {% block body %}
     {% endblock %}
     <!-- Pager -->
