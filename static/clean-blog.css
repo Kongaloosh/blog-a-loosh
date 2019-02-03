@@ -22,7 +22,13 @@ h3.preview:hover {
     color: #c5edc5 !important;
 }
 */
+.preview h3{
+    -bottom: 10px;
+}
 
+.article-preview div {
+ min-height: 100px;
+}
 
 body {
   font-family: 'Lora', 'Times New Roman', serif;

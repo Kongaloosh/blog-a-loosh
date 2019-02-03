@@ -53,19 +53,18 @@
 </header>
 <!-- Main Content -->
 <div class="container">
-
     <div class="row row-lg-12 row-md-12 row-sm-12 row-xs-12 entry-preview">
         {% for article in display_articles%}
-        <div class="col col-lg-4 col-md-4 col-sm-4 col-xs-4">
+        <div class="col col-lg-4 col-md-4 col-sm-4 col-xs-12 article-preview">
+
             <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
-            <hr>
-            {% if article.category %}
-            <div class="text-left categories">
-                <i class="fa fa-tags"></i>
-                {% for c in article.category %}
-                <a class="category" href="/t/{{c}}">{{c}}</a>
-                {% endfor %}
-            </div>
+
+            {% if article.photo%}
+            <a href="{{article.url}}">
+                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                     style="image-orientation: from-image; max-height:500px"
+                     src="/{{article.photo}}">
+            </a>
             {% endif %}
 
             {% if article.summary %}
@@ -77,6 +76,16 @@
             {% else %}
             <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
             {% endif%}
+
+            {% if article.category %}
+            <div class="text-left categories">
+                <i class="fa fa-tags"></i>
+                {% for c in article.category %}
+                <a class="category" href="/t/{{c}}">{{c}}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
         </div>
         {%endfor%}
     </div>
