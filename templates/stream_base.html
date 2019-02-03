@@ -37,36 +37,33 @@
                         Science at the <a href="http://spaces.facsci.ualberta.ca/rlai/" class="tag">University of Alberta</a>. I focus on Artificial
                         Intelligence and Epistemology.
                     </p>
-                    <p>
-                        When I'm not playing with robots, I hang out with the indieweb community, drink tea, and
-                        scubadive.
-                    </p>
+
                     {% if popular_tags %}
                     <p class="clearfix">
                         I talk a lot about {% for tag in popular_tags%} <a href="/t/{{tag}}" class="tag" >{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
                     </p>
                     {%endif%}
-
-                    <div class="row-lg-12 row-md-12 row-sm-12">
+                </div>
+                <div class="row-lg-12 row-md-12 row-sm-12 entry-preview">
                         {% for article in display_articles%}
                         <div class="col-lg-4 col-md-4 col-xs-4">
-                            <h3><a href="{{article.url}}">{{article.title}}</a></h3>
+                            <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
                             <hr>
                             {% if article.category %}
+                            <div class="text-left categories">
                             <i class="fa fa-tags"></i>
                             {% for c in article.category %}
-                            <a class="category" href="/t/{{c}}">{{c}}</a>
+                            <a class="tag category" href="/t/{{c}}">{{c}}</a>
                             {% endfor %}
+                            </div>
                             {% endif %}
 
                             {% if article.summary %}
-                            <div class="post-subtitle p-summary">
-                                <p>
+                                <p class="post-subtitle p-summary">
                                     <i>
                                         {{article.summary}}
                                     </i>
                                 </p>
-                            </div>
                             {% else %}
                             <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
                             {% endif%}
@@ -75,7 +72,6 @@
 
                         {%endfor%}
                     </div>
-                </div>
 
             </div>
         </div>
