@@ -1,4 +1,5 @@
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='add.css') }}"> <!-- blog roll styling -->
+<!--<link rel=stylesheet type=text/css href="{{ url_for('static', filename='autocomplete.css') }}"> &lt;!&ndash; blog roll styling &ndash;&gt;-->
+
 
 {% extends "layout.html" %}
 {% block content %}
@@ -21,24 +22,27 @@
 {% if session.logged_in %}
 <div class="container">
     <div class="col-lg-12 col-md-12 col-sm-12">
-        <div class="row pull-right"  style="padding 10px">
+        <div class="row pull-right" style="padding 10px">
             {% if type == "edit"%}
-                <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
             {% elif type == "draft" %}
-                <a href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            <a href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
             {%endif%}
 
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-6 col-sm-12">
-                <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large" id="input">
+                <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large"
+                      id="input">
                     <p>
-                        <label>Title:</label> <input type="text" style="width: 100%"  name="title" id="title_form" value="{{entry.title}}">
+                        <label>Title:</label> <input type="text" style="width: 100%" name="title" id="title_form"
+                                                     value="{{entry.title}}">
                     </p>
                     <p>
-                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary" id="summary_form">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
+                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"
+                                                         id="summary_form">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
                     </p>
-                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
+                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
                     </p>
                     <hr>
                     <p>
@@ -49,7 +53,8 @@
 
                     <p>
                         <label>Tags</label>
-                        <input type="text" style="width: 100%" name="category" value="{%if entry.category%}{{entry.category}}{%endif%}">
+                        <input type="text" style="width: 100%" name="category"
+                               value="{%if entry.category%}{{entry.category}}{%endif%}">
                     </p>
 
                     <p>
@@ -57,37 +62,59 @@
 
                     </p>
                     {% if popular_tags %}
-                    <p> Common tags include: {% for tag in popular_tags%} <a onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
-                     {%endif%}
+                    <p> Common tags include: {% for tag in popular_tags%} <a
+                            onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %},
+                        {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
+                    {%endif%}
                     <p>
                         <label>Reply-to</label>
-                        <input type="text" style="width: 100%" name="in_reply_to" value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}">
+                        <input type="text" style="width: 100%" name="in_reply_to"
+                               value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}">
 
+                    </p>
+
+                    <div id="form-div">
+                        <label>Travel</label><br>
+
+                    </div>
+
+                    <div class="dash-add">
+                        <button type="button" class="dash-add-button" onclick="addfieldFunction()">Add Stop</button>
+                    </div>
+                    <p>
+                        <label>Event</label><br>
+                        <b>start </b><input type="date" name="dt-start" value="{{entry.start}}"><br>
+                        <b>end </b><input type="date" name="dt-end" value="{{entry.end}}">
                     </p>
 
                     <p>
                         <label>Photo</label>
                         <input type="file" name="photo_file" id="img_input" accept="image/*"/>
-                        <input type="text" style="width:100%" name="photo" id="img_loc" value="{%if entry.photo%}{{entry.photo}}{%endif%}">
+                        <input type="text" style="width:100%" name="photo" id="img_loc"
+                               value="{%if entry.photo%}{{entry.photo}}{%endif%}">
                     </p>
 
 
                     <p>
                         <label>facebook </label> <input type="checkbox" name="facebook" value="facebook"> <br>
                         <label>twitter </label> <input type="checkbox" name="twitter" value="twitter"> <br>
-                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check" checked>
+                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check"
+                                                  checked>
                         <textarea style="width: 100%" type="text" name="location"
                                   id="geo_coord">{%if entry.location%}{{entry.location}}{%endif%}</textarea>
                     </p>
 
                     <p>
                         {% if type == "draft" %}
-                            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save" style="width:49%">
-                            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit" style="width:49%">
-                        {% elif type == "edit"  %}
-                            <input type="submit" style="width:49%" value="Submit" name="Submit">
+                        <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save"
+                               style="width:49%">
+                        <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit"
+                               style="width:49%">
+                        {% elif type == "edit" %}
+                        <input type="submit" style="width:49%" value="Submit" name="Submit">
                         {% elif type == "add"%}
-                            <input formaction="/add" type="submit" style="width:49%" value="Save" name="Save"> <input formaction="/add" type="submit" style="width:49%" value="Submit" name="Submit">
+                        <input formaction="/add" type="submit" style="width:49%" value="Save" name="Save"> <input
+                            formaction="/add" type="submit" style="width:49%" value="Submit" name="Submit">
                         {% endif %}
 
                     </p>
@@ -99,9 +126,11 @@
                 <div class="row clearfix" style="overflow-y: scroll; height:100%">
                     <div style="overflow-y:  scroll;height: 98%;margin-left:  0px;margin-right: 0px; padding:0.5em">
                         <h2 class="post-title p-name" id="title_format"></h2>
-                        <div><img id="blah" src="#" class="img-responsive center-block img-thumbnail img-rounded u-photo" style="image-orientation: from-image; max-height:300px" alt="your image" /></div>
+                        <div><img id="blah" src="#"
+                                  class="img-responsive center-block img-thumbnail img-rounded u-photo"
+                                  style="image-orientation: from-image; max-height:300px" alt="your image"/></div>
                         <div class="post-subtitle p-summary">
-                        <p><i id="summary_format"></i></p>
+                            <p><i id="summary_format"></i></p>
                         </div>
                         <div id="wysiwyg"></div>
                     </div>
@@ -113,7 +142,7 @@
 
 <script src="/static/js/jquery.js"></script>
 <script src="/static/js/wysiwyg.js"></script>
-
+<script src="/static/js/place_location_autocomplete.js"></script>
 
 <script>
 var x = document.getElementById("geo_coord");
@@ -181,6 +210,7 @@ txtarea.scrollTop = scrollPos;
 if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
     getLocation()
 }
+
 </script>
 
 <script>
@@ -197,6 +227,62 @@ $("#img_input").change(function(){
     readURL(this);
 });
 
+</script>
+
+<script>
+    var i = 0;
+
+function increment() {
+  i += 1;
+}
+
+function addfieldFunction() {
+  var r = document.createElement('div');
+  r.setAttribute("class", "form-id")
+
+  var a_x = document.createElement("INPUT");
+  var a_y = document.createElement("INPUT");
+  var a_z = document.createElement("INPUT");
+  var b_x = document.createElement("INPUT");
+  var b_y = document.createElement("INPUT");
+  var b_z = document.createElement("INPUT");
+  var br = document.createElement("BR");
+
+  a_x.setAttribute("type", "hidden")
+  a_y.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
+  a_y.setAttribute("class", "dash-input");
+  a_y.setAttribute("type", "text");
+  a_y.setAttribute("placeholder", "Origin");
+  a_y.setAttribute("id", "test");
+  a_z.setAttribute("class", "dash-input");
+  a_z.setAttribute("type", "date");
+  a_z.setAttribute("placeholder", "dt-departure");
+
+   a_x.setAttribute("type", "hidden")
+  a_y.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
+  b_y.setAttribute("class", "dash-input");
+  b_y.setAttribute("type", "text");
+  b_y.setAttribute("placeholder", "Destination");
+  b_z.setAttribute("class", "dash-input");
+  b_z.setAttribute("type", "date");
+  b_z.setAttribute("placeholder", "date");
+  increment();
+  a_y.setAttribute("name", "travel[origin][" + i + "][date]"); //Keep attribute in lower case
+  b_y.setAttribute("name", "travel[oirigin][" + i + "][location]"); //Keep attribute in lower case
+
+  r.appendChild(a_z);
+  r.appendChild(a_y);
+  r.appendChild(br);
+
+  a_z.setAttribute("name", "travel[destination]["+ i +"][date]");
+  b_z.setAttribute("name", "travel[destination]["+ i +"][location]");
+
+  r.appendChild(b_z);
+  r.appendChild(b_y);
+
+  document.getElementById("form-div").appendChild(r);
+  autocomplete(document.getElementById("test"), countries);
+}
 </script>
 
 {% else %}
