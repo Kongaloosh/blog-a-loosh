@@ -8,7 +8,7 @@ async function getCandidatePlaces(str) {
             });
     const json = await response.json();
     console.log(json);
-    return json
+    return json.geonames
 }
 
 function autocomplete(inp) {
@@ -27,32 +27,33 @@ function autocomplete(inp) {
       a.setAttribute("id", this.id + "autocomplete-list");
       a.setAttribute("class", "autocomplete-items");
       /*append the DIV element as a child of the autocomplete container:*/
-
-
       this.parentNode.appendChild(a);
       /*for each item in the array...*/
-      arr = getCandidatePlaces(val)
-      for (i = 0; i < arr.length; i++) {
-        /*check if the item starts with the same letters as the text field value:*/
-        if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+      getCandidatePlaces(val).then( function ( arr ) {
+        for (i = 0; i < arr.length; i++) {
+            console.log(i + "here")
           /*create a DIV element for each matching element:*/
           b = document.createElement("DIV");
-          /*make the matching letters bold:*/
-          b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
-          b.innerHTML += arr[i].substr(val.length);
+          // add the title of the matching geoname place to the drop-down
+          b.innerHTML += arr[i]['title']
           /*insert a input field that will hold the current array item's value:*/
-          b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+          b.innerHTML += "<input type='hidden' value='" + i + "'>";
           /*execute a function when someone clicks on the item value (DIV element):*/
               b.addEventListener("click", function(e) {
               /*insert the value for the autocomplete text field:*/
-              inp.value = this.getElementsByTagName("input")[0].value;
+              inp.value = arr[this.getElementsByTagName("input")[0].value]['title'];
+              geo = "geo:" + arr[this.getElementsByTagName("input")[0].value]['lat'] + "," + arr[this.getElementsByTagName("input")[0].value]['lng']
+              var name = inp.name
+              console.log(name.substring(0, name.length-10)+"[geo]")
+              var element = document.getElementsByName(name.substring(0, name.length-10)+"[geo]")[0];
+              element.value = geo
               /*close the list of autocompleted values,
               (or any other open lists of autocompleted values:*/
               closeAllLists();
           });
           a.appendChild(b);
         }
-      }
+      })
   });
   /*execute a function presses a key on the keyboard:*/
   inp.addEventListener("keydown", function(e) {
