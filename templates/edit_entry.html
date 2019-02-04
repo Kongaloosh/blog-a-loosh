@@ -252,7 +252,7 @@ function addfieldFunction() {
   a_y.setAttribute("class", "dash-input");
   a_y.setAttribute("type", "text");
   a_y.setAttribute("placeholder", "Origin");
-  a_y.setAttribute("id", "test");
+  a_y.setAttribute("id", "origin_"+i);
   a_z.setAttribute("class", "dash-input");
   a_z.setAttribute("type", "date");
   a_z.setAttribute("placeholder", "dt-departure");
@@ -261,32 +261,36 @@ function addfieldFunction() {
   b_y.setAttribute("class", "dash-input");
   b_y.setAttribute("type", "text");
   b_y.setAttribute("placeholder", "Destination");
+  b_y.setAttribute("id", "destination_"+i);
   b_z.setAttribute("class", "dash-input");
   b_z.setAttribute("type", "date");
   b_z.setAttribute("placeholder", "date");
 
-  a_x.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
-  b_x.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
+  a_x.setAttribute("name", "travel[" + i + "][origin][geo]"); //Keep attribute in lower case
+  b_x.setAttribute("name", "travel[" + i + "][destination][geo]"); //Keep attribute in lower case
 
-  a_y.setAttribute("name", "travel[origin][" + i + "][location]"); //Keep attribute in lower case
-  b_y.setAttribute("name", "travel[oirigin][" + i + "][date]"); //Keep attribute in lower case
+  a_y.setAttribute("name", "travel[" + i + "][origin][location]"); //Keep attribute in lower case
+  b_y.setAttribute("name", "travel[" + i + "][destination][location]"); //Keep attribute in lower case
 
-  increment();
+  a_z.setAttribute("name", "travel[" + i + "][origin][date]");
+  b_z.setAttribute("name", "travel[" + i + "][destination][date]");
 
   r.appendChild(a_x);
   r.appendChild(a_z);
   r.appendChild(a_y);
   r.appendChild(br);
 
-  a_z.setAttribute("name", "travel[destination]["+ i +"][location]");
-  b_z.setAttribute("name", "travel[destination]["+ i +"][date]");
+
 
   r.appendChild(b_x);
   r.appendChild(b_z);
   r.appendChild(b_y);
 
   document.getElementById("form-div").appendChild(r);
-  autocomplete(document.getElementById("test"));
+  console.log(document.getElementById("destination_"+i));
+  autocomplete(document.getElementById("destination_"+i));
+  autocomplete(document.getElementById("origin_"+i));
+  increment();
 }
 </script>
 
