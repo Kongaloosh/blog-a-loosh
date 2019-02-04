@@ -249,7 +249,6 @@ function addfieldFunction() {
   var br = document.createElement("BR");
 
   a_x.setAttribute("type", "hidden")
-  a_y.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
   a_y.setAttribute("class", "dash-input");
   a_y.setAttribute("type", "text");
   a_y.setAttribute("placeholder", "Origin");
@@ -258,25 +257,31 @@ function addfieldFunction() {
   a_z.setAttribute("type", "date");
   a_z.setAttribute("placeholder", "dt-departure");
 
-   a_x.setAttribute("type", "hidden")
-  a_y.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
+  b_x.setAttribute("type", "hidden")
   b_y.setAttribute("class", "dash-input");
   b_y.setAttribute("type", "text");
   b_y.setAttribute("placeholder", "Destination");
   b_z.setAttribute("class", "dash-input");
   b_z.setAttribute("type", "date");
   b_z.setAttribute("placeholder", "date");
-  increment();
-  a_y.setAttribute("name", "travel[origin][" + i + "][date]"); //Keep attribute in lower case
-  b_y.setAttribute("name", "travel[oirigin][" + i + "][location]"); //Keep attribute in lower case
 
+  a_x.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
+  b_x.setAttribute("name", "travel[origin][" + i + "][geo]"); //Keep attribute in lower case
+
+  a_y.setAttribute("name", "travel[origin][" + i + "][location]"); //Keep attribute in lower case
+  b_y.setAttribute("name", "travel[oirigin][" + i + "][date]"); //Keep attribute in lower case
+
+  increment();
+
+  r.appendChild(a_x);
   r.appendChild(a_z);
   r.appendChild(a_y);
   r.appendChild(br);
 
-  a_z.setAttribute("name", "travel[destination]["+ i +"][date]");
-  b_z.setAttribute("name", "travel[destination]["+ i +"][location]");
+  a_z.setAttribute("name", "travel[destination]["+ i +"][location]");
+  b_z.setAttribute("name", "travel[destination]["+ i +"][date]");
 
+  r.appendChild(b_x);
   r.appendChild(b_z);
   r.appendChild(b_y);
 

@@ -31,7 +31,6 @@ function autocomplete(inp) {
       /*for each item in the array...*/
       getCandidatePlaces(val).then( function ( arr ) {
         for (i = 0; i < arr.length; i++) {
-            console.log(i + "here")
           /*create a DIV element for each matching element:*/
           b = document.createElement("DIV");
           // add the title of the matching geoname place to the drop-down
@@ -41,10 +40,13 @@ function autocomplete(inp) {
           /*execute a function when someone clicks on the item value (DIV element):*/
               b.addEventListener("click", function(e) {
               /*insert the value for the autocomplete text field:*/
-              inp.value = arr[this.getElementsByTagName("input")[0].value]['title'];
-              geo = "geo:" + arr[this.getElementsByTagName("input")[0].value]['lat'] + "," + arr[this.getElementsByTagName("input")[0].value]['lng']
+              console.log(arr[this.getElementsByTagName("input")[0].value].title)
+              inp.value = arr[this.getElementsByTagName("input")[0].value].title;
+
+              geo = "geo:" + arr[this.getElementsByTagName("input")[0].value].lat + "," + arr[this.getElementsByTagName("input")[0].value].lng
               var name = inp.name
-              console.log(name.substring(0, name.length-10)+"[geo]")
+              console.log(name)
+              console.log("location name "+ name.substring(0, name.length-10)+"[geo]")
               var element = document.getElementsByName(name.substring(0, name.length-10)+"[geo]")[0];
               element.value = geo
               /*close the list of autocompleted values,
