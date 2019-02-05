@@ -41,9 +41,9 @@
 
                         {% if popular_tags %}
                         <p class="clearfix">
-                            I talk a lot about {% for tag in popular_tags%} <a href="/t/{{tag}}" class="tag" >{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
+                            I talk a lot about {% for tag in popular_tags%}<a href="/t/{{tag}}" class="tag" >{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
                         </p>
-                        {%endif%}
+                        {% endif %}
                     </div>
                 </div>
 

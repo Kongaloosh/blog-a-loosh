@@ -1,5 +1,5 @@
 async function getCandidatePlaces(str) {
-    const response = await fetch('http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q='+str, {
+    const response = await fetch('https://kongaloosh.com/geonames/'+str, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
