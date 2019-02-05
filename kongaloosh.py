@@ -193,9 +193,12 @@ def post_from_request(request=None):
         try:
             # create an event
             data['event'] = {}
-            data['event']['dt_start'] = request.form['dt-start']
-            data['event']['dt_end'] = request.form['dt-end']
-            data['event']['name'] = request.form['event-name']
+            for key in ['dt.start', 'dt_end', 'name']:
+                if request.form[key] == '':
+                    data['event'] = None
+                    break
+                else:
+                    data['event'][key] = request.form[key]
         except KeyError:
             pass
 
@@ -675,7 +678,8 @@ def md_to_html():
 @app.route('/geonames/<query>', methods=['GET'])
 def geonames_wrapper(query):
     if request.method == "GET":
-        return request.get("http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q="+query)
+        resp = requests.get("http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q="+query)
+        return jsonify(resp.json()), resp.status_code, resp.headers.items()
     else:
         return redirect('/404'), 404
 
