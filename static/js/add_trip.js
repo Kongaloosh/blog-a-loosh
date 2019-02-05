@@ -21,7 +21,7 @@ function addFieldFunction() {
   a_y.setAttribute("placeholder", "Origin");
   a_y.setAttribute("id", "origin_"+i);
   a_z.setAttribute("class", "dash-input");
-  a_z.setAttribute("type", "date");
+  a_z.setAttribute("type", "datetime-local");
   a_z.setAttribute("placeholder", "dt-departure");
 
   a_x.setAttribute("name", "geo[]"); //Keep attribute in lower case
@@ -39,6 +39,7 @@ function addFieldFunction() {
   autocomplete(document.getElementById("geo_"+i));
   autocomplete(document.getElementById("origin_"+i));
   increment();
+//  if this is the first leg of the trip, we need an additional input to act as the endpoint
   if (i == 1){
     addFieldFunction()
   }
