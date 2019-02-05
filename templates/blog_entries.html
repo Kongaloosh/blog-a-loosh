@@ -17,60 +17,73 @@
 <!-- START ENTRIES -->
 <div class="row post-preview hentry h-entry">
     {% if session.logged_in %}
-        <div class="row pull-right">
-            <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
-        </div>
-    {% endif %}
-
-    {% if entry.title %}
-    <h2 class="post-title p-name">
-        <a href="{{entry.url}}">{{ entry.title }}</a>
-    </h2>
-
-    {% endif %}
-    {% if entry.in_reply_to is sequence%}
-    <div class="reply reply-header reply-topper reply-footer">
-            {% for site in entry.in_reply_to %}
-            {% if site.photo is defined %}
-            <a href="{{site.url}}">
-                <img
-                        class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                        style="image-orientation: from-image; max-height:300px"
-                        src="/{{site.photo}}"
-                        >
-            </a>
-            {% endif %}
-            In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{% if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
-            {% endfor %}
+    <div class="row">
+        <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
     </div>
     {% endif %}
 
-    <div class="e-content {% if not entry.title %}p-name{% endif %}">
+    {% if entry.title %}
+    <div>
+        <h2 class="post-title p-name">
+            <a href="{{entry.url}}">{{ entry.title }}</a>
+        </h2>
+    </div>
+
+    {% endif %}
+    {% if entry.in_reply_to is sequence%}
+    <div class="row reply reply-header reply-topper reply-footer">
+        {% for site in entry.in_reply_to %}
+        {% if site.photo is defined %}
+        <a href="{{site.url}}">
+            <img
+                    class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                    style="image-orientation: from-image; max-height:300px"
+                    src="/{{site.photo}}"
+            >
+        </a>
+        {% endif %}
+        In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{%
+        if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row e-content {% if not entry.title %}p-name{% endif %}">
         {% if entry.photo%}
         <a href="{{entry.url}}">
-        <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-             style="image-orientation: from-image; max-height:500px"
-             src="/{{entry.photo}}">
+            <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                 style="image-orientation: from-image; max-height:500px"
+                 src="/{{entry.photo}}">
         </a>
         {% endif %}
         {% if entry.summary %}
         <div class="post-subtitle p-summary">
-                <p>
+            <p>
                 <i>
-                {{entry.summary}}
+                    {{entry.summary}}
                 </i>
             </p>
         </div>
         {% else %}
         <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
+
+        <div class="row text-center">
+            <p>{% for destination in entry.travel %} {{destination.location_name}} {% if not loop.last %}&rarr;{% endif
+                %}{% endfor %}</p>
+
+            <div class="row">
+                <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc
+">
+            </div>
+        </div>
         <div class="entry-footer clearfix">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
                 {% if entry.category %}
-                    <i class="fa fa-tags"></i>
-                    {% for c in entry.category %}
-                    <a class="category" href="/t/{{c}}">{{c}}</a>
-                    {% endfor %}
+                <i class="fa fa-tags"></i>
+                {% for c in entry.category %}
+                <a class="category" href="/t/{{c}}">{{c}}</a>
+                {% endfor %}
                 {% endif %}
             </div>
         </div>
@@ -79,15 +92,17 @@
     <div class="entry-footer row">
         <div class="text-left col-lg-9 col-md-9 col-sm-9 col-xs-9">
             <p>Posted on
-            <a class="u-url" href="{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-            {% if entry.location and entry.location_name%} <!-- If there's a location -->
+                <a class="u-url" href="{{entry.url}}">
+                    <time class="dt-published">{{entry.published}}</time>
+                </a>
+                {% if entry.location and entry.location_name%} <!-- If there's a location -->
                 in
                 {% if entry.location_name %}
-			        <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
-		        {% else %}
-			        <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
-		        {% endif %}
-            {% endif %}
+                <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
+                {% else %}
+                <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+                {% endif %}
+                {% endif %}
                 By <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
             </p>
         </div> <!-- END POST DETAILS -->
@@ -131,16 +146,16 @@
 
         <div class="actions col-md-3 text-right">
             {% if entry.twitter %}
-                <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
-                    On Twitter
-                    <i class="fa fa-twitter"></i>
-                </a>
-                {% endif %}
-                {% if entry.facebook %}
-                <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
-                    On facebook
-                    <i class="fa fa-facebook-square"></i>
-                </a>
+            <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
+                On Twitter
+                <i class="fa fa-twitter"></i>
+            </a>
+            {% endif %}
+            {% if entry.facebook %}
+            <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
+                On facebook
+                <i class="fa fa-facebook-square"></i>
+            </a>
             {% endif %}
         </div> <!-- END TWITTER LINK -->
     </div><!-- END TWITTER SYNDICATION -->

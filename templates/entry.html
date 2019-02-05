@@ -1,6 +1,6 @@
 <html>
 <head>
-        <meta charset="utf-8">
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
@@ -10,15 +10,14 @@
     <link rel="authorization_endpoint" href="https://indieauth.com/auth"> <!-- Auth point for Quill -->
     <link rel="token_endpoint" href="https://tokens.indieauth.com/token"> <!-- Token point for Quill -->
     <link rel="micropub" href="http://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
-    <link rel="webmention" href="https://webmention.io/kongaloosh.com/webmention" />
+    <link rel="webmention" href="https://webmention.io/kongaloosh.com/webmention"/>
     <link rel="alternate" type="application/atom+xml"
-      href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=http://kgl.superfeedr.com/" />
+          href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=http://kgl.superfeedr.com/"/>
     <link rel="self" href="http://kongaloosh.com/">
     <link rel="hub" href="http://kgl.superfeedr.com/">
 
     <meta name="viewport" content="initial-scale=1">
     <title>kongaloosh</title>
-
 
 
     <link rel="https://www.w3.org/ns/ldp#inbox" href="http://kongaloosh.com/inbox">
@@ -29,9 +28,12 @@
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+          type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+          rel='stylesheet' type='text/css'>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -50,7 +52,7 @@
     <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
     <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -67,7 +69,8 @@
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header page-scroll">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
@@ -119,12 +122,9 @@
 
 <article>
     <div class="container intro-head">
-        <div class="row text-center">
-                <!--<h1 style="color:black">Hi</h1>-->
-                <!--<hr class="small">-->
-        </div>
         {% if reply_to %}
-        <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-xs-offset-1 col-md-10 col-xs-offset-1 align-center"> <!-- REPLY DECORATOR END -->
+        <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-xs-offset-1 col-md-10 col-xs-offset-1 align-center">
+            <!-- REPLY DECORATOR END -->
             <div class="text-center">
                 <h3><i class="fa fa-share"></i></h3>
                 <strong>In response to</strong>
@@ -134,14 +134,16 @@
         {% endif %}
 
         {% for reply in reply_to %}
-        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1 reply"> <!-- REPLY -->
+        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1 reply">
+            <!-- REPLY -->
             {% if reply.content %}
             <div class="reply-header text-center">
                 {{reply.content | safe}}
             </div>
 
             <div class="reply-footer">
-                <p>Published <a class="" rel="u-in-reply-to in-reply-to"  href="{{reply.url}}">{{reply.published}}</a> by {{reply.author}}</p>
+                <p>Published <a class="" rel="u-in-reply-to in-reply-to" href="{{reply.url}}">{{reply.published}}</a> by
+                    {{reply.author}}</p>
             </div>
             {% else %}
             <a class="" rel="u-in-reply-to in-reply-to" href="{{reply.url}}">{{reply.url}}</a>
@@ -164,7 +166,7 @@
 
         <div class="hentry h-entry col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
 
-               {% if entry.in_reply_to is sequence%}
+            {% if entry.in_reply_to is sequence%}
             <div class="reply reply-header reply-topper reply-footer">
                 {% for site in entry.in_reply_to %}
                 {% if site.photo is defined %}
@@ -173,10 +175,12 @@
                             class="u-photo img-responsive center-block img-thumbnail img-rounded"
                             style="image-orientation: from-image; max-height:300px"
                             src="/{{site.photo}}"
-                            >
+                    >
                 </a>
                 {% endif %}
-                In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{% if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
+                In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to"
+                                                                href="{{site.url}}">{% if site.title %}
+                {{site.title}}{%else%}{{site.url}}{%endif%}</a>
                 {% endfor %}
             </div>
             {% endif %}
@@ -193,7 +197,7 @@
                 <div class="post-subtitle p-summary">
                     <p>
                         <i>
-                        {{entry.summary}}
+                            {{entry.summary}}
                         </i>
                     </p>
                 </div>
@@ -205,78 +209,94 @@
                      src="/{{entry.photo}}">
                 {% endif %}
                 {% if entry.content %}
-                {{entry.content | safe}}</div>
-                {% endif %}
+                {{entry.content | safe}}
+            </div>
+            {% endif %}
+
+            {% if entry.travel %}
+            <div class="row text-center">
+            <p>{% for destination in entry.travel %} {{destination.location_name}} {% if not loop.last %}&rarr;{% endif %}{% endfor %}</p>
+
+            <div class="row">
+                <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc
+">
+            </div>
+            </div>
+            {% endif %}
+
+
             <div class="entry-footer clearfix">                         <!-- Footer -->
-            <hr>
-            <div class="row post-meta">
-                <div class="col-md-8 pull-left">
-                    <p>
-                    Posted by on
-                    <a href="{{entry.url}}"><time class="dt-published">{{entry.published}}</time></a>
-                    by
-                    <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
-                    {% if entry.location%} <!-- If there's a location -->
-                        in
-                        {% if entry.location_name %}
+                <hr>
+                <div class="row post-meta">
+                    <div class="col-md-8 pull-left">
+                        <p>
+                            Posted by on
+                            <a href="{{entry.url}}">
+                                <time class="dt-published">{{entry.published}}</time>
+                            </a>
+                            by
+                            <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
+                            {% if entry.location%} <!-- If there's a location -->
+                            in
+                            {% if entry.location_name %}
                             <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
-                        {% else %}
+                            {% else %}
                             <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
-                        {% endif %}
-                    {% endif %}
-                    </p>
-                    <p>
-                        {{reposts}}  <i class="fa fa-retweet"></i>'s | {{likes}} <i class="fa fa-star"></i>'s
-                    </p>
-                </div> <!-- END POST DETAILS -->
-                <div class="col-md-4 pull-right text-right">
+                            {% endif %}
+                            {% endif %}
+                        </p>
+                        <p>
+                            {{reposts}} <i class="fa fa-retweet"></i>'s | {{likes}} <i class="fa fa-star"></i>'s
+                        </p>
+                    </div> <!-- END POST DETAILS -->
+                    <div class="col-md-4 pull-right text-right">
                         {% if entry.category %}
-                            <i class="fa fa-tags"></i>
-                            {% for c in entry.category %}
-                            <a class="p-category" href="/t/{{c}}">{{c}}</a>
-                            {% endfor %}
+                        <i class="fa fa-tags"></i>
+                        {% for c in entry.category %}
+                        <a class="p-category" href="/t/{{c}}">{{c}}</a>
+                        {% endfor %}
                         {% endif %}
                         <a class="u-url" href="{{entry.url}}"></a>
-                </div> <!-- END PERMALINK -->
-            </div> <!-- END AUTHORSHIP -->
-            <div class="row">
-                {% if entry.twitter %}
-                <div class="actions col-md-8 pull-left">
-                    <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
-                        <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
-                            <i class="fa fa-star"></i>
-                            Like
-                        </a>
-                    </indie-action>
-                    <indie-action do="repost" with="http://kongaloosh.com{{entry.url}}">
-                        <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
-                            <i class="fa fa-retweet"></i>
-                            Repost
-                        </a>
-                    </indie-action>
-                    <indie-action do="reply" with="http://kongaloosh.com{{entry.url}}">
-                        <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
-                            <i class="fa fa-reply"></i>
-                            Reply
-                        </a>
-                    </indie-action>
-                </div> <!-- END ACTIONS -->
-                {% endif %}
-                <div class="actions col-md-4 pull-right text-right">
+                    </div> <!-- END PERMALINK -->
+                </div> <!-- END AUTHORSHIP -->
+                <div class="row">
                     {% if entry.twitter %}
-                    <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
-                        On Twitter
-                        <i class="fa fa-twitter"></i>
-                    </a>
+                    <div class="actions col-md-8 pull-left">
+                        <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
+                            <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
+                                <i class="fa fa-star"></i>
+                                Like
+                            </a>
+                        </indie-action>
+                        <indie-action do="repost" with="http://kongaloosh.com{{entry.url}}">
+                            <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
+                                <i class="fa fa-retweet"></i>
+                                Repost
+                            </a>
+                        </indie-action>
+                        <indie-action do="reply" with="http://kongaloosh.com{{entry.url}}">
+                            <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
+                                <i class="fa fa-reply"></i>
+                                Reply
+                            </a>
+                        </indie-action>
+                    </div> <!-- END ACTIONS -->
                     {% endif %}
-                    {% if entry.facebook %}
-                    <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
-                        On facebook
-                        <i class="fa fa-facebook-square"></i>
-                    </a>
-                    {% endif %}
-                </div> <!-- END TWITTER LINK -->
-            </div><!-- END TWITTER SYNDICATION -->
+                    <div class="actions col-md-4 pull-right text-right">
+                        {% if entry.twitter %}
+                        <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
+                            On Twitter
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                        {% endif %}
+                        {% if entry.facebook %}
+                        <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
+                            On facebook
+                            <i class="fa fa-facebook-square"></i>
+                        </a>
+                        {% endif %}
+                    </div> <!-- END TWITTER LINK -->
+                </div><!-- END TWITTER SYNDICATION -->
             </div><!-- END ENTRY DETAILS -->
         </div>
 
@@ -327,17 +347,17 @@
 
 <!-- Footer -->
 <footer>
-<div class = "container">
-    <div class="row h-card p-author">
-	<data class="p-name" value="Alex Kearney"></data>
-        <data class="p-url p-uid u-url u-uid" value="http://kongaloosh.com/" rel="me"></data>
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-centered">
-            <img src="{{ url_for('static', filename='img/profile.jpg') }}"
-                 class="u-photo u-url u-uid img-responsive center-block img-thumbnail img-circle"
-                 alt="Alex Kearney"
-                 style="max-height: 100px"
-		 rel="author">
-        </div>
+    <div class="container">
+        <div class="row h-card p-author">
+            <data class="p-name" value="Alex Kearney"></data>
+            <data class="p-url p-uid u-url u-uid" value="http://kongaloosh.com/" rel="me"></data>
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-centered">
+                <img src="{{ url_for('static', filename='img/profile.jpg') }}"
+                     class="u-photo u-url u-uid img-responsive center-block img-thumbnail img-circle"
+                     alt="Alex Kearney"
+                     style="max-height: 100px"
+                     rel="author">
+            </div>
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <ul class="list-inline text-center">
                     <li>
@@ -390,9 +410,9 @@
                     </li>
                 </ul>
                 <p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p>
+            </div>
         </div>
     </div>
-</div>
 </footer>
 
 <!-- jQuery -->
@@ -414,9 +434,10 @@
 
   ga('create', 'UA-65133906-1', 'auto');
   ga('send', 'pageview');
+
 </script>
 
-<script type="text/javascript" >
+<script type="text/javascript">
   jQuery(function($){
       var urls = [];
       var base;
@@ -439,27 +460,37 @@
       });
     });
   });
+
 </script>
 
 <!-- Add mousewheel plugin (this is optional) -->
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/lib/jquery.mousewheel-3.0.6.pack.js') }}"></script>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/lib/jquery.mousewheel-3.0.6.pack.js') }}"></script>
 
 <!-- Add fancyBox -->
-<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/jquery.fancybox.css') }}" type="text/css" media="screen" />
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/jquery.fancybox.pack.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/jquery.fancybox.css') }}" type="text/css"
+      media="screen"/>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/jquery.fancybox.pack.js') }}"></script>
 
 <!-- Optionally add helpers - button, thumbnail and/or media -->
-<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.css') }}" type="text/css" media="screen" />
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-media.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.css') }}"
+      type="text/css" media="screen"/>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.js') }}"></script>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-media.js') }}"></script>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.css') }}" type="text/css" media="screen" />
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.css') }}"
+      type="text/css" media="screen"/>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.js') }}"></script>
 
 <script type="text/javascript">
 	$(document).ready(function() {
 		$(".fancybox").fancybox();
 	});
+
 </script>
 
 </body>
