@@ -79,7 +79,7 @@
                     </div>
 
                     <div class="dash-add">
-                        <button type="button" class="dash-add-button" onclick="addfieldFunction()">Add Stop</button>
+                        <button type="button" class="dash-add-button" onclick="addFieldFunction()">Add Stop</button>
                     </div>
                     <p>
                         <label>Event</label><br>
@@ -143,6 +143,7 @@
 <script src="/static/js/jquery.js"></script>
 <script src="/static/js/wysiwyg.js"></script>
 <script src="/static/js/place_location_autocomplete.js"></script>
+<script src="/static/js/add_trip.js"></script>
 
 <script>
 var x = document.getElementById("geo_coord");
@@ -229,70 +230,7 @@ $("#img_input").change(function(){
 
 </script>
 
-<script>
-    var i = 0;
 
-function increment() {
-  i += 1;
-}
-
-function addfieldFunction() {
-  var r = document.createElement('div');
-  r.setAttribute("class", "form-id")
-
-  var a_x = document.createElement("INPUT");
-  var a_y = document.createElement("INPUT");
-  var a_z = document.createElement("INPUT");
-  var b_x = document.createElement("INPUT");
-  var b_y = document.createElement("INPUT");
-  var b_z = document.createElement("INPUT");
-  var br = document.createElement("BR");
-
-  a_x.setAttribute("type", "hidden")
-  a_y.setAttribute("class", "dash-input");
-  a_y.setAttribute("type", "text");
-  a_y.setAttribute("placeholder", "Origin");
-  a_y.setAttribute("id", "origin_"+i);
-  a_z.setAttribute("class", "dash-input");
-  a_z.setAttribute("type", "date");
-  a_z.setAttribute("placeholder", "dt-departure");
-
-  b_x.setAttribute("type", "hidden")
-  b_y.setAttribute("class", "dash-input");
-  b_y.setAttribute("type", "text");
-  b_y.setAttribute("placeholder", "Destination");
-  b_y.setAttribute("id", "destination_"+i);
-  b_z.setAttribute("class", "dash-input");
-  b_z.setAttribute("type", "date");
-  b_z.setAttribute("placeholder", "date");
-
-  a_x.setAttribute("name", "travel[" + i + "][origin][geo]"); //Keep attribute in lower case
-  b_x.setAttribute("name", "travel[" + i + "][destination][geo]"); //Keep attribute in lower case
-
-  a_y.setAttribute("name", "travel[" + i + "][origin][location]"); //Keep attribute in lower case
-  b_y.setAttribute("name", "travel[" + i + "][destination][location]"); //Keep attribute in lower case
-
-  a_z.setAttribute("name", "travel[" + i + "][origin][date]");
-  b_z.setAttribute("name", "travel[" + i + "][destination][date]");
-
-  r.appendChild(a_x);
-  r.appendChild(a_z);
-  r.appendChild(a_y);
-  r.appendChild(br);
-
-
-
-  r.appendChild(b_x);
-  r.appendChild(b_z);
-  r.appendChild(b_y);
-
-  document.getElementById("form-div").appendChild(r);
-  console.log(document.getElementById("destination_"+i));
-  autocomplete(document.getElementById("destination_"+i));
-  autocomplete(document.getElementById("origin_"+i));
-  increment();
-}
-</script>
 
 {% else %}
 <div class="row">

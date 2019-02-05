@@ -43,11 +43,11 @@ function autocomplete(inp) {
               console.log(arr[this.getElementsByTagName("input")[0].value].title)
               inp.value = arr[this.getElementsByTagName("input")[0].value].title;
 
-              geo = "geo:" + arr[this.getElementsByTagName("input")[0].value].lat + "," + arr[this.getElementsByTagName("input")[0].value].lng
-              var name = inp.name
+              var geo = "geo:" + arr[this.getElementsByTagName("input")[0].value].lat + "," + arr[this.getElementsByTagName("input")[0].value].lng
+              var name = inp.id
               console.log(name)
-              console.log("location name "+ name.substring(0, name.length-10)+"[geo]")
-              var element = document.getElementsByName(name.substring(0, name.length-10)+"[geo]")[0];
+              console.log("name is: geo_"+name.substring(name.length-1, name.length))
+              var element = document.getElementById("geo_"+name.substring(name.length-1, name.length));
               element.value = geo
               /*close the list of autocompleted values,
               (or any other open lists of autocompleted values:*/
