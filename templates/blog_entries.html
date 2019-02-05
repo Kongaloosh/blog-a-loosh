@@ -68,15 +68,18 @@
         <p class="row e-content">{{entry.content | safe}}</p>
         {% endif%}
 
+      {% if entry.travel %}
         <div class="row text-center">
-            <p>{% for destination in entry.travel %} {{destination.location_name}} {% if not loop.last %}&rarr;{% endif
-                %}{% endfor %}</p>
+            <p>{%for destination in entry.travel%}
+                    {{destination.location_name}}
+                    {% if not loop.last %} &rarr;{% endif %}
+                {% endfor %}</p>
 
             <div class="row">
-                <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc
-">
+                <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc">
             </div>
         </div>
+        {% endif %}
 
         {%if entry.event%}
         <div>
