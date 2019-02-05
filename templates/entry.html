@@ -215,14 +215,23 @@
 
             {% if entry.travel %}
             <div class="row text-center">
-            <p>{% for destination in entry.travel %} {{destination.location_name}} {% if not loop.last %}&rarr;{% endif %}{% endfor %}</p>
+                <p>{% for destination in entry.travel %} {{destination.location_name}} {% if not loop.last %}&rarr;{%
+                    endif %}{% endfor %}</p>
 
-            <div class="row">
-                <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc
+                <div class="row">
+                    <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc
 ">
-            </div>
+                </div>
             </div>
             {% endif %}
+
+            {%if entry.event%}
+            <div>
+                <h4>At: {{entry.event.name}}</h4>
+                <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
+                <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
+            </div>
+            {%endif%}
 
 
             <div class="entry-footer clearfix">                         <!-- Footer -->
@@ -435,6 +444,7 @@
   ga('create', 'UA-65133906-1', 'auto');
   ga('send', 'pageview');
 
+
 </script>
 
 <script type="text/javascript">
@@ -460,6 +470,7 @@
       });
     });
   });
+
 
 </script>
 
@@ -490,6 +501,7 @@
 	$(document).ready(function() {
 		$(".fancybox").fancybox();
 	});
+
 
 </script>
 
