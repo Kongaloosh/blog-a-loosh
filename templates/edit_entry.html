@@ -75,7 +75,15 @@
 
                     <div id="form-div">
                         <label>Travel</label><br>
-
+                        {% if entry.travel %}
+                        {% for destination in entry.travel %}
+                            <div class="form-id">
+                                <input type="hidden" id="geo_0" name="geo[]" value="{{destination.location}}">
+                                <input class="dash-input" type="datetime-local" placeholder="dt-departure" name="date[]" value="{{destination.date}}">
+                                <input class="dash-input" type="text" placeholder="Origin" id="origin_0" name="location[]" value="{{destination.location_name}}"><br>
+                            </div>
+                        {% endfor %}
+                        {% endif %}
                     </div>
 
                     <div class="dash-add">
@@ -83,9 +91,9 @@
                     </div>
                     <p>
                         <label>Event</label><br>
-                        <b>name </b> <input type="text" value="{%if entry.event%}{{entry.event.name}}{%endif%}"><br>
-                        <b>start </b><input type="date" name="dt-start" value="{%if entry.event%}{{entry.event.start}}{%endif%}"><br>
-                        <b>end </b><input type="date" name="dt-end" value="{%if entry.event%}{{entry.event.end}}{%endif%}">
+                        <b>name </b> <input type="text" name="event-name" value="{%if entry.event%}{{entry.event.name}}{%endif%}"><br>
+                        <b>start </b><input type="datetime-local" name="dt-start" value="{%if entry.event%}{{entry.event.dt_start}}{%endif%}"><br>
+                        <b>end </b><input type="datetime-local" name="dt-end" value="{%if entry.event%}{{entry.event.dt_end}}{%endif%}">
                     </p>
 
                     <p>

@@ -174,7 +174,6 @@ def post_from_request(request=None):
             geo = request.form.getlist('geo[]')
             location = request.form.getlist('location[]')
             date = request.form.getlist('date[]')
-            print geo, location, date
             # if the trips are well-formatted, then parse them accordingly
             if len(geo) == len(location) and len(location) == len(date):
                 while True:
@@ -193,8 +192,10 @@ def post_from_request(request=None):
 
         try:
             # create an event
-            data['event']['dt-start'] = request.form['dt-start']
-            data['event']['dt-end'] = request.form['dt-end']
+            data['event'] = {}
+            data['event']['dt_start'] = request.form['dt-start']
+            data['event']['dt_end'] = request.form['dt-end']
+            data['event']['name'] = request.form['event-name']
         except KeyError:
             pass
 
