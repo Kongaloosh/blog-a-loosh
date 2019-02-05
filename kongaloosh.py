@@ -677,6 +677,14 @@ def md_to_html():
         return redirect('/404'), 404
 
 
+@app.route('/geonames/<query>', methods=['GET'])
+def geonames_wrapper(query):
+    if request.method == "GET":
+        return request.get("http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q="+query)
+    else:
+        return redirect('/404'), 404
+
+
 @app.route('/recent_uploads', methods=['GET', 'POST'])
 def recent_uploads():
     """
