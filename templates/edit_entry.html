@@ -83,8 +83,9 @@
                     </div>
                     <p>
                         <label>Event</label><br>
-                        <b>start </b><input type="date" name="dt-start" value="{{entry.start}}"><br>
-                        <b>end </b><input type="date" name="dt-end" value="{{entry.end}}">
+                        <b>name </b> <input type="text" value="{%if entry.event%}{{entry.event.name}}{%endif%}"><br>
+                        <b>start </b><input type="date" name="dt-start" value="{%if entry.event%}{{entry.event.start}}{%endif%}"><br>
+                        <b>end </b><input type="date" name="dt-end" value="{%if entry.event%}{{entry.event.end}}{%endif%}">
                     </p>
 
                     <p>

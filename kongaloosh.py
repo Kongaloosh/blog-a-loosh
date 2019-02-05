@@ -139,6 +139,8 @@ def resolve_placename(location):
 
 
 def post_from_request(request=None):
+
+
     data = {
         'h': None,
         'title': None,
@@ -154,15 +156,45 @@ def post_from_request(request=None):
         'in_reply_to': None,
         'repost-of': None,
         'syndication': None,
-        'photo': None
+        'photo': None,
     }
 
     if request:
         try:
+            # if the photo is a file, then go to beginning; otherwise, null.
             data['photo'] = request.files['photo_file']
             data['photo'].seek(0, 2)
             if data['photo'].tell() < 1:
                 data['photo'] = None
+        except KeyError:
+            pass
+
+        try:
+            trips = []
+            geo = request.form.getlist('geo[]')
+            location = request.form.getlist('location[]')
+            date = request.form.getlist('date[]')
+            print geo, location, date
+            # if the trips are well-formatted, then parse them accordingly
+            if len(geo) == len(location) and len(location) == len(date):
+                while True:
+                    try:
+                        trips.append({
+                            "location": geo.pop(0),
+                            "location_name": location.pop(0),
+                            "date": date.pop(0)
+                        })
+                        print trips
+                    except IndexError:
+                        break
+            data['travel'] = trips
+        except KeyError:
+            pass
+
+        try:
+            # create an event
+            data['event']['dt-start'] = request.form['dt-start']
+            data['event']['dt-end'] = request.form['dt-end']
         except KeyError:
             pass
 
@@ -480,6 +512,7 @@ def add():
         return render_template('edit_entry.html', entry=post_from_request(), popular_tags=tags, type="add")
 
     elif request.method == 'POST':  # if we're adding a new post
+
         if not session.get('logged_in'):
             abort(401)
 
@@ -488,12 +521,13 @@ def add():
             # album processing can take time: we want to spin it off to avoid worker timeouts.
             thread.start()
             location = '/'
-
             location = add_entry(request)
 
         if "Save" in request.form:  # if we're simply saving the post as a draft
+
             data = post_from_request(request)
             location = create_json_entry(data, g=g, draft=True)
+
         return redirect(location)  # send the user to the newly created post
 
 
