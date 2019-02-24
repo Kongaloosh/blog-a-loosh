@@ -193,7 +193,7 @@ def post_from_request(request=None):
         try:
             # create an event
             data['event'] = {}
-            for key in ['dt.start', 'dt_end', 'name']:
+            for key in ['dt_start', 'dt_end', 'name']:
                 if request.form[key] == '':
                     data['event'] = None
                     break

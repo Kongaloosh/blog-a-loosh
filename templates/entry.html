@@ -226,13 +226,13 @@
             </div>
             {% endif %}
 
-            {%if entry.event%}
+            {%if entry.event %}
             <div>
-                <h4>At: {{entry.event.name}}</h4>
+                <h4>At: {{entry.event.event_name}}</h4>
                 <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
                 <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
             </div>
-            {%endif%}
+            {% endif %}
 
 
             <div class="entry-footer clearfix">                         <!-- Footer -->
