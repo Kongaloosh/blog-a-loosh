@@ -187,7 +187,7 @@ def post_from_request(request=None):
                         print trips
                     except IndexError:
                         break
-            data['travel'] = trips
+            data['travel']['trips'] = trips
             markers = '|'.join([destination['location'][4:]for destination in trips]) # make the trips
             r = requests.get('https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
             data['travel']['map'] = r.content
@@ -336,10 +336,12 @@ def search_by_tag(category):
 @app.route('/')
 def show_entries():
     """ The main view: presents author info and entries. """
-
-    if 'application/atom+xml' in request.headers.get('Accept'):
-        # if the header is requesting an xml or atom feed, simply return it
-        return show_atom()
+    try:
+        if 'application/atom+xml' in request.headers.get('Accept'):
+            # if the header is requesting an xml or atom feed, simply return it
+            return show_atom()
+    except TypeError: # if there are empty headers
+        pass
 
     # getting the entries we want to display.
     entries = []  # store the entries which will be presented

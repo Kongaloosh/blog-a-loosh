@@ -70,7 +70,7 @@
 
       {% if entry.travel %}
         <div class="row text-center">
-            <p>{%for destination in entry.travel%}
+            <p>{%for destination in entry.travel.trips%}
                     {{destination.location_name}}
                     {% if not loop.last %} &rarr;{% endif %}
                 {% endfor %}</p>
