@@ -365,6 +365,11 @@ def show_entries():
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10], display_articles=display_articles)
 
 
+#@app.route('/webfinger')
+#def finger():
+#    return jsonify(json.loads(open('webfinger.json', 'r').read()))
+
+
 @app.route('/webfinger')
 def finger():
     return jsonify(json.loads(open('webfinger.json', 'r').read()))
