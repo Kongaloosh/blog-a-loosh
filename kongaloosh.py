@@ -187,6 +187,7 @@ def post_from_request(request=None):
                         print trips
                     except IndexError:
                         break
+            data['travel'] = {}
             data['travel']['trips'] = trips
             markers = '|'.join([destination['location'][4:]for destination in trips]) # make the trips
             r = requests.get('https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
