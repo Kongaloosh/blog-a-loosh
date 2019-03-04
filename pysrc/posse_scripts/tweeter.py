@@ -3,6 +3,17 @@ import tweepy
 import re
 import ConfigParser
 
+config = ConfigParser.ConfigParser()
+config.read('config.ini')
+
+# configuration
+DATABASE = config.get('Global', 'Database')
+DEBUG = config.get('Global', 'Debug')
+SECRET_KEY = config.get('Global', 'DevKey')
+USERNAME = config.get('SiteAuthentication', "Username")
+PASSWORD = config.get('SiteAuthentication', 'password')
+DOMAIN_NAME = config.get('Global', 'DomainName')
+# the url to use for showing recent bulk uploads
 
 def get_keys():
     config = ConfigParser.ConfigParser()
@@ -39,8 +50,8 @@ def send_tweet(data):
         for reply in data['in_reply_to']:
             if reply[:len(twitter_url)] == twitter_url:     # if the URL points to twitter ...
                 in_reply_to = reply.split('/')[-1:]         # ... get the status id
-
-    tweets = text_to_tweets(data=data['content'], url=data['url'])  # process string into tweet thread
+    url = 'https://' + DOMAIN_NAME + data['url']
+    tweets = text_to_tweets(data=data['content'], url=url)  # process string into tweet thread
     # post the first tweet so that we have a status id to start the thread
     status = api.update_status(status=tweets.pop(0), in_reply_to_status_id=in_reply_to)
     first_id = status.id    # the id which points to origin of thread
