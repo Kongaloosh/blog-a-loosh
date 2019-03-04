@@ -68,6 +68,9 @@ def text_to_tweets(data, url):
     """
     max_chars = 240-1-23                # one removed for punctuation 22 removed for link.
     data = ''.join(data.split('\n'))    # strip newlines.
+    data = re.sub(r'\((?P<url>https?://[^\s]+)', '', data)                  # remove URLS
+    data = re.sub(r'(\[)([\w\s\d.?\-\",\'!@#$%^&*]*)(\])', r'\2', data)     # no links, just names
+    data = re.sub(r'(@{3,})(?P<album>((.)|(\n))*?)(@{3,})', '', data)       # strip albums
     text = re.findall(r"[\w']+|[.!?;]", data)
     tweets = []
     tweet = ""
