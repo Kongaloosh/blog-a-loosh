@@ -263,8 +263,7 @@ def syndicate_from_form(creation_request, data):
 
     if creation_request.form.get('twitter'):
         # if we're syndicating to twitter, spin off a thread and send the request.
-        t = Timer(2, send_tweet(), [data])
-        t.start()
+        send_tweet(data)
 
 
 def update_entry(update_request, year, month, day, name, draft=False):
