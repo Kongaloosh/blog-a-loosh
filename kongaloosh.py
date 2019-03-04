@@ -247,6 +247,7 @@ def syndicate_tweet(data):
     data['twitter'] = {'url': tweet_url, 'id': tweet_id}
     update_json_entry(data=data, old_entry=old_data, g=None)
 
+
 def syndicate_from_form(creation_request, data):
     """Using the data from a post just submitted, syndicate to social networks.
     Args:
@@ -280,7 +281,7 @@ def update_entry(update_request, year, month, day, name, draft=False):
     file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
     entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
     update_json_entry(data, entry, g=g, draft=draft)
-    syndicate_from_form(update_request, location, data['in_reply_to'])
+    syndicate_from_form(update_request, data)
     return location
 
 
