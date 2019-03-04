@@ -35,12 +35,20 @@ def main(data):
     # Fill in the values noted in previous step here
     cfg = get_keys()        # grab keys
     api = get_api(cfg)      # setup API
+    in_reply_to = None
+    twitter_url = 'https://twitter.com'
+    if data['in_reply_to'] is not None:                     # if post is reply ...
+        for reply in data['in_reply_to']:
+            if reply[:len(twitter_url)] == twitter_url:     # if the URL points to twitter ...
+                in_reply_to = reply.split('/')[-1:]         # ... get the status id
+
     tweets = text_to_tweets(data=data['content'], url=data['url'])  # process string into tweet thread
-    status = api.update_status(status=tweets.pop(0))                # post the first tweet so that we have a status id
-    first_id = status.id                                            # the id which points to origin of thread
+    # post the first tweet so that we have a status id to start the thread
+    status = api.update_status(status=tweets.pop(0), in_reply_to_status_id=in_reply_to)
+    first_id = status.id    # the id which points to origin of thread
     for tweet in tweets:
         status = api.update_status(status=tweet, in_reply_to_status_id=status.id)
-    return ('http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=first_id))
+    return 'http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=first_id)
 
 
 def text_to_tweets(data, url):
