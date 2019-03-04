@@ -269,7 +269,7 @@ def create_json_entry(data, g, draft=False, update=False):
                                  [data['slug'], data['published'], c])
                     g.db.commit()
 
-            create_entry_markdown(data, total_path)                 # also create md version.
+            # create_entry_markdown(data, total_path)                 # also create md version.
         return data['url']
     else:
         return "/already_made"                                     # a post of this name already exists

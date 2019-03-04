@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = 'alex'
 import tweepy
-from slugify import slugify
 import re
 import ConfigParser
 
@@ -25,7 +23,7 @@ def get_api(cfg):
     return tweepy.API(auth)
 
 
-def main(data):
+def send_tweet(data):
     """Posts a thread of tweets based on the text of a post.
     Args:
         data (dict): A dict which represents a post.
