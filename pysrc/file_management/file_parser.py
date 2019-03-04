@@ -251,10 +251,10 @@ def create_json_entry(data, g, draft=False, update=False):
                 pass
 
         if data['travel']['map']:
-            file_writer = open(total_path + "_map.png")  # save in the same place as post with map naming and as .png
+            file_writer = open(total_path + "-map.png", 'w')  # save in the same place as post with map naming and as .png
             file_writer.write(data['travel']['map'])     # save the buffer from the request
             file_writer.close()
-            data['travel']['map'] = data['url'] + "_map.png"    # where the post should point to fetch the map
+            data['travel']['map'] = total_path + "-map.png"    # where the post should point to fetch the map
 
         data['published'] = data['published'].__str__()             # dump to string for serialization
         file_writer = open(total_path+".json", 'w')                 # open and dump the actual post meta-data

@@ -76,7 +76,7 @@
                     <div id="form-div">
                         <label>Travel</label><br>
                         {% if entry.travel %}
-                        {% for destination in entry.travel %}
+                        {% for destination in entry.travel.trips %}
                             <div class="form-id">
                                 <input type="hidden" id="geo_0" name="geo[]" value="{{destination.location}}">
                                 <input class="dash-input" type="datetime-local" placeholder="dt-departure" name="date[]" value="{{destination.date}}">
