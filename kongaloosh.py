@@ -188,6 +188,9 @@ def post_from_request(request=None):
                     except IndexError:
                         break
             data['travel'] = trips
+            markers = '|'.join([destination['location'][4:]for destination in trips]) # make the trips
+            r = requests.get('https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
+            data['travel']['map'] = r.content
         except KeyError:
             pass
 
@@ -364,11 +367,6 @@ def show_entries():
     display_articles = search_by_tag("article")[:3]
 
     return render_template('blog_entries.html', entries=entries, before=before, popular_tags=tags[:10], display_articles=display_articles)
-
-
-#@app.route('/webfinger')
-#def finger():
-#    return jsonify(json.loads(open('webfinger.json', 'r').read()))
 
 
 @app.route('/webfinger')

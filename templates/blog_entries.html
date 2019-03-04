@@ -76,7 +76,7 @@
                 {% endfor %}</p>
 
             <div class="row">
-                <img src="https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{% endfor %}&path=color:green|weight:5|{% for destination in entry.travel %}{{destination.location[4:]}}{% if not loop.last %}|{% endif %}{%endfor%}&key=AIzaSyAT8nOWYsKZXy1UgHQcZAA848Dt0xhXsdc">
+                    <img src="{{entry.travel.map}}">
             </div>
         </div>
         {% endif %}
