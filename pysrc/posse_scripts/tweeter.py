@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-__author__ = 'alex'
 import tweepy
-from slugify import slugify
 import re
 import ConfigParser
+
 
 def get_keys():
     config = ConfigParser.ConfigParser()
     config.read('config.ini')
-    
     cfg = {}
     cfg['access_token'] = config.get('Twitter', 'AccessToken')
     cfg['access_token_secret'] = config.get('Twitter', 'AccessTokenSecret')
@@ -25,22 +23,40 @@ def get_api(cfg):
     return tweepy.API(auth)
 
 
-def main(data):
+def send_tweet(data):
+    """Posts a thread of tweets based on the text of a post.
+    Args:
+        data (dict): A dict which represents a post.
+    Returns:
+        url (str): The url of the first tweet in the thread.
+        """
     # Fill in the values noted in previous step here
-    cfg = get_keys()
-    api = get_api(cfg)
+    cfg = get_keys()        # grab keys
+    api = get_api(cfg)      # setup API
+    in_reply_to = None
+    twitter_url = 'https://twitter.com'
+    if data['in_reply_to'] is not None:                     # if post is reply ...
+        for reply in data['in_reply_to']:
+            if reply[:len(twitter_url)] == twitter_url:     # if the URL points to twitter ...
+                in_reply_to = reply.split('/')[-1:]         # ... get the status id
 
-    tweets = process_tweet(data=data['content'], url=data['url'])
-    status = api.update_status(status=tweets.pop(0))
+    tweets = text_to_tweets(data=data['content'], url=data['url'])  # process string into tweet thread
+    # post the first tweet so that we have a status id to start the thread
+    status = api.update_status(status=tweets.pop(0), in_reply_to_status_id=in_reply_to)
+    first_id = status.id    # the id which points to origin of thread
     for tweet in tweets:
-        status = api.update_status(status=tweet, )
+        status = api.update_status(status=tweet, in_reply_to_status_id=status.id)
+    return 'http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=first_id)
 
-    return ('http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=status.id))
 
-
-def process_tweet(data, url):
-    """unrolls text into a series of """
-    max_chars = 240-1-23        # one removed for punctuation 22 removed for link.
+def text_to_tweets(data, url):
+    """unrolls text into a list of strings which correspond to a full tweet.
+    Args:
+        data (str): the text to be unrolled into a twitter thread.
+        url (str): the url which the tweet should point towards.
+    """
+    max_chars = 240-1-23                # one removed for punctuation 22 removed for link.
+    data = data.split('\n').join('')    # strip newlines.
     text = re.findall(r"[\w']+|[.!?;]", data)
     tweets = []
     tweet = ""

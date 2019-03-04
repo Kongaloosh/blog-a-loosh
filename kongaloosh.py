@@ -25,6 +25,7 @@ from markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.file_management.markdown_album_pre_process import new_prefix
 import markdown
 from python_webmention.mentioner import send_mention, get_mentions
+from pysrc.posse_scripts.tweeter import send_tweet
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
 
@@ -233,16 +234,36 @@ def get_post_for_editing(draft_location, md=False):
     return entry
 
 
-def syndicate_from_form(creation_request, location, in_reply_to):
-    if in_reply_to:
-        # if it's a response...
-        for reply_to in in_reply_to.split(','):
-            # split in case post is in reply to many and send mention
-            send_mention('http://' + DOMAIN_NAME + location, reply_to)
+def syndicate_tweet(data):
+    """Syndicates a tweet and updates the post.
+    Args:
+        data (dict): the contents of a post to be syndicated.
+    Returns:
+        None
+    """
+    old_data = data
+    tweet_url = send_tweet(data)
+    tweet_id = tweet_url.split("/")[-1:]
+    data['twitter'] = {'url': tweet_url, 'id': tweet_id}
+    update_json_entry(data=data, old_entry=old_data, g=None)
+
+def syndicate_from_form(creation_request, data):
+    """Using the data from a post just submitted, syndicate to social networks.
+    Args:
+        creation_request (Response): the response from an /add post form.
+        data (dict): represents a new entry.
+    """
+    post_loc = 'http://' + DOMAIN_NAME + data['url']
+    # Check to see if the post is in reply to another post and send a mention
+    try:
+        for reply in data['in_reply_to']:
+                send_mention(post_loc, reply)
+    except TypeError:
+        pass
 
     if creation_request.form.get('twitter'):
         # if we're syndicating to twitter, spin off a thread and send the request.
-        t = Timer(2, bridgy_twitter, [location])
+        t = Timer(2, send_tweet(), [data])
         t.start()
 
 
@@ -265,9 +286,15 @@ def update_entry(update_request, year, month, day, name, draft=False):
 
 
 def add_entry(creation_request, draft=False):
-
+    """Adds a post based on a request.
+    Args:
+        creation_request (request): the request received from a post at /add or /edit
+        draft (bool): A flag determining whether the post should be considered a draft. If true, saves instead of post.
+    Returns:
+        location (str): the url of the new post.
+    """
     data = post_from_request(creation_request)
-    if data['published'] is None:  # we're publishing it now; give it the present time
+    if data['published'] is None:               # we're publishing it now; give it the present time
         data['published'] = datetime.now()
     data['content'] = run(data['content'], date=data['published'])  # find all images in albums and move them
 
@@ -278,7 +305,7 @@ def add_entry(creation_request, draft=False):
         # todo: you'll be left with a rogue 'location' in the dict... should clean that...
 
     location = create_json_entry(data, g=g)  # create the entry
-    syndicate_from_form(creation_request, location, data['in_reply_to'])
+    syndicate_from_form(creation_request, data)
     return location
 
 
