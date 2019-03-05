@@ -189,8 +189,9 @@ def post_from_request(request=None):
                         break
             data['travel'] = {}
             data['travel']['trips'] = trips
-            markers = '|'.join([destination['location'][4:]for destination in trips]) # make the trips
-            r = requests.get('https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
+            if len(trips) > 0:  # if there's more than one location, make the map
+                markers = '|'.join([destination['location'][4:]for destination in trips]) # make the trips
+                r = requests.get('https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
             data['travel']['map'] = r.content
         except KeyError:
             pass
