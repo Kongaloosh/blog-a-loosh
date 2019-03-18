@@ -31,8 +31,10 @@ h3.preview:hover {
     -bottom: 10px;
 }
 
-.article-preview div {
+.article-preview div{
+ margin: 10px;
  min-height: 100px;
+
 }
 
 body {
@@ -84,12 +86,15 @@ hr{
 }
 
 .navbar-custom {
-  position: absolute;
+  /*position: absolute;*/
+  /*
   top: 0;
   left: 0;
   width: 100%;
   z-index: 3;
+  */
   font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: white;
 }
 .navbar-custom .navbar-brand {
   font-weight: 800;
@@ -99,75 +104,15 @@ hr{
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1px;
+    /* the rest of your styling */
 }
-@media only screen and (min-width: 768px) {
-  .navbar-custom {
-    background: transparent;
-    border-bottom: 1px solid transparent;
-  }
-  .navbar-custom .navbar-brand {
-    color: #c5edc5;
-    padding: 20px;
-  }
-  .navbar-custom .navbar-brand:hover,
-  .navbar-custom .navbar-brand:focus {
-    color: #8fbc8f;
-  }
-  .navbar-custom .nav li a {
-    color: #c5edc5;
-    padding: 20px;
-  }
-  .navbar-custom .nav li a:hover,
-  .navbar-custom .nav li a:focus {
-    color: #8fbc8f;
-  }
-}
-@media only screen and (min-width: 1170px) {
-  .navbar-custom {
-    -webkit-transition: background-color 0.3s;
-    -moz-transition: background-color 0.3s;
-    transition: background-color 0.3s;
-    /* Force Hardware Acceleration in WebKit */
-    -webkit-transform: translate3d(0, 0, 0);
-    -moz-transform: translate3d(0, 0, 0);
-    -ms-transform: translate3d(0, 0, 0);
-    -o-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-  .navbar-custom.is-fixed {
-    /* when the user scrolls down, we hide the header right above the viewport */
-    position: fixed;
-    top: -61px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-bottom: 1px solid #f2f2f2;
-    -webkit-transition: -webkit-transform 0.3s;
-    -moz-transition: -moz-transform 0.3s;
-    transition: transform 0.3s;
-  }
-  .navbar-custom.is-fixed .navbar-brand {
-    color: #264026;
-  }
-  .navbar-custom.is-fixed .navbar-brand:hover,
-  .navbar-custom.is-fixed .navbar-brand:focus {
-    color: #339933;
-  }
-  .navbar-custom.is-fixed .nav li a {
-    color: #264026;
-  }
-  .navbar-custom.is-fixed .nav li a:hover,
-  .navbar-custom.is-fixed .nav li a:focus {
-    color: #339933;
-  }
-  .navbar-custom.is-visible {
-    /* if the user changes the scrolling direction, we show the header */
-    -webkit-transform: translate3d(0, 100%, 0);
-    -moz-transform: translate3d(0, 100%, 0);
-    -ms-transform: translate3d(0, 100%, 0);
-    -o-transform: translate3d(0, 100%, 0);
-    transform: translate3d(0, 100%, 0);
-  }
+
+.navbar {
+    -webkit-box-shadow: 0 8px 6px -6px #999;
+    -moz-box-shadow: 0 8px 6px -6px #999;
+    box-shadow: 0 8px 6px -6px #999;
+
+    /* the rest of your styling */
 }
 .intro-header {
   background-color: #808080;
@@ -179,6 +124,7 @@ hr{
   -o-background-size: cover;
   margin-bottom: 50px;
 }
+
 .intro-header .site-heading,
 .intro-header .post-heading,
 .intro-header .page-heading {
@@ -398,6 +344,7 @@ form .row:first-child .floating-label-form-group {
 }
 .pager {
   margin: 20px 0 0;
+  list-style: none;
 }
 .pager li > a,
 .pager li > span {
