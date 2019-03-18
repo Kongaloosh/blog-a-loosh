@@ -271,7 +271,8 @@ def syndicate_from_form(creation_request, data):
         # if we're syndicating to twitter, spin off a thread and send the request.
         send_tweet(data)
     if creation_request.form.get('bridgy_twitter'):
-        bridgy_twitter(data['url'])
+        t = Timer(30, bridgy_twitter, [data['url']])
+        t.start()
 
 
 def update_entry(update_request, year, month, day, name, draft=False):
@@ -635,9 +636,14 @@ def bulk_upload():
         app.logger.info("uploading at " + file_path)
         app.logger.info(request.files)
         for uploaded_file in request.files.getlist('file'):
-
+            i = 0
             file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S") + '.' + \
                        uploaded_file.filename.split('.')[-1:][0]
+            while os.path.exists(file_loc):
+                file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-") + i + '.' + \
+                           uploaded_file.filename.split('.')[-1:][0]
+                i += 1
+
             image = Image.open(uploaded_file)
             try:
                 for orientation in ExifTags.TAGS.keys():
