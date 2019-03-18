@@ -34,7 +34,7 @@
     <link rel="micropub" href="https://kongaloosh.com/micropub"> <!-- Micropub endpoint for Quill -->
 
     <link rel="alternate" type="application/atom+xml" title="Kongaloosh's Blogroll"
-      href="https://kongaloosh.com/atom.xml" />
+          href="https://kongaloosh.com/atom.xml" />
     <!--<link rel="alternate" type="application/rss+xml" title="Kongaloosh's Blogroll" href="http://kongaloosh.com/rss.xml">-->
     <!--<link rel="alternate" type="application/as2+json" title="title-of-the-page" href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=http://kgl.superfeedr.com/">-->
     <link rel="self" href="http://kongaloosh.com/">
@@ -132,76 +132,75 @@
 {% block content %}
 {% endblock %}
 
-<hr> <!-- page breaker -->
-
 <!-- Footer -->
 <footer>
-<div class = "container">
-    <div class="row h-card">
-	<data class="p-name" value="Alex Kearney"></data>
-        <data class="u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-centered">
-            <img src="{{ url_for('static', filename='img/profile.jpg') }}"
-                 class="u-photo u-url u-uid img-responsive center-block img-thumbnail img-circle"
-                 alt="Alex Kearney"
-                 style="max-height: 100px"
-		 rel="author">
-        </div>
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <ul class="list-inline text-center">
-                    <li>
-                        <a class="u-url url" href="https://twitter.com/kongaloosh" rel="me">
+    <div class = "container">
+        <div class="d-flex flex-column justify-content-center h-card">
+            <data class="p-name" value="Alex Kearney"></data>
+            <data class="u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
+            <div class="p-2">
+                <img src="{{ url_for('static', filename='img/profile.jpg') }}"
+                     class="u-photo u-url u-uid img-responsive center-block img-thumbnail  mx-auto d-block img-circle"
+                     alt="Alex Kearney"
+                     style="max-height: 100px"
+                     rel="author">
+            </div >
+            <div class="p-2 d-flex flex-row justify-content-center">
+                <div class="p-2">
+                    <a class="u-url url" href="https://twitter.com/kongaloosh" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://www.facebook.com/alex.k.kearney" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://www.facebook.com/alex.k.kearney" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://github.com/Kongaloosh" title="Github" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://github.com/Kongaloosh" title="Github" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-github fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://instagram.com/kongaloosh" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://instagram.com/kongaloosh" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-instagram fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://ca.linkedin.com/in/alexandrakearney" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://ca.linkedin.com/in/alexandrakearney" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="mailto:hi@kongaloosh.com" rel="me" class="u-email">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a href="mailto:hi@kongaloosh.com" rel="me" class="u-email">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                </ul>
-                <p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p>
+                    </a>
+                </div>
+
+            </div>
+
+            <div><p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p></div>
+
         </div>
     </div>
-</div>
 </footer>
 
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

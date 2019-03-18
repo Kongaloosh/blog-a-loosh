@@ -56,8 +56,8 @@
     <div class="d-none d-md-block d-lg-block">
     <div class="row entry-preview">
         {% for article in display_articles%}
-        <div class="hidden-sm hidden-xs col-lg-4 col-md-4 article-preview">
-
+        <div class="hidden-sm hidden-xs col-lg-4 col-md-4">
+            <div class="article-preview border rounded">
             <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
 
             {% if article.photo%}
@@ -86,7 +86,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-
+            </div>
         </div>
         {%endfor%} <!-- end search  --->
         </div>

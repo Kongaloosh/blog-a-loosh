@@ -15,15 +15,15 @@
 
 {% for entry in entries %}
 <!-- START ENTRIES -->
-<div class="row post-preview hentry h-entry">
+<div class="row flex-column post-preview hentry h-entry">
     {% if session.logged_in %}
-    <div class="row">
+    <div class="p-2">
         <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
     </div>
     {% endif %}
 
     {% if entry.title %}
-    <div>
+    <div class="p-2">
         <h2 class="post-title p-name">
             <a href="{{entry.url}}">{{ entry.title }}</a>
         </h2>
@@ -31,7 +31,7 @@
 
     {% endif %}
     {% if entry.in_reply_to is sequence%}
-    <div class="row reply reply-header reply-topper reply-footer">
+    <div class="p-2 reply reply-header reply-topper reply-footer">
         {% for site in entry.in_reply_to %}
         {% if site.photo is defined %}
         <a href="{{site.url}}">
@@ -48,7 +48,7 @@
     </div>
     {% endif %}
 
-    <div class="row e-content {% if not entry.title %}p-name{% endif %}">
+    <div class="d-flex flex-column p-2 e-content {% if not entry.title %}p-name{% endif %}">
         {% if entry.photo%}
         <a href="{{entry.url}}">
             <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
@@ -65,24 +65,24 @@
             </p>
         </div>
         {% else %}
-        <p class="row e-content">{{entry.content | safe}}</p>
+        <p>{{entry.content | safe}}</p>
         {% endif%}
 
       {% if entry.travel %}
-        <div class="row text-center">
+        <div class="d-flex text-center">
             <p>{%for destination in entry.travel.trips%}
                     {{destination.location_name}}
                     {% if not loop.last %} &rarr;{% endif %}
                 {% endfor %}</p>
 
-            <div class="row">
+            <div class="">
                     <img src="{{entry.travel.map}}">
             </div>
         </div>
         {% endif %}
 
         {%if entry.event%}
-        <div>
+        <div class="p-2">
             <h4>At: {{entry.event.event_name}}</h4>
             <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
             <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
@@ -90,7 +90,7 @@
         {%endif%}
 
 
-        <div class="entry-footer clearfix">                         <!-- Footer -->
+        <div class="p-2 entry-footer clearfix">                         <!-- Footer -->
             <div class="categories">                                <!-- Catagories -->
                 {% if entry.category %}
                 <i class="fa fa-tags"></i>
@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    <div class="entry-footer row">
+    <div class="p-2 entry-footer row align-items-end">
         <div class="text-left col-lg-9 col-md-9 col-sm-9 col-xs-9">
             <p>Posted on
                 <a class="u-url" href="{{entry.url}}">
@@ -133,7 +133,7 @@
         </div> <!-- END PERMALINK -->
     </div> <!-- END AUTHORSHIP -->
 
-    <div class="entry-footer row">
+    <div class="p-2 entry-footer row">
         <div class="actions col-md-9 pull-left">
             {% if entry.twitter %}
             <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">

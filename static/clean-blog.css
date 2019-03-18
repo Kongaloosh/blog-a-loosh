@@ -31,8 +31,10 @@ h3.preview:hover {
     -bottom: 10px;
 }
 
-.article-preview div {
+.article-preview div{
+ margin: 10px;
  min-height: 100px;
+
 }
 
 body {
@@ -102,8 +104,16 @@ hr{
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1px;
+    /* the rest of your styling */
 }
 
+.navbar {
+    -webkit-box-shadow: 0 8px 6px -6px #999;
+    -moz-box-shadow: 0 8px 6px -6px #999;
+    box-shadow: 0 8px 6px -6px #999;
+
+    /* the rest of your styling */
+}
 .intro-header {
   background-color: #808080;
   background: no-repeat center center;
@@ -334,6 +344,7 @@ form .row:first-child .floating-label-form-group {
 }
 .pager {
   margin: 20px 0 0;
+  list-style: none;
 }
 .pager li > a,
 .pager li > span {
