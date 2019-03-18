@@ -256,13 +256,13 @@ def create_json_entry(data, g, draft=False, update=False):
                 file_writer.write(data['travel']['map'])     # save the buffer from the request
                 file_writer.close()
                 data['travel']['map'] = total_path + "-map.png"    # where the post should point to fetch the map
-
-            data['published'] = data['published'].__str__()             # dump to string for serialization
-            file_writer = open(total_path+".json", 'w')                 # open and dump the actual post meta-data
-            file_writer.write(json.dumps(data))
-            file_writer.close()
         except KeyError:
             pass
+
+        data['published'] = data['published'].__str__()             # dump to string for serialization
+        file_writer = open(total_path+".json", 'w')                 # open and dump the actual post meta-data
+        file_writer.write(json.dumps(data))
+        file_writer.close()
 
         if not draft and not update and g:                         # if this isn't a draft, put it in the dbms
             g.db.execute(
