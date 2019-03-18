@@ -2,7 +2,7 @@
 {% block content %}
 <!-- Page Header -->
 <!-- Set your background image for this header on the line below. -->
-<header class="intro-header"
+<header class="intro-header media-heading"
         style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
@@ -24,8 +24,8 @@
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
     <div class="container">
-        <div class="">
-            <div class="row site-heading jumbotron" style="display: block;">
+        <div class="row">
+            <div class="site-heading jumbotron" style="display: block;">
                 <div class="row">
                     <div class="col col-lg-4 col-md-4  col-sm-12 col-xs-12 profile-image-holder">
                         <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
@@ -33,14 +33,14 @@
                     </div>
 
                     <div class="col col-lg-8 col-md-8 col-sm-12 col-xs-12 intro-text">
-                        <p>
+                        <p class="d-none d-md-block d-lg-block">
                             I'm <a href="http://alexkearney.com" class="tag">Alex Kearney</a>, a PhD student studying Computer
                             Science at the <a href="http://spaces.facsci.ualberta.ca/rlai/" class="tag">University of Alberta</a>. I focus on Artificial
                             Intelligence and Epistemology.
                         </p>
 
                         {% if popular_tags %}
-                        <p class="clearfix">
+                        <p class="clearfix d-none d-md-block d-lg-block">
                             I talk a lot about {% for tag in popular_tags%}<a href="/t/{{tag}}" class="tag" >{{tag}}</a>{% if not loop.last %}, {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}
                         </p>
                         {% endif %}
@@ -52,10 +52,11 @@
     </div>
 </header>
 <!-- Main Content -->
-<div class="container">
-    <div class="row row-lg-12 row-md-12 row-sm-12 row-xs-12 entry-preview">
+<div class="container-fluid">
+    <div class="d-none d-md-block d-lg-block">
+    <div class="row entry-preview">
         {% for article in display_articles%}
-        <div class="col col-lg-4 col-md-4 col-sm-4 col-xs-12 article-preview">
+        <div class="hidden-sm hidden-xs col-lg-4 col-md-4 article-preview">
 
             <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
 
@@ -87,7 +88,8 @@
             {% endif %}
 
         </div>
-        {%endfor%}
+        {%endfor%} <!-- end search  --->
+        </div>
     </div>
     <hr>
     {% block body %}

@@ -51,7 +51,8 @@
     <link rel="https://www.w3.org/ns/ldp#inbox" href="https://kongaloosh.com/inbox">
 
     <!-- Bootstrap Core CSS -->
-    <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!--<link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">-->
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
@@ -89,49 +90,43 @@
 </head>
 
 <body>
-<!-- Navigation -->
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-    <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header page-scroll">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">kongaloosh</a>
-        </div>
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a href="/">Home</a>
-                </li>
-                <li>
-                    <a href="http://alexkearney.com">About</a>
-                </li>
-                <li>
-                    <a href="/a/">Articles</a>
-                </li>
-                <li>
-                    <a href="/t/image">Photos</a>
-                </li>
-                <li>
-                    <a href="/t/bookmark">Bookmarks</a>
-                </li>
-                <li>
-                    <a href="/inbox">Inbox</a>
-                </li>
-                {% if session.logged_in %}
-                <li><a href="/logout">logout</a></li>
-                {% endif %}
-            </ul>
-        </div>
-        <!-- /.navbar-collapse -->
+<!-- Navigation -->
+<nav class="navbar navbar-light navbar-expand-lg navbar-expand-md sticky-top navbar-custom">
+    <a class="navbar-brand" href="/">kongaloosh</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://alexkearney.com">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/a/">Articles</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/t/image">Photos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/t/bookmark">Bookmarks</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/inbox">Inbox</a>
+            </li >
+            {% if session.logged_in %}
+            <li class="nav-item">
+                <a class="nav-link" href="/logout">logout</a>
+            </li>
+            {% endif %}
+        </ul>
     </div>
-    <!-- /.container -->
+    <!-- /.navbar-collapse -->
 </nav>
 
 {% block content %}
@@ -209,14 +204,18 @@
 </div>
 </footer>
 
-<!-- jQuery -->
-<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 
-<!-- Bootstrap Core JavaScript -->
-<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<!--&lt;!&ndash; jQuery &ndash;&gt;-->
+<!--<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>-->
 
-<!-- Custom Theme JavaScript -->
-<script src="{{ url_for('static', filename='js/clean-blog.js') }}"></script>
+<!--&lt;!&ndash; Bootstrap Core JavaScript &ndash;&gt;-->
+<!--<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>-->
+
+<!--&lt;!&ndash; Custom Theme JavaScript &ndash;&gt;-->
+<!--<script src="{{ url_for('static', filename='js/clean-blog.js') }}"></script>-->
 
 <!--http://webmention.io/js/mentions.js-->
 
@@ -254,6 +253,8 @@
     });
   });
 </script>
+
+
 
 <!-- Add mousewheel plugin (this is optional) -->
 <script type="text/javascript" src="{{ url_for('static', filename='fancybox/lib/jquery.mousewheel-3.0.6.pack.js') }}"></script>
