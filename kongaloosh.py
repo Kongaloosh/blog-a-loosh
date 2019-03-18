@@ -271,7 +271,8 @@ def syndicate_from_form(creation_request, data):
         # if we're syndicating to twitter, spin off a thread and send the request.
         send_tweet(data)
     if creation_request.form.get('bridgy_twitter'):
-        bridgy_twitter(data['url'])
+        t = Timer(30, bridgy_twitter, [data['url']])
+        t.start()
 
 
 def update_entry(update_request, year, month, day, name, draft=False):
