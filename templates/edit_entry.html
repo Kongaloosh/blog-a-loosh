@@ -150,12 +150,21 @@
     </div>
 </div>
 
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  config: ["MMLorHTML.js"],
+  jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
+  extensions: ["MathMenu.js", "MathZoom.js"]
+});
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js??config=TeX-AMS-MML_HTMLorMML">
+</script>
 <script src="/static/js/jquery.js"></script>
 <script src="/static/js/wysiwyg.js"></script>
 <script src="/static/js/place_location_autocomplete.js"></script>
 <script src="/static/js/add_trip.js"></script>
-
 <script>
+
 var x = document.getElementById("geo_coord");
 
 function getLocation() {

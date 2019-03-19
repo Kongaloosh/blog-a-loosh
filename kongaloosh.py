@@ -710,7 +710,7 @@ def md_to_html():
     """
     if request.method == "POST":
         return jsonify(
-            {"html": markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension()])})
+            {"html": markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension(),'mdx_math'])})
 
         # return request.json()
     else:

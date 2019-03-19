@@ -1,3 +1,15 @@
+//(function () {
+//  var script = document.createElement("script");
+//  script.type = "text/javascript";
+//  script.src  = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+//  document.getElementsByTagName("head")[0].appendChild(script);
+//})();
+MathJax.Hub.Startup.onload()
+MathJax.Hub.Config({
+  config: ["MMLorHTML.js"],
+  jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
+  extensions: ["MathMenu.js", "MathZoom.js"]
+});
 
 var text = "";
 var img = "";
@@ -26,7 +38,7 @@ function getHTMLFromMD(val) {
             })
             .then(function (result) {
                 document.getElementById("wysiwyg").innerHTML = result['html'];
-
+                MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
             })
         .catch(function(error) {
     // If there is any error you will catch them here
