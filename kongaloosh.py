@@ -767,10 +767,10 @@ def recent_uploads():
                 text_box_insert = insert_pattern % image_location
                 row += \
                     '''
-                        <a onclick="insertAtCaret('text_input','%s');return false;">
-                            <img src="%s" class="p-2 justify-content-center" style="max-height:auto">
+                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s');return false;">
+                            <img src="%s" class="img-fluid" style="max-height:auto;">
                         </a>
-                    ''' % (text_box_insert)
+                    ''' % (text_box_insert, image_location)
             preview += \
                 '''
                 <div class="d-flexbox flexbox-row">
