@@ -53,44 +53,48 @@
 </header>
 <!-- Main Content -->
 <div class="container-fluid">
-    <div class="d-none d-md-block d-lg-block">
-    <div class="row entry-preview">
-        {% for article in display_articles%}
-        <div class="hidden-sm hidden-xs col-lg-4 col-md-4">
-            <div class="article-preview border rounded">
-            <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
+    <div class="d-none d-lg-block">
+        <div class="row entry-preview text-center offset-md-2 offset-lg-2">
+            {% for article in display_articles%}
+            <div class="hidden-sm hidden-xs col-lg-3 col-md-3 border rounded ml-2 mr-2 center">
+                <div class="article-preview col-lg-12 col-md-12 ">
+                    <h3 class="preview"><a href="{{article.url}}">{{article.title}}</a></h3>
 
-            {% if article.photo%}
-            <a href="{{article.url}}">
-                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                     style="image-orientation: from-image; max-height:500px"
-                     src="/{{article.photo}}">
-            </a>
-            {% endif %}
+                    {% if article.photo%}
+                    <a href="{{article.url}}">
+                        <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                             style="image-orientation: from-image; max-height:500px"
+                             src="/{{article.photo}}">
+                    </a>
+                    {% endif %}
 
-            {% if article.summary %}
-            <p class="post-subtitle p-summary">
-                <i>
-                    {{article.summary}}
-                </i>
-            </p>
-            {% else %}
-            <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
-            {% endif%}
+                    {% if article.summary %}
+                    <p class="post-subtitle p-summary">
+                        <i>
+                            {{article.summary}}
+                        </i>
+                    </p>
+                    {% else %}
+                    <p class="row e-content"><i>{{article.content[0:30]| safe}} ...</i></p>
+                    {% endif%}
 
-            {% if article.category %}
-            <div class="text-left categories">
-                <i class="fa fa-tags"></i>
-                {% for c in article.category %}
-                <a class="category" href="/t/{{c}}">{{c}}</a>
-                {% endfor %}
+                    {% if article.category %}
+                    <div class="text-left categories">
+                        <i class="fa fa-tags"></i>
+                        {% for c in article.category %}
+                        <a class="category" href="/t/{{c}}">{{c}}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
-            </div>
-        </div>
-        {%endfor%} <!-- end search  --->
+            {%endfor%} <!-- end search  --->
         </div>
     </div>
+</div>
+
+<div class="container">
+
     <hr>
     {% block body %}
     {% endblock %}

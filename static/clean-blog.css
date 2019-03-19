@@ -199,6 +199,11 @@ hr{
   text-align:left
 }
 
+.preview-holder{
+    margin-right:2px;
+    margin-left:2px;
+}
+
 .intro-text p{
   line-height: 120%;
   margin-top: 0px;
