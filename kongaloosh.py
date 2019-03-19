@@ -732,28 +732,8 @@ def recent_uploads():
     :returns a formatted list of all the images in the current day's directory
     """
     if request.method == 'GET':
-        IMAGE_TEMPLATE = \
-            '''
-                <div class="row">
-                    <div class="col-md-1 col-lg-1 col-sm-1">
-                        <a class="fancybox" rel="group"  href="%s">
-                            <img src="%s" class="img-responsive img-thumbnail" style="width:100">
-                        </a>
-                    </div>
-                    <div class="col-md-11 col-lg-11 col-sm-11">
-                        <a onclick="insertAtCaret('text_input','%s');return false;" >
-                            <p style="font-size:8pt;">
-                            %s
-                            </p>
-                        </a>
-                    </div>
-                </div>
-
-            '''
 
         directory = ORIGINAL_PHOTOS_DIR
-        app.logger.info(request.args)
-        app.logger.info(request.url)
 
         try:
             if request.args.get('stream'):
@@ -788,12 +768,12 @@ def recent_uploads():
                 row += \
                     '''
                         <a onclick="insertAtCaret('text_input','%s');return false;">
-                            <img src="%s" class="img-responsive img-thumbnail" style="max-width:%d%%; max-height:200px">
+                            <img src="%s" class="p-2 justify-content-center" style="max-height:auto">
                         </a>
-                    ''' % (text_box_insert, image_location, 100 / (4 + 0.2))
+                    ''' % (text_box_insert)
             preview += \
                 '''
-                <div class="row">
+                <div class="d-flexbox flexbox-row">
                     %s
                 </div>
                 ''' % (row)
@@ -1266,6 +1246,8 @@ def notification():
 @app.route('/already_made', methods=['GET'])
 def post_already_exists():
     return render_template('already_exists.html')
+
+
 
 
 if __name__ == "__main__":
