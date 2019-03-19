@@ -23,6 +23,11 @@ h3.preview:hover {
 }
 */
 
+.intro-container{
+    padding-top: 1%;
+    padding-bottom: 2%;
+}
+
 .article-preview-footer div {
     vertical-align: bottom;
 }
@@ -399,8 +404,6 @@ body {
 }
 
 .site-heading {
-  margin-top: 55px;
-  margin-bottom: 50px;
   background-color:rgba(0, 0, 0, 0.7);
   padding: 10%;
   padding-top: 60px;
