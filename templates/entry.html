@@ -23,9 +23,11 @@
     <link rel="https://www.w3.org/ns/ldp#inbox" href="http://kongaloosh.com/inbox">
 
     <!-- Bootstrap Core CSS -->
-    <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
+    <!--<link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
@@ -64,50 +66,41 @@
 
 <body>
 
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top"
-     style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%; background-size:cover;">
-    <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header page-scroll">
-            <button type="button" class="navbar-toggle" data-toggle="collapse"
-                    data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">kongaloosh</a>
-        </div>
+<nav class="navbar navbar-light navbar-expand-lg navbar-expand-md sticky-top navbar-custom">
+    <a class="navbar-brand" href="/">kongaloosh</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a href="/">Home</a>
-                </li>
-                <li>
-                    <a href="http://alexkearney.com">About</a>
-                </li>
-                <li>
-                    <a href="/a/">Articles</a>
-                </li>
-                <li>
-                    <a href="/t/image">Photos</a>
-                </li>
-                <li>
-                    <a href="/t/bookmark">Bookmarks</a>
-                </li>
-                <li>
-                    <a href="/inbox">Inbox</a>
-                </li>
-                {% if session.logged_in %}
-                <li><a href="/logout">logout</a></li>
-                {% endif %}
-            </ul>
-        </div>
-        <!-- /.navbar-collapse -->
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://alexkearney.com">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/a/">Articles</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/t/image">Photos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/t/bookmark">Bookmarks</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/inbox">Inbox</a>
+            </li >
+            {% if session.logged_in %}
+            <li class="nav-item">
+                <a class="nav-link" href="/logout">logout</a>
+            </li>
+            {% endif %}
+        </ul>
     </div>
-    <!-- /.container -->
+    <!-- /.navbar-collapse -->
 </nav>
 
 
@@ -152,7 +145,6 @@
         </div> <!-- REPLY END -->
         {% endfor %}
 
-
         <a href="https://brid.gy/publish/facebook"></a>
         <a href="https://brid.gy/publish/instagram"></a>
         <a href="https://brid.gy/publish/twitter"></a>
@@ -164,10 +156,10 @@
         </div>
         {% endif %}
 
-        <div class="hentry h-entry col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-xs-10 col-xs-offset-1">
+        <div class="hentry h-entry d-flex flex-column p-2">
 
             {% if entry.in_reply_to is sequence%}
-            <div class="reply reply-header reply-topper reply-footer">
+            <div class="d-flex flex-row p-2 reply reply-header reply-topper reply-footer">
                 {% for site in entry.in_reply_to %}
                 {% if site.photo is defined %}
                 <a href="{{site.url}}">
@@ -184,7 +176,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <div class="e-content p-note">
+            <div class="flex-row p-2 e-content p-note">
                 <!-- The title of an entry -->
                 {% if entry.title %}
 
@@ -214,7 +206,7 @@
             {% endif %}
 
             {% if entry.travel %}
-            <div class="row text-center">
+            <div class="flex-row p-2 text-center">
                 <p>{%for destination in entry.travel.trips%}
                         {{destination.location_name}}
                         {% if not loop.last %} &rarr;{% endif %}
@@ -227,15 +219,14 @@
             {% endif %}
 
             {%if entry.event %}
-            <div>
+            <div class="flex-row p-2">
                 <h4>At: {{entry.event.event_name}}</h4>
                 <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
                 <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
             </div>
             {% endif %}
 
-
-            <div class="entry-footer clearfix align-items-end">                         <!-- Footer -->
+            <div class="flex-row p-2 entry-footer clearfix align-items-end">                         <!-- Footer -->
                 <hr>
                 <div class="row post-meta">
                     <div class="col-md-8 pull-left">
@@ -355,72 +346,74 @@
 
 <hr> <!-- page breaker -->
 
+
 <!-- Footer -->
 <footer>
-    <div class="container">
-        <div class="row h-card p-author">
+    <div class = "container">
+        <div class="d-flex flex-column justify-content-center h-card">
             <data class="p-name" value="Alex Kearney"></data>
-            <data class="p-url p-uid u-url u-uid" value="http://kongaloosh.com/" rel="me"></data>
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-centered">
+            <data class="u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
+            <div class="p-2">
                 <img src="{{ url_for('static', filename='img/profile.jpg') }}"
-                     class="u-photo u-url u-uid img-responsive center-block img-thumbnail img-circle"
+                     class="u-photo u-url u-uid img-responsive center-block img-thumbnail  mx-auto d-block img-circle"
                      alt="Alex Kearney"
                      style="max-height: 100px"
                      rel="author">
-            </div>
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <ul class="list-inline text-center">
-                    <li>
-                        <a class="u-url url" href="https://twitter.com/kongaloosh" rel="me">
+            </div >
+            <div class="p-2 d-flex flex-row justify-content-center">
+                <div class="p-2">
+                    <a class="u-url url" href="https://twitter.com/kongaloosh" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://www.facebook.com/alex.k.kearney" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://www.facebook.com/alex.k.kearney" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://github.com/Kongaloosh" title="Github" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://github.com/Kongaloosh" title="Github" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-github fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://instagram.com/kongaloosh" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://instagram.com/kongaloosh" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-instagram fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="u-url url" href="https://ca.linkedin.com/in/alexandrakearney" rel="me">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a class="u-url url" href="https://ca.linkedin.com/in/alexandrakearney" rel="me">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="mailto:hi@kongaloosh.com" rel="me" class="u-email">
+                    </a>
+                </div>
+                <div class="p-2">
+                    <a href="mailto:hi@kongaloosh.com" rel="me" class="u-email">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
                                 </span>
-                        </a>
-                    </li>
-                </ul>
-                <p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p>
+                    </a>
+                </div>
+
             </div>
+
+            <div><p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p></div>
+
         </div>
     </div>
 </footer>
