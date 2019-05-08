@@ -27,6 +27,7 @@ function addFieldFunction() {
   a_x.setAttribute("name", "geo[]"); //Keep attribute in lower case
   a_y.setAttribute("name", "location[]"); //Keep attribute in lower case
   a_z.setAttribute("name", "date[]");
+  a_z.setAttribute("value", "2000-07-01T12:00")
 
   r.appendChild(a_x);
   r.appendChild(a_z);
