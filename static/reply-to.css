@@ -9,6 +9,7 @@
 }
 
 .reply{
+    width: 100%;
     z-index: 0;
     box-shadow: inset 0px 10px 10px 0.5px #aaaaaa;
     overflow-y: scroll;

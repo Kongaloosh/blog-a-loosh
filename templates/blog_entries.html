@@ -50,13 +50,13 @@
 
     <div class="d-flex flex-column p-2 e-content {% if not entry.title %}p-name{% endif %}">
         {% if entry.photo%}
-        <div class="d-flex flex-row p-2 justify-content-center">
-        <a href="{{entry.url}}">
-            <img class="u-photo img-fluid center-block img-thumbnail img-rounded"
-                 style="image-orientation: from-image; max-height:500px"
-                 src="/{{entry.photo}}">
-        </a>
-            </div>
+        <div class="flex-row p-2 justify-content-center">
+            <a href="{{entry.url}}">
+                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                     style="image-orientation: from-image; max-height:500px"
+                     src="/{{entry.photo}}">
+            </a>
+        </div>
         {% endif %}
         {% if entry.summary %}
         <div class="post-subtitle p-summary">
@@ -70,18 +70,20 @@
         <p>{{entry.content | safe}}</p>
         {% endif%}
 
-      {% if entry.travel %}
-        <div class="d-flex text-center">
+        {% if entry.travel %}
+        <div class="flex-row p-2 text-center">
             <p>{%for destination in entry.travel.trips%}
-                    {{destination.location_name}}
-                    {% if not loop.last %} &rarr;{% endif %}
+                {{destination.location_name}}
+                {% if not loop.last %} &rarr;{% endif %}
                 {% endfor %}</p>
-
-            <div class="">
-                    <img src="{{entry.travel.map}}">
+            {% if entry.travel.map %}
+            <div class="clearfix">
+                <img class="u-photo img-fluid center-block img-thumbnail img-rounded" src="/{{entry.travel.map}}">
             </div>
+            {% endif %}
         </div>
         {% endif %}
+
 
         {%if entry.event%}
         <div class="p-2">

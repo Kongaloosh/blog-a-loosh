@@ -196,9 +196,11 @@
                 {% endif%}
 
                 {% if entry.photo %}
-                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                <div class="d-flex flex-row p-2 justify-content-center">
+                    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
                      style="image-orientation: from-image; max-height:600px"
                      src="/{{entry.photo}}">
+                </div>
                 {% endif %}
                 {% if entry.content %}
                 {{entry.content | safe}}
@@ -211,10 +213,11 @@
                         {{destination.location_name}}
                         {% if not loop.last %} &rarr;{% endif %}
                     {% endfor %}</p>
-
-                <div class="row">
-                    <img src="{{entry.travel.map}}">
+                {% if entry.travel.map %}
+                <div class="clearfix">
+                    <img class="u-photo img-fluid center-block img-thumbnail img-rounded" src="/{{entry.travel.map}}">
                 </div>
+                {% endif %}
             </div>
             {% endif %}
 
@@ -498,7 +501,7 @@
 
 
 </script>
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 </script>
 
 </body>
