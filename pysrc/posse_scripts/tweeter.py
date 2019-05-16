@@ -15,6 +15,16 @@ PASSWORD = config.get('SiteAuthentication', 'password')
 DOMAIN_NAME = config.get('Global', 'DomainName')
 # the url to use for showing recent bulk uploads
 
+ALBUM_GROUP_RE = re.compile(
+    r'''@{3,}([\s\S]*?)@{3,}'''
+)
+IMAGES_GROUP_RE = re.compile(
+    r'''(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})'''
+)
+IMAGE_REF_RE = re.compile(
+    r'''\({1}([\s\S]*)\){1}'''
+)
+
 def get_keys():
     config = ConfigParser.ConfigParser()
     config.read('config.ini')
@@ -51,56 +61,98 @@ def send_tweet(data):
             if reply[:len(twitter_url)] == twitter_url:     # if the URL points to twitter ...
                 in_reply_to = reply.split('/')[-1:]         # ... get the status id
     url = 'https://' + DOMAIN_NAME + data['url']
-    tweets = text_to_tweets(data=data['content'], url=url)  # process string into tweet thread
+    tweets = post_to_tweets(data=data['content'], url=url)  # process string into tweet thread
     # post the first tweet so that we have a status id to start the thread
     status = api.update_status(status=tweets.pop(0), in_reply_to_status_id=in_reply_to)
     first_id = status.id    # the id which points to origin of thread
+    try:
+        lat,lng = data['geo'][4:].split(",")
+    except KeyError:
+        lat, lng = None, None
     for tweet in tweets:
         status = api.update_status(status=tweet, in_reply_to_status_id=status.id)
-    return 'http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=first_id)
+    return 'http://twitter.com/{name}/status/{id}'.format(name=status.user.screen_name, id=first_id, lat=lat, lng=lng)
 
 
-def text_to_tweets(data, url):
-    """unrolls text into a list of strings which correspond to a full tweet.
-    Args:
-        data (str): the text to be unrolled into a twitter thread.
-        url (str): the url which the tweet should point towards.
-    """
-    max_chars = 240-1-23                # one removed for punctuation 22 removed for link.
-    data = ''.join(data.split('\n'))    # strip newlines.
-    data = re.sub(r'\((?P<url>https?://[^\s]+)', '', data)                  # remove URLS
-    data = re.sub(r'(\[)([\w\s\d.?\-\",\'!@#$%^&*]*)(\])', r'\2', data)     # no links, just names
-    albums = re.findall(r'(@{3,})(?P<album>((.)|(\n))*?)(@{3,})', data)     # strip albums
-    data = re.sub(r'(@{3,})(?P<album>((.)|(\n))*?)(@{3,})', '', data)       # strip albums
-    text = re.findall(r"[\w']+|[.!?;]\ ", data)
+def text_to_tweets(text, url):
+    max_chars = 240 - 1 - 23  # one removed for punctuation 22 removed for link.
+
     tweets = []
     tweet = ""
+
     while len(text) > 0:
         try:
             while len(tweet) + len(text[0]) + 1 < max_chars:
                 # as long as the composed tweet is one less than the character limit
                 phrase = text.pop(0)
-                if phrase not in ["? ", ". ", "! "]:    # If the next piece of text is not punctuation
-                    tweet += " "                        # Add a space
+                if phrase not in ["? ", ". ", "! "]:  # If the next piece of text is not punctuation
+                    tweet += " "  # Add a space
                     tweet += phrase
                 else:
                     tweet += phrase[0]
 
             # if the net character is a punctuation mark
-            if text[0] in ["? ", ". "]:         # if the next char is a punctuation mark
+            if text[0] in ["? ", ". "]:  # if the next char is a punctuation mark
 
-                tweet += text.pop(0)[0]         # add it to the end of the tweet
+                tweet += text.pop(0)[0]  # add it to the end of the tweet
             else:
-                tweet += u'…'             # otherwise '...'
+                tweet += u'…'  # otherwise '...'
 
-            if len(tweets) == 0:            # if there are presently no tweets, we need to add the blog link to the post
-                max_chars = 240-1           # we can now use more characters.
-                tweet += " " + url        #
+            if len(tweets) == 0:  # if there are presently no tweets, we need to add the blog link to the post
+                max_chars = 240 - 1  # we can now use more characters.
+                tweet += " " + url  #
         except IndexError:
             pass
         tweets.append(tweet)
         tweet = ""
+
     return tweets
+
+
+def find_all_images(text):
+    albums = ALBUM_GROUP_RE.findall(text)       # for all albums in the text ...
+    parsed_albums = []                          # where we store the image refs
+    for album in albums:
+        parsed_albums.append([])                # make a new list for all the images
+        images = IMAGES_GROUP_RE.split(album)   # for all images in an album ...
+        for image in images:
+            parsed_albums[-1].append(IMAGE_REF_RE.findall(image)[0])    # append the image ref.
+    return parsed_albums
+
+
+def load_all_images(refs):
+    for album in refs:
+        for image in album:
+            image =
+
+def post_to_tweets(data, url):
+    """unrolls text into a list of strings which correspond to a full tweet.
+    Args:
+        data (str): the text to be unrolled into a twitter thread.
+        url (str): the url which the tweet should point towards.
+    """
+    albums = get_images()
+    max_chars = 240-1-23                # one removed for punctuation 22 removed for link.
+    data = ''.join(data.split('\n'))    # strip newlines.
+    data = re.sub(r'\((?P<url>https?://[^\s]+)', '', data)                  # remove URLS
+    data = re.sub(r'(\[)([\w\s\d.?\-\",\'!@#$%^&*]*)(\])', r'\2', data)     # no links, just names
+    # albums = ALBUM_GROUP_RE.search(data).group('album')
+    # parsed_albums = []
+    # if albums:
+    #     print albums
+    #     images = IMAGES_GROUP_RE.split(albums.group("album"))
+    #     print "images", images, "\n"
+    #     for image in images:
+    #         image_location = IMAGE_REF_RE.search(image)
+    #         print image_location
+    #
+    # captions = ALBUM_GROUP_RE.split(data)                                   # split at each album
+    # print captions
+    # for caption in captions:                                                # for each album caption ...
+    #     text = re.findall(r"[\w']+|[.!?;]\ ", caption)                      # find all the sentences ...
+    #     tweets = text_to_tweets(text, url)                                  # ... and turn them into tweets
+    #
+    # return tweets, albums
 
 
 def social_link(data):
@@ -108,8 +160,8 @@ def social_link(data):
 
 
 if __name__ == "__main__":
-    tweets = text_to_tweets("""
-    I'm going back through my dive logbook after a three year diving hiatus. @@@@[img_loc]()@@@ The software I use to track my dives has become an ungodly mess of company acquisitions and software maintenance. Turns out the company that made my dive-computer was bought out by scuba-pro. To even get my hands on the software to open my dive-log file, I had to scour looking for a hidden link that would take me to the SmartTrak site. That wasn't even enough alone, I had to engage in browser witchcraft to coerce the site to not redirect me to scuba-pro's main site. The file is _nowhere else_, at least by my searching. Interesting that no one liked it enough to keep a mirror of it... Of course, the software didn't solve my problems. _oh no_. The dates were incorrect on some of my dives. Another example malady of poor software support: I could turn the background of dive profiles _gradient olive green_, but I could not edit basic dive info---e.g., the date and location of a dive. For the first-time in my life, I'm actually facing a deprecation of software that I _need_. It's important that I keep the data I collect when I'm diving. After going through old dev-forums and [dive-forums](https://www.scubaboard.com/community/threads/smart-trak-to-logtrak-import.546613/page-2), I found [a converter](https://thetheoreticaldiver.org/rch-cgi-bin/smtk2ssrf.pl) which takes shameful SmartTrack files and converts them into a modified XML for use with [SubSurface](https://subsurface-divelog.org/download/). At least I can coerce the file into being read as XML, rather than proprietary nonsense. More than that, not only does sub-surface allow me to edit the date of a dive in increments greater than 7, I can edit _multiple_ dives at the same time. It's the future. I can't help but feel that this is a sort of digital vagrancy. SubSurface seems great now, but what about in 3 years? 10 years? I know there's a trend of web-based [dive-logs](https://en.divelogs.de/), but I don't want to have to shuffle around, converting what has no business being anything but XML or a CSV to bunch of proprietary, uninterpretable file formats. Having been burnt by SmartTrack, I'm looking for robust export functionality. Luck for me, it seems sub-surface is able to export as CSVs. This seems like a clear candidate to make a stand and own my own data. It's just screaming to be added to the blog. Then if something breaks, it's my own damn fault.
+    tweets = post_to_tweets("""
+    I'm going back through my dive logbook after a three year diving hiatus. @@@@[img_loc]()@@@ The software I use to track my dives has become an ungodly mess of company acquisitions and software maintenance. Turns out the company that made my dive-computer was bought out by scuba-pro. To even get my hands on the software to open my dive-log file, I had to scour looking for a hidden link that would take me to the SmartTrak site. That wasn't even enough alone, I had to engage in browser witchcraft to coerce the site to not redirect me to scuba-pro's main site. The file is _nowhere else_, at least by my searching. @@@@[img_loc]()@@@ Interesting that no one liked it enough to keep a mirror of it... Of course, the software didn't solve my problems. _oh no_. The dates were incorrect on some of my dives. Another example malady of poor software support: I could turn the background of dive profiles _gradient olive green_, but I could not edit basic dive info---e.g., the date and location of a dive. For the first-time in my life, I'm actually facing a deprecation of software that I _need_. It's important that I keep the data I collect when I'm diving. After going through old dev-forums and [dive-forums](https://www.scubaboard.com/community/threads/smart-trak-to-logtrak-import.546613/page-2), I found [a converter](https://thetheoreticaldiver.org/rch-cgi-bin/smtk2ssrf.pl) which takes shameful SmartTrack files and converts them into a modified XML for use with [SubSurface](https://subsurface-divelog.org/download/). At least I can coerce the file into being read as XML, rather than proprietary nonsense. More than that, not only does sub-surface allow me to edit the date of a dive in increments greater than 7, I can edit _multiple_ dives at the same time. It's the future. I can't help but feel that this is a sort of digital vagrancy. SubSurface seems great now, but what about in 3 years? 10 years? I know there's a trend of web-based [dive-logs](https://en.divelogs.de/), but I don't want to have to shuffle around, converting what has no business being anything but XML or a CSV to bunch of proprietary, uninterpretable file formats. Having been burnt by SmartTrack, I'm looking for robust export functionality. Luck for me, it seems sub-surface is able to export as CSVs. This seems like a clear candidate to make a stand and own my own data. It's just screaming to be added to the blog. Then if something breaks, it's my own damn fault.
 """, "https://example.com")
     for i in tweets:
         print i
