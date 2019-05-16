@@ -159,7 +159,7 @@
         <div class="hentry h-entry d-flex flex-column p-2">
 
             {% if entry.in_reply_to is sequence%}
-            <div class="d-flex flex-row p-2 reply reply-header reply-topper reply-footer">
+            <div class="clearfix reply reply-header reply-topper reply-footer">
                 {% for site in entry.in_reply_to %}
                 {% if site.photo is defined %}
                 <a href="{{site.url}}">
