@@ -506,6 +506,12 @@ def map():
                 geo_coords.append(entry['location'][4:].split(';')[0])
             except (AttributeError, TypeError):
                 pass
+            try:
+                trips = entry['travel']['trips']
+                if len(trips) > 0:  # if there's more than one location, make the map
+                    geo_coords += [destination['location'][4:]for destination in trips]
+            except (KeyError, TypeError):
+                pass
 
     app.logger.info(geo_coords)
     return render_template('map.html', geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
@@ -640,7 +646,7 @@ def bulk_upload():
             file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S") + '.' + \
                        uploaded_file.filename.split('.')[-1:][0]
             while os.path.exists(file_loc):
-                file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-") + i + '.' + \
+                file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-") + str(i) + '.' + \
                            uploaded_file.filename.split('.')[-1:][0]
                 i += 1
 
@@ -710,7 +716,7 @@ def md_to_html():
     """
     if request.method == "POST":
         return jsonify(
-            {"html": markdown.markdown(request.form.keys()[0], extensions=[AlbumExtension(), HashtagExtension(),'mdx_math'])})
+            {"html": markdown.markdown(request.data, extensions=['mdx_math', AlbumExtension(), HashtagExtension()])})
 
         # return request.json()
     else:
