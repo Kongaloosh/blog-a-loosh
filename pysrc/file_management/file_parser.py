@@ -143,7 +143,7 @@ def file_parser_json(filename, g=None, md=True):
         pass    # this is a draft, so we don't need the published date
 
     if md and entry['content']:
-        entry['content'] = markdown.markdown(entry['content'], extensions=[AlbumExtension(), HashtagExtension()])
+        entry['content'] = markdown.markdown(entry['content'], extensions=['mdx_math', AlbumExtension(), HashtagExtension()])
     elif entry['content'] is None:          # if we have no text for this
         entry['content'] = ''               # give it an empty string so it renders the post properly
 
@@ -396,9 +396,9 @@ def activity_stream_parser(filename):
 
     try:
         e['object']['content'] = re.search('(?<=content:)((?!category:)(?!published:)(.)|(\n))*', str).group()
-        e['object']['content'] = markdown.markdown(e['content'], extensions=[AlbumExtension(), HashtagExtension()])
+        e['object']['content'] = markdown.markdown(e['content'], extensions=['mdx_math', AlbumExtension(), HashtagExtension()])
         if e['object']['content'] is None:
-            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=[AlbumExtension(), HashtagExtension()])
+            e['object']['content'] = markdown.markdown(re.search('(?<=content:)((.)|(\n))*$', str).group(), extensions=['mdx_math', AlbumExtension(), HashtagExtension()])
     except KeyError:
         pass
 
