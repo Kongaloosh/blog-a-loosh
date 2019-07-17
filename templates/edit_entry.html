@@ -20,150 +20,154 @@
     </div>
 </header>
 {% if session.logged_in %}
-<div class="container">
+<div class="container-fluid">
     <div class="col-lg-12 col-md-12 col-sm-12">
         <div class="row pull-right" style="padding 10px">
-            {% if type == "edit"%}
+            {% if type == "edit"%} <div class="p-2 reply reply-header reply-topper reply-footer">
             <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
             {% elif type == "draft" %}
             <a href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
             {%endif%}
 
         </div>
-        <div class="row">
-            <div class="col-lg-6 col-md-6 col-sm-12">
-                <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large"
-                      id="input">
-                    <p>
-                        <label>Title:</label> <input type="text" style="width: 100%" name="title" id="title_form"
-                                                     value="{{entry.title}}">
-                    </p>
-                    <p>
-                        <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"
-                                                         id="summary_form">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
-                    </p>
-                    <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
-                    </p>
-                    <hr>
-                    <p>
+            <div class="row">
+                <div class="col-lg-6 col-md-6 col-sm-12">
+                    <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large"
+                          id="input">
+                        <p>
+                            <label>Title:</label> <input type="text" style="width: 100%" name="title" id="title_form"
+                                                         value="{{entry.title}}">
+                        </p>
+                        <p>
+                            <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"
+                                                             id="summary_form">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
+                        </p>
+                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
+                        </p>
+                        <hr>
+                        <p>
 
-                    <div class="text-center" id="photo_holder"
-                         style="overflow:scroll; width:100%; max-height:400px;"></div>
-                    </p>
+                        <div class="text-center" id="photo_holder"
+                             style="overflow:scroll; width:100%; max-height:400px;"></div>
+                        </p>
 
-                    <p>
-                        <label>Tags</label>
-                        <input type="text" style="width: 100%" name="category"
-                               value="{%if entry.category%}{{entry.category}}{%endif%}">
-                    </p>
+                        <p>
+                            <label>Tags</label>
+                            <input type="text" style="width: 100%" name="category"
+                                   value="{%if entry.category%}{{entry.category}}{%endif%}">
+                        </p>
 
-                    <p>
-                        <input type="date" name="published" value="{{entry.published}}" style="width:100%">
+                        <p>
+                            <input type="date" name="published" value="{{entry.published}}" style="width:100%">
 
-                    </p>
-                    {% if popular_tags %}
-                    <p> Common tags include: {% for tag in popular_tags%} <a
-                            onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %},
-                        {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
-                    {%endif%}
-                    <p>
-                        <label>Reply-to</label>
-                        <input type="text" style="width: 100%" name="in_reply_to"
-                               value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}">
+                        </p>
+                        {% if popular_tags %}
+                        <p> Common tags include: {% for tag in popular_tags%} <a
+                                onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %},
+                            {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
+                        {%endif%}
+                        <p>
+                            <label>Reply-to</label>
+                            <input type="text" style="width: 100%" name="in_reply_to"
+                                   value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}">
 
-                    </p>
+                        </p>
 
-                    <div id="form-div">
-                        <label>Travel</label><br>
-                        {% if entry.travel %}
-                        {% for destination in entry.travel.trips %}
+                        <div id="form-div">
+                            <label>Travel</label><br>
+                            {% if entry.travel %}
+                            {% for destination in entry.travel.trips %}
                             <div class="form-id">
                                 <input type="hidden" id="geo_0" name="geo[]" value="{{destination.location}}">
                                 <input class="dash-input" type="datetime-local" placeholder="dt-departure" name="date[]" value="{{destination.date}}">
                                 <input class="dash-input" type="text" placeholder="Origin" id="origin_0" name="location[]" value="{{destination.location_name}}"><br>
                             </div>
-                        {% endfor %}
-                        {% endif %}
-                    </div>
-
-                    <div class="dash-add">
-                        <button type="button" class="dash-add-button" onclick="addFieldFunction()">Add Stop</button>
-                    </div>
-                    <p>
-                        <label>Event</label><br>
-                        <b>name </b> <input type="text" name="event_name" value="{%if entry.event%}{{entry.event.event_name}}{%endif%}"><br>
-                        <b>start </b><input type="datetime-local" name="dt_start" value="{%if entry.event%}{{entry.event.dt_start}}{%endif%}"><br>
-                        <b>end </b><input type="datetime-local" name="dt_end" value="{%if entry.event%}{{entry.event.dt_end}}{%endif%}">
-                    </p>
-
-                    <p>
-                        <label>Photo</label>
-                        <input type="file" name="photo_file" id="img_input" accept="image/*"/>
-                        <input type="text" style="width:100%" name="photo" id="img_loc"
-                               value="{%if entry.photo%}{{entry.photo}}{%endif%}">
-                    </p>
-
-
-                    <p>
-                        <label>twitter </label> <input type="checkbox" name="twitter" value="twitter"><br>
-                        <label>brid.gy twitter </label> <input type="checkbox" name="bridgy_twitter" value="brigy_twitter"><br>
-
-                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check"
-                                                  checked>
-                        <textarea style="width: 100%" type="text" name="location"
-                                  id="geo_coord">{%if entry.location%}{{entry.location}}{%endif%}</textarea>
-                    </p>
-
-                    <p>
-                        {% if type == "draft" %}
-                        <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save"
-                               style="width:49%">
-                        <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit"
-                               style="width:49%">
-                        {% elif type == "edit" %}
-                        <input type="submit" style="width:49%" value="Submit" name="Submit">
-                        {% elif type == "add"%}
-                        <input formaction="/add" type="submit" style="width:49%" value="Save" name="Save"> <input
-                            formaction="/add" type="submit" style="width:49%" value="Submit" name="Submit">
-                        {% endif %}
-
-                    </p>
-                </form>
-                <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
-            </div>
-
-            <div class="col-lg-6 col-md-6 col-sm-12" style="box-shadow: 0px 0px 10px 5px #aaaaaa;">
-                <div class="row clearfix" style="overflow-y: scroll; height:100%">
-                    <div style="overflow-y:  scroll;height: 98%;margin-left:  0px;margin-right: 0px; padding:0.5em">
-                        <h2 class="post-title p-name" id="title_format"></h2>
-                        <div><img id="blah" src="#"
-                                  class="img-responsive center-block img-thumbnail img-rounded u-photo"
-                                  style="image-orientation: from-image; max-height:300px" alt="your image"/></div>
-                        <div class="post-subtitle p-summary">
-                            <p><i id="summary_format"></i></p>
+                            {% endfor %}
+                            {% endif %}
                         </div>
-                        <div id="wysiwyg"></div>
+
+                        <div class="dash-add">
+                            <button type="button" class="dash-add-button" onclick="addFieldFunction()">Add Stop</button>
+                        </div>
+                        <p>
+                            <label>Event</label><br>
+                            <b>name </b> <input type="text" name="event_name" value="{%if entry.event%}{{entry.event.event_name}}{%endif%}"><br>
+                            <b>start </b><input type="datetime-local" name="dt_start" value="{%if entry.event%}{{entry.event.dt_start}}{%endif%}"><br>
+                            <b>end </b><input type="datetime-local" name="dt_end" value="{%if entry.event%}{{entry.event.dt_end}}{%endif%}">
+                        </p>
+
+                        <p>
+                            <label>Photo</label>
+                            <input type="file" name="photo_file" id="img_input" accept="image/*"/>
+                            <input type="text" style="width:100%" name="photo" id="img_loc"
+                                   value="{%if entry.photo%}{{entry.photo}}{%endif%}">
+                        </p>
+
+
+                        <p>
+                            <label>twitter </label> <input type="checkbox" name="twitter" value="twitter"><br>
+                            <label>brid.gy twitter </label> <input type="checkbox" name="bridgy_twitter" value="brigy_twitter"><br>
+
+                            <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check"
+                                                      checked>
+                            <textarea style="width: 100%" type="text" name="location"
+                                      id="geo_coord">{%if entry.location%}{{entry.location}}{%endif%}</textarea>
+                        </p>
+
+                        <p>
+                            {% if type == "draft" %}
+                            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save"
+                                   style="width:49%">
+                            <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit"
+                                   style="width:49%">
+                            {% elif type == "edit" %}
+                            <input type="submit" style="width:49%" value="Submit" name="Submit">
+                            {% elif type == "add"%}
+                            <input formaction="/add" type="submit" style="width:49%" value="Save" name="Save"> <input
+                                formaction="/add" type="submit" style="width:49%" value="Submit" name="Submit">
+                            {% endif %}
+
+                        </p>
+                    </form>
+                    <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
+                </div>
+
+                <div class="col-lg-6 col-md-6 col-sm-12" style="box-shadow: 0px 0px 10px 5px #aaaaaa;">
+                    <div class="row clearfix" style="overflow-y: scroll; height:100%">
+                        <div style="overflow-y:  scroll;height: 98%;margin-left:  0px;margin-right: 0px; padding:0.5em">
+                            <h2 class="post-title p-name" id="title_format"></h2>
+                            <div class="d-flex flex-row p-2 justify-content-center">
+                                <img id="blah" src="#"
+                                     class="img-responsive center-block img-thumbnail img-rounded u-photo"
+                                     style="image-orientation: from-image; max-height:300px" alt="your image"/>
+                            </div>
+                            <div class="post-subtitle p-summary">
+                                <p><i id="summary_format"></i></p>
+                            </div>
+                            <div id="wysiwyg"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script type="text/x-mathjax-config">
+    <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
   config: ["MMLorHTML.js"],
   jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
   extensions: ["MathMenu.js", "MathZoom.js"]
 });
 </script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js??config=TeX-AMS-MML_HTMLorMML">
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 </script>
-<script src="/static/js/jquery.js"></script>
-<script src="/static/js/wysiwyg.js"></script>
-<script src="/static/js/place_location_autocomplete.js"></script>
-<script src="/static/js/add_trip.js"></script>
-<script>
+    </script>
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/wysiwyg.js"></script>
+    <script src="/static/js/place_location_autocomplete.js"></script>
+    <script src="/static/js/add_trip.js"></script>
+    <script>
 
 var x = document.getElementById("geo_coord");
 
@@ -233,7 +237,7 @@ if (document.getElementById('geo_check').checked && document.getElementById('geo
 
 </script>
 
-<script>
+    <script>
 function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
@@ -251,11 +255,11 @@ $("#img_input").change(function(){
 
 
 
-{% else %}
-<div class="row">
-    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <p>You need to be logged in, buck-eye.</p>
+    {% else %}
+    <div class="row">
+        <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <p>You need to be logged in, buck-eye.</p>
+        </div>
     </div>
-</div>
-{% endif %}
-{% endblock %}
+    {% endif %}
+    {% endblock %}
