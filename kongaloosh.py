@@ -68,6 +68,7 @@ def connect_db():
 
 @app.before_request
 def before_request():
+    """Befo"""
     g.db = connect_db()
 
 
@@ -601,8 +602,6 @@ def stream():
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
-    app.logger.info(year)
-    app.logger.info('here')
     app.logger.info("delete requested")
     app.logger.info(session.get('logged_in'))
     if not session.get('logged_in'):
@@ -640,7 +639,7 @@ def bulk_upload():
             file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S") + '.' + \
                        uploaded_file.filename.split('.')[-1:][0]
             while os.path.exists(file_loc):
-                file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-") + i + '.' + \
+                file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-") + str(i) + '.' + \
                            uploaded_file.filename.split('.')[-1:][0]
                 i += 1
 
@@ -767,10 +766,10 @@ def recent_uploads():
                 text_box_insert = insert_pattern % image_location
                 row += \
                     '''
-                        <a onclick="insertAtCaret('text_input','%s');return false;">
-                            <img src="%s" class="p-2 justify-content-center" style="max-height:auto">
+                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s');return false;">
+                            <img src="%s" class="img-fluid" style="max-height:auto;">
                         </a>
-                    ''' % (text_box_insert)
+                    ''' % (text_box_insert, image_location)
             preview += \
                 '''
                 <div class="d-flexbox flexbox-row">
