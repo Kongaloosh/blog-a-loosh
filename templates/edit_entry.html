@@ -22,12 +22,17 @@
 {% if session.logged_in %}
 <div class="container-fluid">
     <div class="col-lg-12 col-md-12 col-sm-12">
-        <div class="row pull-right" style="padding 10px">
-            {% if type == "edit"%} <div class="p-2 reply reply-header reply-topper reply-footer">
-            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+        <div class="flex-row" style="padding 10px">
+            {% if type == "edit"%}
+            <div class=float-right">
+            <a class="float-right" href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            </div>
             {% elif type == "draft" %}
-            <a href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            <div class=float-right">
+            <a class="float-right" href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            </div>
             {%endif%}
+            <br>
 
         </div>
             <div class="row">
