@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # coding: utf-8
-import configparser
+import ConfigParser
 import json
 import markdown
 import os
@@ -520,6 +520,12 @@ def map():
                 geo_coords.append(entry['location'][4:].split(';')[0])
             except (AttributeError, TypeError):
                 pass
+            try:
+                trips = entry['travel']['trips']
+                if len(trips) > 0:  # if there's more than one location, make the map
+                    geo_coords += [destination['location'][4:]for destination in trips]
+            except (KeyError, TypeError):
+                pass
 
     app.logger.info(geo_coords)
     return render_template('map.html', geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
@@ -722,7 +728,9 @@ def md_to_html():
     """
     if request.method == "POST":
         return jsonify(
-            {"html": markdown.markdown(request.data, extensions=[AlbumExtension(), HashtagExtension(),'mdx_math'])})
+            {"html": markdown.markdown(request.data, extensions=[AlbumExtension(), HashtagExtension(),'mdx_math'])}
+        )
+
     else:
         return redirect('/404'), 404
 
@@ -775,12 +783,14 @@ def recent_uploads():
 
                 image_location = file_list[image_index]
                 text_box_insert = insert_pattern % image_location
+                img_id = (3 * j) + i
                 row += \
                     """
-                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s');return false;">
-                            <img src="%s" class="img-fluid" style="max-height:auto; width:25%%;">
+                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s', 'img_%s');return false;">
+                            <img src="%s" id="img_%s" class="img-fluid" style="max-height:auto; width:25%%;">
                         </a>
-                    """ % (text_box_insert, image_location)
+                    """ % (text_box_insert, img_id, image_location,img_id)
+
             preview += \
                 '''
                 <div class="d-flexbox flexbox-row">
@@ -1253,6 +1263,10 @@ def notification():
 @app.route('/already_made', methods=['GET'])
 def post_already_exists():
     return render_template('already_exists.html')
+
+
+@app.route('/all_photos', methods=['GET'])
+def get_photos():
 
 
 if __name__ == "__main__":

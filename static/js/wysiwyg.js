@@ -29,7 +29,7 @@ function getHTMLFromMD(val) {
             method: 'POST',
             headers: {
                 'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+                'Content-Type': 'text/plain;charset=UTF-8'
             },
             body: val
         }).then(function (response) {

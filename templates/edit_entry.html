@@ -52,6 +52,13 @@
                         <hr>
                         <p>
 
+                        {% if entry.video %}
+                            <video class="u-video" controls="controls"
+                                   src="{{entry.video}}"
+                                   poster="http://ben.example.com/camcorder.png">
+                            </video>
+                        {% endif %}
+
                         <div class="text-center" id="photo_holder"
                              style="overflow:scroll; width:100%; max-height:400px;"></div>
                         </p>
@@ -127,6 +134,7 @@
                                    style="width:49%">
                             <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit"
                                    style="width:49%" formnovalidate>
+
                             {% elif type == "edit" %}
                             <input type="submit" style="width:49%" value="Submit" name="Submit">
                             {% elif type == "add"%}
@@ -168,81 +176,13 @@ MathJax.Hub.Config({
 </script>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-    </script>
-    <script src="/static/js/jquery.js"></script>
-    <script src="/static/js/wysiwyg.js"></script>
-    <script src="/static/js/place_location_autocomplete.js"></script>
-    <script src="/static/js/add_trip.js"></script>
-    <script>
 
-var x = document.getElementById("geo_coord");
-
-function getLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition);
-    } else {
-        x.innerHTML = "Geolocation is not supported by this browser.";
-    }
-}
-
-function showPosition(position) {
-    x.innerHTML = "geo:" + position.coords.latitude +
-    "," + position.coords.longitude;
-}
-
-var form = document.getElementById("input");
-
-function getRecentPhotos() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (xhttp.readyState == 4 && xhttp.status == 200) {
-            document.getElementById("photo_holder").innerHTML = xhttp.responseText;
-        }
-    };
-    xhttp.open("GET", "/recent_uploads", true);
-    xhttp.send();
-}
-
-function insertAtCaret(areaId,text) {
-var txtarea = document.getElementById(areaId);
-var scrollPos = txtarea.scrollTop;
-var strPos = 0;
-var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
-    "ff" : (document.selection ? "ie" : false ) );
-if (br == "ie") {
-    txtarea.focus();
-    var range = document.selection.createRange();
-    range.moveStart ('character', -txtarea.value.length);
-    strPos = range.text.length;
-}
-else if (br == "ff") strPos = txtarea.selectionStart;
-
-var front = (txtarea.value).substring(0,strPos);
-var back = (txtarea.value).substring(strPos,txtarea.value.length);
-txtarea.value=front+text+back;
-strPos = strPos + text.length;
-if (br == "ie") {
-    txtarea.focus();
-    var range = document.selection.createRange();
-    range.moveStart ('character', -txtarea.value.length);
-    range.moveStart ('character', strPos);
-    range.moveEnd ('character', 0);
-    range.select();
-}
-else if (br == "ff") {
-    txtarea.selectionStart = strPos;
-    txtarea.selectionEnd = strPos;
-    txtarea.focus();
-}
-txtarea.scrollTop = scrollPos;
-}
-
-if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
-    getLocation()
-}
-
-</script>
+<script src="/static/js/jquery.js"></script>
+<script src="/static/js/wysiwyg.js"></script>
+<script src="/static/js/place_location_autocomplete.js"></script>
+<script src="/static/js/add_trip.js"></script>
+<script src="/static/js/photostream.js"></script>
+<script src="/static/js/geolocation.js"></script>
 
     <script>
 function readURL(input) {

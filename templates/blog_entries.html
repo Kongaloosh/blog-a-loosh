@@ -3,6 +3,7 @@
 
 {% if session.logged_in %}
 <div class="add-entry flex-column">
+
     <div class="row justify-content-center">
         <a class="btn btn-success" style="width: 24%" href="/add">Add Post</a>
         <a class="btn btn-success" style="width: 24%" href="/drafts">Drafts</a>
@@ -49,26 +50,38 @@
     {% endif %}
 
     <div class="d-flex flex-column p-2 e-content {% if not entry.title %}p-name{% endif %}">
-        {% if entry.photo%}
-        <div class="clearfix row justify-content-center">
-            <a href="{{entry.url}}">
-                <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                     style="image-orientation: from-image; max-height:500px"
-                     src="/{{entry.photo}}">
-            </a>
-        </div>
-        {% endif %}
         {% if entry.summary %}
-        <div class="post-subtitle p-summary">
-            <p>
-                <i>
-                    {{entry.summary}}
-                </i>
-            </p>
-        </div>
-        {% else %}
-        <p>{{entry.content | safe}}</p>
-        {% endif%}
+                <div class="post-subtitle p-summary">
+                    <p>
+                        <i>
+                            {{entry.summary}}
+                        </i>
+                    </p>
+                </div>
+                {% endif%}
+
+                {% if entry.video %}
+                <div class="d-flex flex-row p-2 justify-content-center">
+                   <video class="u-video" controls="controls"
+                           src="{{entry.video}}"
+                           poster="https://kongaloosh.com"
+                           style="max-height:300px;">
+                    alternate text content only for browsers that do not support the video tag
+                    </video>
+                </div>
+                {% endif %}
+
+
+                {% if entry.photo %}
+                <div class="d-flex flex-row p-2 justify-content-center">
+                    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                     style="image-orientation: from-image; max-height:600px"
+                     src="/{{entry.photo}}">
+                </div>
+                {% endif %}
+                {% if entry.content %}
+                {{entry.content | safe}}
+            {% endif %}
 
         {% if entry.travel %}
         <div class="flex-row p-2 text-center">
