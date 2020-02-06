@@ -55,7 +55,9 @@
                         </i>
                     </p>
                     {% else %}
-                    <p class=""><i>{{article.content[0:140]| safe}} ...</i></p>
+                    <i>
+                        <p class="">{{article.content | striptags | truncate(150) }}</p>
+                    </i>
                     {% endif%}
 
                     {% if article.category %}

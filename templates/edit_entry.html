@@ -8,8 +8,8 @@
         background-size:cover;
 ">
     <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="flexbox-row">
+            <div class="flexbox-column">
                 <div class="site-heading">
                     <h1>Edit</h1>
                     <hr class="small">
@@ -22,12 +22,17 @@
 {% if session.logged_in %}
 <div class="container-fluid">
     <div class="col-lg-12 col-md-12 col-sm-12">
-        <div class="row pull-right" style="padding 10px">
-            {% if type == "edit"%} <div class="p-2 reply reply-header reply-topper reply-footer">
-            <a href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+        <div class="flex-row" style="padding 10px">
+            {% if type == "edit"%}
+            <div class=float-right">
+            <a class="float-right" href="/delete_entry{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            </div>
             {% elif type == "draft" %}
-            <a href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            <div class=float-right">
+            <a class="float-right" href="/delete_draft{{entry.url}}"><i class="fa fa-times" aria-hidden="true"></i></a>
+            </div>
             {%endif%}
+            <br>
 
         </div>
             <div class="row">
@@ -46,6 +51,13 @@
                         </p>
                         <hr>
                         <p>
+
+                        {% if entry.video %}
+                            <video class="u-video" controls="controls"
+                                   src="{{entry.video}}"
+                                   poster="http://ben.example.com/camcorder.png">
+                            </video>
+                        {% endif %}
 
                         <div class="text-center" id="photo_holder"
                              style="overflow:scroll; width:100%; max-height:400px;"></div>
@@ -77,10 +89,12 @@
                             <label>Travel</label><br>
                             {% if entry.travel %}
                             {% for destination in entry.travel.trips %}
-                            <div class="form-id">
-                                <input type="hidden" id="geo_0" name="geo[]" value="{{destination.location}}">
-                                <input class="dash-input" type="datetime-local" placeholder="dt-departure" name="date[]" value="{{destination.date}}">
-                                <input class="dash-input" type="text" placeholder="Origin" id="origin_0" name="location[]" value="{{destination.location_name}}"><br>
+                            <div class="form-id" id="form-id_{{loop.index}}">
+                                <input type="hidden" id="geo_{{loop.index}}" name="geo[]" value="{{destination.location}}">
+                                <input class="dash-input" type="datetime-local" placeholder="dt-departure" id="datetime_{{loop.index}}" name="date[]" value="{{destination.date}}">
+                                <input class="dash-input" type="text" placeholder="Origin" id="origin_{{loop.index}}" name="location[]" value="{{destination.location_name}}"><br>
+                                <a id="remove_{{loop.index}}" onclick="remove_trip({{loop.index}})"><i class="fa fa-minus-circle"></i></a>
+                                <br id="break_{{loop.index}}">
                             </div>
                             {% endfor %}
                             {% endif %}
@@ -119,7 +133,8 @@
                             <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save"
                                    style="width:49%">
                             <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit"
-                                   style="width:49%">
+                                   style="width:49%" formnovalidate>
+
                             {% elif type == "edit" %}
                             <input type="submit" style="width:49%" value="Submit" name="Submit">
                             {% elif type == "add"%}
@@ -132,9 +147,9 @@
                     <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
                 </div>
 
-                <div class="col-lg-6 col-md-6 col-sm-12" style="box-shadow: 0px 0px 10px 5px #aaaaaa;">
-                    <div class="row clearfix" style="overflow-y: scroll; height:100%">
-                        <div style="overflow-y:  scroll;height: 98%;margin-left:  0px;margin-right: 0px; padding:0.5em">
+                <div class="col-lg-6 col-md-6 col-sm-12" style="box-shadow: 0px 0px 10px 5px #aaaaaa; height: 100vh; overflow-y: scroll;">
+                    <div class="row clearfix">
+                        <div style="margin-left:  0px;margin-right: 0px; padding:0.5em">
                             <h2 class="post-title p-name" id="title_format"></h2>
                             <div class="d-flex flex-row p-2 justify-content-center">
                                 <img id="blah" src="#"
@@ -161,81 +176,13 @@ MathJax.Hub.Config({
 </script>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-    </script>
-    <script src="/static/js/jquery.js"></script>
-    <script src="/static/js/wysiwyg.js"></script>
-    <script src="/static/js/place_location_autocomplete.js"></script>
-    <script src="/static/js/add_trip.js"></script>
-    <script>
 
-var x = document.getElementById("geo_coord");
-
-function getLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition);
-    } else {
-        x.innerHTML = "Geolocation is not supported by this browser.";
-    }
-}
-
-function showPosition(position) {
-    x.innerHTML = "geo:" + position.coords.latitude +
-    "," + position.coords.longitude;
-}
-
-var form = document.getElementById("input");
-
-function getRecentPhotos() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (xhttp.readyState == 4 && xhttp.status == 200) {
-            document.getElementById("photo_holder").innerHTML = xhttp.responseText;
-        }
-    };
-    xhttp.open("GET", "/recent_uploads", true);
-    xhttp.send();
-}
-
-function insertAtCaret(areaId,text) {
-var txtarea = document.getElementById(areaId);
-var scrollPos = txtarea.scrollTop;
-var strPos = 0;
-var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
-    "ff" : (document.selection ? "ie" : false ) );
-if (br == "ie") {
-    txtarea.focus();
-    var range = document.selection.createRange();
-    range.moveStart ('character', -txtarea.value.length);
-    strPos = range.text.length;
-}
-else if (br == "ff") strPos = txtarea.selectionStart;
-
-var front = (txtarea.value).substring(0,strPos);
-var back = (txtarea.value).substring(strPos,txtarea.value.length);
-txtarea.value=front+text+back;
-strPos = strPos + text.length;
-if (br == "ie") {
-    txtarea.focus();
-    var range = document.selection.createRange();
-    range.moveStart ('character', -txtarea.value.length);
-    range.moveStart ('character', strPos);
-    range.moveEnd ('character', 0);
-    range.select();
-}
-else if (br == "ff") {
-    txtarea.selectionStart = strPos;
-    txtarea.selectionEnd = strPos;
-    txtarea.focus();
-}
-txtarea.scrollTop = scrollPos;
-}
-
-if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
-    getLocation()
-}
-
-</script>
+<script src="/static/js/jquery.js"></script>
+<script src="/static/js/wysiwyg.js"></script>
+<script src="/static/js/place_location_autocomplete.js"></script>
+<script src="/static/js/add_trip.js"></script>
+<script src="/static/js/photostream.js"></script>
+<script src="/static/js/geolocation.js"></script>
 
     <script>
 function readURL(input) {
