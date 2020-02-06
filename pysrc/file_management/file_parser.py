@@ -143,9 +143,12 @@ def file_parser_json(filename, g=None, md=True):
         pass    # this is a draft, so we don't need the published date
 
     if md and entry['content']:
+        entry['raw_content'] = entry['content']
         entry['content'] = markdown.markdown(entry['content'], extensions=['mdx_math', AlbumExtension(), HashtagExtension()])
+
     elif entry['content'] is None:          # if we have no text for this
         entry['content'] = ''               # give it an empty string so it renders the post properly
+        entry['raw_content'] = ''           # give it an empty string so it renders the post properly
 
     if entry['in_reply_to']:
         # if the post is a response,
