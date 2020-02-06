@@ -1,30 +1,31 @@
 #!/usr/bin/python
 # coding: utf-8
-import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, \
-    jsonify
-from contextlib import closing
-import os
-from datetime import datetime
-from jinja2 import Environment
-from dateutil.parser import parse
-from pysrc.posse_scripts.bridgy import *
-from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
-from pysrc.authentication.indieauth import checkAccessToken
-from threading import Timer
-import json
-from slugify import slugify
 import ConfigParser
+import json
+import markdown
+import os
 import re
 import requests
-from pysrc.file_management.markdown_album_pre_process import move, run
-from PIL import Image, ExifTags
+import sqlite3
 import threading
-from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
+from PIL import Image, ExifTags
+from contextlib import closing
+from datetime import datetime
+from dateutil.parser import parse
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, \
+    jsonify
+from jinja2 import Environment
 from markdown_albums.markdown_album_extension import AlbumExtension
-from pysrc.file_management.markdown_album_pre_process import new_prefix
-import markdown
+from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from python_webmention.mentioner import send_mention, get_mentions
+from slugify import slugify
+from threading import Timer
+
+from pysrc.authentication.indieauth import checkAccessToken
+from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
+from pysrc.file_management.markdown_album_pre_process import move, run
+from pysrc.file_management.markdown_album_pre_process import new_prefix
+from pysrc.posse_scripts.bridgy import *
 from pysrc.posse_scripts.tweeter import send_tweet
 
 jinja_env = Environment(extensions=['jinja2.ext.with_'])
@@ -68,6 +69,7 @@ def connect_db():
 
 @app.before_request
 def before_request():
+    """Befo"""
     g.db = connect_db()
 
 
@@ -96,7 +98,7 @@ def get_entries_by_date():
 
 def get_most_popular_tags():
     """gets the tags (excluding post type declarations) and returns them in descending order of usage.
-    
+
     Returns:
         List of tags in descending order by usage.
     """
@@ -119,14 +121,27 @@ def get_most_popular_tags():
 
 
 def resolve_placename(location):
+    """Given a location, returns the closest placename and geoid of a location.
+    Args:
+        location (str): the geocoords of some location
+    Returns:
+        placename (str), geoid (int): the name resolution and geoid of the place resolved
+    """
     try:
+        # we take off the first four characters 'geo:'
+        # and then we split
         (lat, long) = location[4:].split(',')
+
+        # no clue what's going on here :o
         try:
             float(long)
         except ValueError:
             long = re.search('(.)*(?=;)', long).group(0)
+
+        #  make a request to the geonames API to find nearest placename
         geo_results = requests.get(
             'http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat=' + lat + '&lng=' + long + '&username=' + GEONAMES)
+
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
             place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
@@ -140,7 +155,6 @@ def resolve_placename(location):
 
 
 def post_from_request(request=None):
-
 
     data = {
         'h': None,
@@ -184,7 +198,6 @@ def post_from_request(request=None):
                             "location_name": location.pop(0),
                             "date": date.pop(0)
                         })
-                        print trips
                     except IndexError:
                         break
             data['travel'] = {}
@@ -227,6 +240,7 @@ def post_from_request(request=None):
 
 
 def get_post_for_editing(draft_location, md=False):
+
     entry = file_parser_json(draft_location, md=False)
     if entry['category']:
         entry['category'] = ', '.join(entry['category'])
@@ -607,8 +621,6 @@ def stream():
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
-    app.logger.info(year)
-    app.logger.info('here')
     app.logger.info("delete requested")
     app.logger.info(session.get('logged_in'))
     if not session.get('logged_in'):
@@ -716,9 +728,9 @@ def md_to_html():
     """
     if request.method == "POST":
         return jsonify(
-            {"html": markdown.markdown(request.data, extensions=['mdx_math', AlbumExtension(), HashtagExtension()])})
+            {"html": markdown.markdown(request.data, extensions=[AlbumExtension(), HashtagExtension(),'mdx_math'])}
+        )
 
-        # return request.json()
     else:
         return redirect('/404'), 404
 
@@ -758,8 +770,8 @@ def recent_uploads():
         j = 0
         while True:
             row = ""
-            for i in range(0, 4):  # for every row we want to make
-                image_index = (4 * j) + i
+            for i in range(0, 3):  # for every row we want to make
+                image_index = (3 * j) + i
                 if image_index >= len(file_list):
                     preview += \
                         '''
@@ -771,12 +783,14 @@ def recent_uploads():
 
                 image_location = file_list[image_index]
                 text_box_insert = insert_pattern % image_location
+                img_id = (3 * j) + i
                 row += \
-                    '''
-                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s');return false;">
-                            <img src="%s" class="img-fluid" style="max-height:auto;">
+                    """
+                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s', 'img_%s');return false;">
+                            <img src="%s" id="img_%s" class="img-fluid" style="max-height:auto; width:25%%;">
                         </a>
-                    ''' % (text_box_insert, image_location)
+                    """ % (text_box_insert, img_id, image_location,img_id)
+
             preview += \
                 '''
                 <div class="d-flexbox flexbox-row">
@@ -808,13 +822,10 @@ def recent_uploads():
 def edit(year, month, day, name):
     """ The form for user-submission """
     if request.method == "GET":
-        # try:
         file_name = "data/{year}/{month}/{day}/{name}.json".format(year=year, month=month, day=day, name=name)
         app.logger.info(file_name)
         entry = get_post_for_editing(file_name)
         return render_template('edit_entry.html', type="edit", entry=entry)
-        # except IOError:
-        #     return redirect('/404')
 
     elif request.method == "POST":
         if not session.get('logged_in'):
@@ -1254,7 +1265,7 @@ def post_already_exists():
     return render_template('already_exists.html')
 
 
-
-
 if __name__ == "__main__":
     app.run(debug=True)
+
+
