@@ -14,3 +14,8 @@ function showPosition(position) {
 }
 
 var form = document.getElementById("input");
+
+
+if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
+    getLocation()
+}
