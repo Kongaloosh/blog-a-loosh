@@ -1265,10 +1265,6 @@ def post_already_exists():
     return render_template('already_exists.html')
 
 
-@app.route('/all_photos', methods=['GET'])
-def get_photos():
-
-
 if __name__ == "__main__":
     app.run(debug=True)
 
