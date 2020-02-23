@@ -238,6 +238,10 @@
                 <h4>At: {{entry.event.event_name}}</h4>
                 <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
                 <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
+                {% if entry.event.url %}
+                <a href="{{entry.event.url}}"> Event link here.</a>
+                {% endif %}
+                <data class="p-rsvp" value="yes"></data>
             </div>
             {% endif %}
 
@@ -318,17 +322,15 @@
 
         <!-- BEGIN MENTIONS -->
         {% if mentions %}
-        <div class="mention-topper row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 align-center">
+        <div class="mention-topper flex-row align-center">
             <div class="text-center">
                 <h3><i class="fa fa-comments"></i></h3>
                 <strong>Mentioned elsewhere on the indieweb</strong>
                 <hr class="small" style="border-color:grey;">
             </div>
-        </div> <!-- END TOPPER -->
-        {% endif %}
 
-        {% for mention in mentions %}
-        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 mention">
+             {% for mention in mentions %}
+        <div class="row flex-row mention">
             <!--<div class="mention-header">-->
             <!--{% if mention.name != mention.content %}-->
             <!--{{mention.name}}-->
@@ -356,6 +358,8 @@
             <hr>
         </div>
         {% endfor %} <!-- END MENTION ROLL -->
+        </div> <!-- END TOPPER -->
+        {% endif %}
     </div> <!-- END MENTIONS -->
 </article>
 
