@@ -46,7 +46,3 @@ else if (br == "ff") {
 }
 txtarea.scrollTop = scrollPos;
 }
-
-if (document.getElementById('geo_check').checked && document.getElementById('geo_coord').value == ""){
-    getLocation()
-}

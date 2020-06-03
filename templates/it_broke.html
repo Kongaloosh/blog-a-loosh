@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<header class="intro-header" style="background-image: url('{{ url_for('static', filename='img/home-bg.jpg') }}')">
+        <div class="container">
+            <div class="d-flex flex-row p-2 justify-content-center">
+                <div class="site-heading" style="background: rgb(200, 54, 54);
+                     background: rgba(0, 0, 0, 0.5);
+                     padding: 3%;
+                     border-radius: 5px
+                     ">
+                        <h3>Well, this is embarassing. Alex broke something...</h3>
+                        <hr class="large">
+                       <div class="embed-responsive-16by9r">
+                             <iframe class="embed-responsive-item"  height="200" src="https://www.youtube.com/embed/3m5qxZm_JqM"></iframe>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+</header>
+{% endblock %}
