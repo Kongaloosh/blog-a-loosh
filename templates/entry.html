@@ -158,13 +158,13 @@
 
         <div class="hentry h-entry d-flex flex-column p-2">
 
-            {% if entry.in_reply_to is sequence%}
+            {% if entry.in_reply_to is sequence and entry.in_reply_to|length > 0 %}
             <div class="clearfix reply reply-header reply-topper reply-footer">
                 {% for site in entry.in_reply_to %}
                 {% if site.photo is defined %}
                 <a href="{{site.url}}">
                     <img
-                            class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                            class="u-photo img-responsive img-fluid center-block img-thumbnail img-rounded"
                             style="image-orientation: from-image; max-height:300px"
                             src="/{{site.photo}}"
                     >
@@ -208,8 +208,8 @@
 
 
                 {% if entry.photo %}
-                <div class="d-flex flex-row p-2 justify-content-center">
-                    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                <div class="flex-row justify-content-center">
+                    <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
                      style="image-orientation: from-image; max-height:600px"
                      src="/{{entry.photo}}">
                 </div>

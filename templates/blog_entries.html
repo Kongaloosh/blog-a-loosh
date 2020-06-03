@@ -16,7 +16,7 @@
 
 {% for entry in entries %}
 <!-- START ENTRIES -->
-<div class="row flex-column post-preview hentry h-entry">
+<div class="flex-row p-2 post-preview hentry h-entry">
     {% if session.logged_in %}
     <div class="p-2">
         <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
@@ -37,7 +37,7 @@
         {% if site.photo is defined %}
         <a href="{{site.url}}">
             <img
-                    class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                    class="u-photo img-responsive center-block img-thumbnail img-rounded  mx-auto d-block"
                     style="image-orientation: from-image; max-height:300px"
                     src="/{{site.photo}}"
             >
@@ -49,7 +49,7 @@
     </div>
     {% endif %}
 
-    <div class="d-flex flex-column p-2 e-content {% if not entry.title %}p-name{% endif %}">
+    <div class="flex-column e-content {% if not entry.title %}p-name{% endif %}">
         {% if entry.summary %}
                 <div class="post-subtitle p-summary">
                     <p>
@@ -61,7 +61,7 @@
                 {% endif%}
 
                 {% if entry.video %}
-                <div class="d-flex flex-row p-2 justify-content-center">
+                <div class="flex-row justify-content-center">
                    <video class="u-video" controls="controls"
                            src="{{entry.video}}"
                            poster="https://kongaloosh.com"
@@ -73,8 +73,8 @@
 
 
                 {% if entry.photo %}
-                <div class="d-flex flex-row p-2 justify-content-center">
-                    <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
+                <div class="flex-row clearfix justify-content-center">
+                    <img class="u-photo img-responsive img-fluid center-block img-thumbnail img-rounded mx-auto d-block"
                      style="image-orientation: from-image; max-height:600px"
                      src="/{{entry.photo}}">
                 </div>
@@ -91,7 +91,7 @@
                 {% endfor %}</p>
             {% if entry.travel.map %}
             <div class="clearfix">
-                <img class="u-photo img-fluid center-block img-thumbnail img-rounded" src="/{{entry.travel.map}}">
+                <img class="u-photo img-fluid center-block img-thumbnail img-rounded mx-auto d-block" src="/{{entry.travel.map}}">
             </div>
             {% endif %}
         </div>

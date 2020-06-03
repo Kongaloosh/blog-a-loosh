@@ -38,10 +38,10 @@
             <div class="row">
                 <div class="col-lg-6 col-md-6 col-sm-12">
                     <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large"
-                          id="input">
+                          id="input" novalidate>
                         <p>
                             <label>Title:</label> <input type="text" style="width: 100%" name="title" id="title_form"
-                                                         value="{{entry.title}}">
+                                                         value="{% if entry.title%}{{entry.title}}{% endif %}">
                         </p>
                         <p>
                             <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"
@@ -70,7 +70,7 @@
                         </p>
 
                         <p>
-                            <input type="date" name="published" value="{{entry.published}}" style="width:100%">
+                            <input type="datetime-local" name="published" value="{{entry.published}}" style="width:100%">
 
                         </p>
                         {% if popular_tags %}

@@ -20,7 +20,6 @@ from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from python_webmention.mentioner import send_mention, get_mentions
 from slugify import slugify
 from threading import Timer
-
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.file_management.file_parser import create_json_entry, update_json_entry, file_parser_json
 from pysrc.file_management.markdown_album_pre_process import move, run
@@ -65,6 +64,20 @@ def init_db():
 
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
+
+
+
+@app.errorhandler(500)
+def it_broke(error):
+    return render_template('it_broke.html')
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('page_not_found.html')
+
+# @app.errorhandler(Exception)
+# def no_clue(error):
+#     return render_template("it_broke.html")
 
 
 @app.before_request
@@ -144,11 +157,14 @@ def resolve_placename(location):
 
         place_name = geo_results.json()['geonames'][0]['name']
         if geo_results.json()['geonames'][0]['adminName2']:
-            place_name += ", " + geo_results.json()['geonames'][0]['adminName2']
+            place_name += ", " + \
+                geo_results.json()['geonames'][0]['adminName2']
         elif geo_results.json()['geonames'][0]['adminName1']:
-            place_name += ", " + geo_results.json()['geonames'][0]['adminName1']
+            place_name += ", " + \
+                geo_results.json()['geonames'][0]['adminName1']
         else:
-            place_name += ", " + geo_results.json()['geonames'][0]['countryName']
+            place_name += ", " + \
+                geo_results.json()['geonames'][0]['countryName']
         return place_name, geo_results.json()['geonames'][0]['geonameId']
     except IndexError:
         return None, None
@@ -203,8 +219,10 @@ def post_from_request(request=None):
             data['travel'] = {}
             data['travel']['trips'] = trips
             if len(trips) > 0:  # if there's more than one location, make the map
-                markers = '|'.join([destination['location'][4:]for destination in trips]) # make the trips
-                r = requests.get('https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
+                markers = '|'.join([destination['location'][4:]
+                                    for destination in trips])  # make the trips
+                r = requests.get(
+                    'https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}'.format(markers, markers, GOOGLE_MAPS_KEY))
                 data['travel']['map'] = r.content
         except KeyError:
             pass
@@ -245,6 +263,9 @@ def get_post_for_editing(draft_location, md=False):
     if entry['category']:
         entry['category'] = ', '.join(entry['category'])
 
+    if entry['in_reply_to']:
+        entry['in_reply_to'] = ', '.join([e['url'] for e in entry['in_reply_to']])
+
     if entry['published']:
         try:
             entry['published'] = entry['published'].strftime('%Y-%m-%d')
@@ -277,7 +298,10 @@ def syndicate_from_form(creation_request, data):
     # Check to see if the post is in reply to another post and send a mention
     try:
         for reply in data['in_reply_to']:
-                send_mention(post_loc, reply)
+            app.logger.info(
+                "MENTIONING: {0} \nTO\n {1}".format(post_loc, reply))
+
+            send_mention(post_loc, reply)
     except TypeError:
         pass
 
@@ -297,11 +321,14 @@ def update_entry(update_request, year, month, day, name, draft=False):
         data['location_name'] = place_name
         data['location_id'] = geo_id
 
-    location = "{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
+    location = "{year}/{month}/{day}/{name}".format(
+        year=year, month=month, day=day, name=name)
     data['content'] = run(data['content'], date=data['published'])
 
-    file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-    entry = file_parser_json(file_name + ".json", g=g)  # get the file which will be updated
+    file_name = "data/{year}/{month}/{day}/{name}".format(
+        year=year, month=month, day=day, name=name)
+    # get the file which will be updated
+    entry = file_parser_json(file_name + ".json", g=g)
     update_json_entry(data, entry, g=g, draft=draft)
     syndicate_from_form(update_request, data)
     return location
@@ -318,10 +345,13 @@ def add_entry(creation_request, draft=False):
     data = post_from_request(creation_request)
     if data['published'] is None:               # we're publishing it now; give it the present time
         data['published'] = datetime.now()
-    data['content'] = run(data['content'], date=data['published'])  # find all images in albums and move them
+    # find all images in albums and move them
+    data['content'] = run(data['content'], date=data['published'])
 
-    if data['location'] is not None and data['location'].startswith("geo:"):  # if we were given a geotag
-        (place_name, geo_id) = resolve_placename(data['location'])  # get the placename
+    # if we were given a geotag
+    if data['location'] is not None and data['location'].startswith("geo:"):
+        (place_name, geo_id) = resolve_placename(
+            data['location'])  # get the placename
         data['location_name'] = place_name
         data['location_id'] = geo_id
         # todo: you'll be left with a rogue 'location' in the dict... should clean that...
@@ -346,7 +376,9 @@ def search_by_tag(category):
          WHERE categories.category='{category}'
          ORDER BY entries.published DESC
         """.format(category=category))
+
     for (row,) in cur.fetchall():
+        app.logger.info(row)
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
     return entries
@@ -359,7 +391,7 @@ def show_entries():
         if 'application/atom+xml' in request.headers.get('Accept'):
             # if the header is requesting an xml or atom feed, simply return it
             return show_atom()
-    except TypeError: # if there are empty headers
+    except TypeError:  # if there are empty headers
         pass
 
     # getting the entries we want to display.
@@ -374,7 +406,10 @@ def show_entries():
 
     for (row,) in cur.fetchall():  # iterate over the results
         if os.path.exists(row + ".json"):  # if the file fetched exists...
-            entries.append(file_parser_json(row + ".json"))  # parse the json and add it to the list of entries.
+            # parse the json and add it to the list of entries.
+            entries.append(file_parser_json(row + ".json"))
+            if len(entries) == 10:
+                break
 
     try:
         entries = entries[:10]  # get the 10 newest
@@ -409,7 +444,8 @@ def show_rss():
     )
     updated = None
     for (row,) in cur.fetchall():  # iterate over the results
-        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
+        # if the file fetched exists, append the parsed details
+        if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
 
     try:
@@ -438,7 +474,8 @@ def show_atom():
     )
     updated = None
     for (row,) in cur.fetchall():  # iterate over the results
-        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
+        # if the file fetched exists, append the parsed details
+        if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
 
     try:
@@ -467,7 +504,8 @@ def show_json():
     )
 
     for (row,) in cur.fetchall():  # iterate over the results
-        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
+        # if the file fetched exists, append the parsed details
+        if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
 
     try:
@@ -514,7 +552,8 @@ def map():
     )
 
     for (row,) in cur.fetchall():  # iterate over the results
-        if os.path.exists(row + ".json"):  # if the file fetched exists, append the parsed details
+        # if the file fetched exists, append the parsed details
+        if os.path.exists(row + ".json"):
             entry = file_parser_json(row + ".json")
             try:
                 geo_coords.append(entry['location'][4:].split(';')[0])
@@ -523,7 +562,8 @@ def map():
             try:
                 trips = entry['travel']['trips']
                 if len(trips) > 0:  # if there's more than one location, make the map
-                    geo_coords += [destination['location'][4:]for destination in trips]
+                    geo_coords += [destination['location'][4:]
+                                   for destination in trips]
             except (KeyError, TypeError):
                 pass
 
@@ -550,7 +590,8 @@ def pagination(number):
             # try to get the remaining entries
             entries = entries[start:len(entries)]
         except IndexError:
-            entries = None  # if this still produces an index error, we are at the end and return no entries.
+            # if this still produces an index error, we are at the end and return no entries.
+            entries = None
             before = 0  # set before so that we know we're at the end
     return render_template('blog_entries.html', entries=entries, before=before)
 
@@ -578,7 +619,8 @@ def add():
             abort(401)
 
         if "Submit" in request.form:
-            thread = threading.Thread(target=add_entry, args=(request))  # we spin off a thread to create
+            thread = threading.Thread(target=add_entry, args=(
+                request))  # we spin off a thread to create
             # album processing can take time: we want to spin it off to avoid worker timeouts.
             thread.start()
             location = '/'
@@ -598,9 +640,12 @@ def delete_drafts():
     # todo: should have a 404 or something if the post doesn't actually exist.
     if not session.get('logged_in'):  # check permissions before deleting
         abort(401)
-    totalpath = "drafts/{name}"  # the file will be located in drafts under the slug name
-    for extension in [".md", '.json', '.jpg']:  # for all of the files associated with a post
-        if os.path.isfile(totalpath + extension):  # if there's an associated file...
+    # the file will be located in drafts under the slug name
+    totalpath = "drafts/{name}"
+    # for all of the files associated with a post
+    for extension in [".md", '.json', '.jpg']:
+        # if there's an associated file...
+        if os.path.isfile(totalpath + extension):
             os.remove(totalpath + extension)  # ... delete it
 
     # note: because this is a draft, the images associated with the post will still be in the temp folder
@@ -656,10 +701,10 @@ def bulk_upload():
         for uploaded_file in request.files.getlist('file'):
             i = 0
             file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S") + '.' + \
-                       uploaded_file.filename.split('.')[-1:][0]
+                uploaded_file.filename.split('.')[-1:][0]
             while os.path.exists(file_loc):
                 file_loc = file_path + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-") + str(i) + '.' + \
-                           uploaded_file.filename.split('.')[-1:][0]
+                    uploaded_file.filename.split('.')[-1:][0]
                 i += 1
 
             image = Image.open(uploaded_file)
@@ -728,7 +773,8 @@ def md_to_html():
     """
     if request.method == "POST":
         return jsonify(
-            {"html": markdown.markdown(request.data, extensions=[AlbumExtension(), HashtagExtension(),'mdx_math'])}
+            {"html": markdown.markdown(request.data, extensions=['fenced_code','mdx_math',
+                                       AlbumExtension(), HashtagExtension(),])}
         )
 
     else:
@@ -738,7 +784,8 @@ def md_to_html():
 @app.route('/geonames/<query>', methods=['GET'])
 def geonames_wrapper(query):
     if request.method == "GET":
-        resp = requests.get("http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q="+query)
+        resp = requests.get(
+            "http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q="+query)
         return jsonify(resp.json()), resp.status_code, resp.headers.items()
     else:
         return redirect('/404'), 404
@@ -789,7 +836,7 @@ def recent_uploads():
                         <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s', 'img_%s');return false;">
                             <img src="%s" id="img_%s" class="img-fluid" style="max-height:auto; width:25%%;">
                         </a>
-                    """ % (text_box_insert, img_id, image_location,img_id)
+                    """ % (text_box_insert, img_id, image_location, img_id)
 
             preview += \
                 '''
@@ -808,7 +855,8 @@ def recent_uploads():
             # app.logger.info(request.get_data())
             to_delete = json.loads(request.get_data())['to_delete']
 
-            app.logger.info("deleting...." + new_prefix + to_delete[len('/images/'):])
+            app.logger.info("deleting...." + new_prefix +
+                            to_delete[len('/images/'):])
             if os.path.isfile(new_prefix + to_delete[len('/images/'):]):
                 os.remove(new_prefix + to_delete[len('/images/'):])
                 return "deleted"
@@ -822,15 +870,14 @@ def recent_uploads():
 def edit(year, month, day, name):
     """ The form for user-submission """
     if request.method == "GET":
-        file_name = "data/{year}/{month}/{day}/{name}.json".format(year=year, month=month, day=day, name=name)
-        app.logger.info(file_name)
+        file_name = "data/{year}/{month}/{day}/{name}.json".format(
+            year=year, month=month, day=day, name=name)
         entry = get_post_for_editing(file_name)
         return render_template('edit_entry.html', type="edit", entry=entry)
 
     elif request.method == "POST":
         if not session.get('logged_in'):
             abort(401)
-        app.logger.info("updating. {0}".format(request.form))
 
         if "Submit" in request.form:
             update_entry(request, year, month, day, name)
@@ -842,9 +889,11 @@ def edit(year, month, day, name):
 def profile(year, month, day, name):
     """ Get a specific article """
 
-    file_name = "data/{year}/{month}/{day}/{name}".format(year=year, month=month, day=day, name=name)
-    if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
-        return action_stream_parser(file_name + ".json")
+    file_name = "data/{year}/{month}/{day}/{name}".format(
+        year=year, month=month, day=day, name=name)
+    # if someone else is consuming
+    if request.headers.get('Accept') == "application/json":
+        return jsonify(file_parser_json(file_name + ".json"))
 
     entry = file_parser_json(file_name + ".json")
 
@@ -857,8 +906,50 @@ def profile(year, month, day, name):
 @app.route('/t/<category>')
 def tag_search(category):
     """ Get all entries with a specific tag """
+
+    if request.headers.get('Accept') == "application/json":
+        entries = []
+        query = """SELECT entries.location 
+         FROM categories
+         INNER JOIN entries ON
+         entries.slug = categories.slug AND
+         entries.published = categories.published
+         WHERE categories.category='{category}'""".format(category=category)
+        args = request.args
+        for key in args.keys():
+            strf = key[0] if key[0] != 'y' else 'Y'
+            query += "\nand CAST(strftime('%{0}', entries.published)AS INT) = {1}".format(strf, args.get(key))
+        query += "\nORDER BY entries.published DESC"
+        cur = g.db.execute(query)
+        for (row,) in cur.fetchall():
+            app.logger.info(row)
+            if os.path.exists(row + ".json"):
+                entries.append(file_parser_json(row + ".json"))
+        return jsonify(entries)
     entries = search_by_tag(category)
     return render_template('blog_entries.html', entries=entries)
+
+
+@app.route('/t/')
+def all_tags():
+    """ Get all entries with a specific tag """
+
+    cur = g.db.execute(
+        """
+        select category, count(category) as count
+        from categories
+        group by category
+        order by count(category) desc
+        """)
+
+    tags = cur.fetchall()
+
+    app.logger.info(tags)
+
+    if request.headers.get('Accept') == "application/json":
+        return jsonify(tags)
+
+    return render_template('tags.html', tags=tags)
 
 
 @app.route('/e/<year>/')
@@ -875,6 +966,10 @@ def time_search_year(year):
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
+
+    if request.headers.get('Accept') == "application/json":
+        return jsonify(entries)
+
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -893,6 +988,10 @@ def time_search_month(year, month):
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
+
+    if request.headers.get('Accept') == "application/json":
+        return jsonify(entries)
+
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -912,6 +1011,10 @@ def time_search(year, month, day):
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
+
+    if request.headers.get('Accept') == "application/json":
+        return jsonify(entries)
+
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -932,6 +1035,10 @@ def articles():
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
+
+    if request.headers.get('Accept') == "application/json":
+        return jsonify(entries)
+
     return render_template('blog_entries.html', entries=entries)
 
 
@@ -961,12 +1068,14 @@ def logout():
 def handle_micropub():
     app.logger.info('handleMicroPub [%s]' % request.method)
     if request.method == 'POST':  # if post, authorise and create
-        access_token = request.headers.get('Authorization')  # get the token and report it
+        access_token = request.headers.get(
+            'Authorization')  # get the token and report it
         app.logger.info('token [%s]' % access_token)
         if access_token:  # if the token is not none...
             access_token = access_token.replace('Bearer ', '')
             app.logger.info('acccess [%s]' % request)
-            if checkAccessToken(access_token, request.form.get("client_id.data")):  # if the token is valid ...
+            # if the token is valid ...
+            if checkAccessToken(access_token, request.form.get("client_id.data")):
                 app.logger.info('authed')
                 app.logger.info(request.data)
                 app.logger.info(request.form.keys())
@@ -1003,7 +1112,8 @@ def handle_micropub():
                     data['category'] = cat
 
                 if type(data['category']) is unicode:
-                    data['category'] = [i.strip() for i in data['category'].lower().split(",")]
+                    data['category'] = [i.strip()
+                                        for i in data['category'].lower().split(",")]
                 elif type(data['category']) is list:
                     data['category'] = data['category']
                 elif data['category'] is None:
@@ -1019,7 +1129,8 @@ def handle_micropub():
                         if request.files.get(key):
                             img = request.files.get(key)
                             data[key] = img
-                            data['category'].append(name)  # we've added an image, so append it
+                            # we've added an image, so append it
+                            data['category'].append(name)
                     except KeyError:
                         pass
 
@@ -1027,14 +1138,16 @@ def handle_micropub():
                     if data['place_name']:
                         data['location_name'] = data['place_name']
                     elif data['location'].startswith("geo:"):
-                        (place_name, geo_id) = resolve_placename(data['location'])
+                        (place_name, geo_id) = resolve_placename(
+                            data['location'])
                         data['location_name'] = place_name
                         data['location_id'] = geo_id
 
                 location = create_json_entry(data, g=g)
 
                 if data['in_reply_to']:
-                    send_mention('https://' + DOMAIN_NAME + '/e/' + location, data['in_reply_to'])
+                    send_mention('https://' + DOMAIN_NAME +
+                                 '/e/' + location, data['in_reply_to'])
 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
@@ -1044,7 +1157,8 @@ def handle_micropub():
                 except KeyError:
                     pass
 
-                resp = Response(status="created", headers={'Location': 'http://' + DOMAIN_NAME + location})
+                resp = Response(status="created", headers={
+                                'Location': 'http://' + DOMAIN_NAME + location})
                 resp.status_code = 201
                 return resp
             else:
@@ -1068,7 +1182,8 @@ def handle_micropub():
             while len(syndicate_to) > 1:
                 r += 'syndicate-to[]=' + syndicate_to.pop() + '&'
             r += 'syndicate-to[]=' + syndicate_to.pop()
-            resp = Response(content_type='application/x-www-form-urlencoded', response=r)
+            resp = Response(
+                content_type='application/x-www-form-urlencoded', response=r)
             return resp
         resp = Response(status='not implemented')
         resp.status_code = 501
@@ -1083,10 +1198,12 @@ def handle_inbox():
         entries = [
             f for f in os.listdir(inbox_location)
             if os.path.isfile(os.path.join(inbox_location, f))
-               and f.endswith('.json')]
+            and f.endswith('.json')]
 
-        for_approval = [entry for entry in entries if entry.startswith("approval_")]
-        entries = [entry for entry in entries if not entry.startswith("approval_")]
+        for_approval = [
+            entry for entry in entries if entry.startswith("approval_")]
+        entries = [
+            entry for entry in entries if not entry.startswith("approval_")]
         if 'text/html' in request.headers.get('Accept'):
             return render_template('inbox.html', entries=entries, for_approval=for_approval)
         elif 'application/ld+json' in request.headers.get('Accept'):
@@ -1095,7 +1212,8 @@ def handle_inbox():
             inbox_items['@id'] = "http://" + DOMAIN_NAME + "/inbox"
             inbox_items['http://www.w3.org/ns/ldp#contains'] = [{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for
                                                                 entry in entries]
-            resp = Response(inbox_items, content_type="application/ld+json", status=200)
+            resp = Response(
+                inbox_items, content_type="application/ld+json", status=200)
             resp.data = json.dumps(inbox_items)
             return resp
         # else:
@@ -1134,10 +1252,12 @@ def handle_inbox():
             try:
                 try:
                     data['context']
-                    notification = open('inbox/approval_' + slugify(str(datetime.now())) + '.json', 'w+')
+                    notification = open(
+                        'inbox/approval_' + slugify(str(datetime.now())) + '.json', 'w+')
                     notification.write(request.data)
                     resp = Response(status='queued')
-                    resp.data = {"@id": "", "http://www.w3.org/ns/ldp#contains": []}
+                    resp.data = {"@id": "",
+                                 "http://www.w3.org/ns/ldp#contains": []}
                     resp.status_code = 202
                     return resp
                 except KeyError:
@@ -1166,7 +1286,8 @@ def show_inbox_item(name):
         entry = json.loads(open('inbox/' + name).read())
         app.logger.info((request, request.data))
         try:
-            if request.headers.get('Accept') == "application/ld+json":  # if someone else is consuming
+            # if someone else is consuming
+            if request.headers.get('Accept') == "application/ld+json":
                 inbox_items = {}
                 resp = Response(content_type="application/ld+json", status=200)
                 resp.data = json.dumps(entry)
@@ -1250,7 +1371,8 @@ def show_draft(name):
 
         if "Submit" in request.form:  # if we're publishing it now
             location = add_entry(request, draft=True)
-            if os.path.isfile("drafts/" + name + ".json"):  # this won't always be the slug generated
+            # this won't always be the slug generated
+            if os.path.isfile("drafts/" + name + ".json"):
                 os.remove("drafts/" + name + ".json")
             return redirect(location)
 
@@ -1267,5 +1389,3 @@ def post_already_exists():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
