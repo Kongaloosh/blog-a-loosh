@@ -55,7 +55,7 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     img.close()
 
     img = Image.open(from_location)  # open the image from the temp
-    max_height = 500                                            # maximum height
+    max_height = 2000                                            # maximum height
     h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
     if h_percent >= 1:
         w_size = 1
