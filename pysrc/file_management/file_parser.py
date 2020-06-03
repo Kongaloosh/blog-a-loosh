@@ -55,7 +55,7 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     img.close()
 
     img = Image.open(from_location)  # open the image from the temp
-    max_height = 500                                            # maximum height
+    max_height = 2000                                            # maximum height
     h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
     if h_percent >= 1:
         w_size = 1
@@ -79,13 +79,13 @@ def move_and_resize(from_location, to_blog_location, to_copy):
 
 def save_to_two(image,  to_blog_location, to_copy):
     """
-    Saves two images: one image which is scaled down to optimize serving images, one which is put in a folder at 
-    original resolution for storage. 
+    Saves two images: one image which is scaled down to optimize serving images, one which is put in a folder at
+    original resolution for storage.
     args:
-    :param image: 
-    :param to_blog_location: 
-    :param to_copy: 
-    :return: 
+    :param image:
+    :param to_blog_location:
+    :param to_copy:
+    :return:
     """
     to_blog_location = to_blog_location.lower()
     to_copy = to_copy.lower()
@@ -129,8 +129,8 @@ def file_parser_json(filename, g=None, md=True):
         g: the database connection
         md: boolean flag whether the markdown content should be parsed.
     """
+    print(filename)
     entry = json.loads(open(filename, 'rb').read())
-
     try:
         entry['published'] = parse(entry['published'])      # parse the string for time
         if g and entry['published'] is None:                # if for some reason it's missing, infer from dbms
@@ -153,8 +153,6 @@ def file_parser_json(filename, g=None, md=True):
     if entry['in_reply_to']:
         # if the post is a response,
         in_reply_to = []
-        if type(entry['in_reply_to']) is unicode:
-            entry['in_reply_to'] = str(entry['in_reply_to'])
         if type(entry['in_reply_to']) != list:  # if the reply_tos isn't a list
             entry['in_reply_to'] = [reply_to.strip() for reply_to in entry['in_reply_to'].split(',')]  # split reply_tos
         for i in entry['in_reply_to']:      # for all the replies we have...
@@ -292,7 +290,7 @@ def update_json_entry(data, old_entry, g, draft=False):
     """
     Update old entry based on differences in new entry and saves file.
     Calls create_json_entry after the appropriate dbms manipulation is finished to actually save the entry.
-    
+
     Args:
         data: the new entry the old entry is updated with
         old_entry: the old entry which is being updated
@@ -330,7 +328,11 @@ def update_json_entry(data, old_entry, g, draft=False):
                  [old_entry['slug'], old_entry['published'], c])
             g.db.commit()
 
-    # 3. for all the remaining data, update the old entry with the new entry.
+    # 3. check for mentions
+    if isinstance(data['in_reply_to'], basestring):
+        data['in_reply_to'] = [reply.strip() for reply in data['in_reply_to'].split(',')]  # turn it into a list
+
+    # 4. for all the remaining data, update the old entry with the new entry.
     for key in data.keys():
         if data[key]:
             old_entry[key] = data[key]
