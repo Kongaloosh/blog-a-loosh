@@ -773,13 +773,8 @@ def md_to_html():
     """
     if request.method == "POST":
         return jsonify(
-<<<<<<< HEAD
             {"html": markdown.markdown(request.data, extensions=['fenced_code','mdx_math',
                                        AlbumExtension(), HashtagExtension(),])}
-=======
-            {"html": markdown.markdown(request.data, extensions=[
-                                       AlbumExtension(), HashtagExtension(), 'mdx_math'])}
->>>>>>> 68732e82368c5ac3909e858d3945e9baeba35174
         )
 
     else:
