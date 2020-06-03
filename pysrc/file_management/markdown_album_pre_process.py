@@ -3,6 +3,11 @@ from PIL import Image
 from datetime import datetime
 import os
 import ConfigParser
+from markdown_albums.markdown_album_extension import album_regexp
+
+ALBUM_GROUP_RE = re.compile(
+    album_regexp
+)
 
 __author__ = 'kongaloosh'
 
@@ -14,11 +19,6 @@ ORIGINAL_PHOTOS_DIR = config.get('PhotoLocations', 'BulkUploadLocation')
 
 old_prefix = config.get('PhotoLocations', 'BlogStorage')
 new_prefix = config.get('PhotoLocations', 'PermStorage')
-
-# the regular expression to find albums
-ALBUM_GROUP_RE = re.compile(
-    r'''(@{3,})(?P<album>((.)|(\n))*?)(@{3,})'''
-)
 
 
 def move(loc, date):
