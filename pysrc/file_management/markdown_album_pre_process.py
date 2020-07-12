@@ -50,7 +50,7 @@ def move(loc, date):
     img.save(new_prefix+date_suffix+file_name.lower())            # open the new location
 
     # 2. RESIZE IMAGE AND SAVE FOR BLOG SERVING
-    max_height = 500                                            # maximum height
+    max_height = 1000                                            # maximum height
     img = Image.open(target_file_path)                          # open the image in PIL
     h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
     w_size = int((float(img.size[0]) * float(h_percent)))       # calculate the new size of the width

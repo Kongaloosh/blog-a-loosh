@@ -64,8 +64,8 @@ def create_json_entry(data):
     total_path = file_path+"{slug}".format(slug=slug)
 
     # check to make sure that the .json and human-readable versions do not exist currently
-
-    if not os.path.isfile(total_path+'.json'):
+    if True:
+    #if not os.path.isfile(total_path+'.json'):
         print('path', total_path + ".json")
         # Find all the multimedia files which were added with the posts
         data['published'] = data['published'].__str__()
@@ -121,6 +121,7 @@ def file_parser(filename):
 
 path = 'data/'
 
+
 def fix():
     for (dirpath, dirnames, filenames) in os.walk(path):
         for filename in filenames:
@@ -134,8 +135,34 @@ def fix():
                 except (AttributeError, UnicodeDecodeError):
                     pass
 
+
+def fix_list():
+    for i in [
+	#'2018/10/21/hat-for-ma',
+	#'2015/7/25/albums',
+	#'2018/8/1/deep-learning-summer-school-reinforcement-learning-summer-school',
+        #'2018/11/20/indie-wysi',
+        #'2018/10/20/walking-ar',
+        #'2018/8/24/interactiv',
+        #'2015/7/26/9-weeks-of-indieweb',
+        #'2015/7/26/west-grid-jasper',
+        #'2016/8/2/on-posting-images',
+        #'2017/6/22/hello-world',
+        #'2017/8/25/solar-eclipse-2017',
+        '2018/11/20/indie-wysi'
+            ]:
+        try:
+            entry = file_parser(path + i + ".md")
+            entry['u-uid'] = '/e' + entry['u-uid']
+            entry['url'] = '/e' + entry['url']
+            create_json_entry(entry)
+        except IOError:
+            print("Couldn't convert {0}".format(i))
+
+
 if __name__ == '__main__':
-    fix()
-    e = file_parser('data/2015/11/20/test-notes.md')
-    print(e)
-    fix()
+    # fix()
+    # e = file_parser('data/'+i+".md")
+    # print(e)
+    # fix()
+    fix_list()

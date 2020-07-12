@@ -4,6 +4,10 @@
  * Licensed under Apache 2.0 (https://github.com/IronSummitMedia/startbootstrap/blob/gh-pages/LICENSE)
  */
 /*
+img {
+max-height: 400px;
+}
+
 .entry-preview a {
     border: 1px solid rgba(143, 188, 143, 0) !important;
     color: #c5edc5 !important;
@@ -22,6 +26,10 @@ h3.preview:hover {
     color: #c5edc5 !important;
 }
 */
+
+img{
+max-height: 400px;
+}
 
 .intro-container{
     padding-top: 1%;

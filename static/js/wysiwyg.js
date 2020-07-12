@@ -5,11 +5,11 @@
 //  document.getElementsByTagName("head")[0].appendChild(script);
 //})();
 MathJax.Hub.Startup.onload()
-MathJax.Hub.Config({
-  config: ["MMLorHTML.js"],
-  jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
-  extensions: ["MathMenu.js", "MathZoom.js"]
-});
+//MathJax.Hub.Config({
+//  config: ["MMLorHTML.js"],
+//  jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
+//  extensions: ["MathMenu.js", "MathZoom.js"]
+//});
 
 var text = "";
 var img = "";
@@ -39,16 +39,19 @@ function getHTMLFromMD(val) {
             .then(function (result) {
                 document.getElementById("wysiwyg").innerHTML = result['html'];
                 MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+                $("img").addClass( "img-responsive img-fluid" );
             })
         .catch(function(error) {
     // If there is any error you will catch them here
     });
+    //$("img").addClass( "img-responsive img-fluid" );
 }
 
 setInterval(function(){
 	var x = document.getElementById("text_input").value;
    	if (x !== text) {
         getHTMLFromMD(x)
+        $("img").addClass( "img-responsive img-fluid" );
     }
     text = x
 }, 1000);
@@ -78,3 +81,4 @@ setInterval(function(){
     }
     img = summary
 }, 1000);
+MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
