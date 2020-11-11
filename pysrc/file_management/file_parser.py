@@ -54,16 +54,28 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     img_file.close()
     img.close()
 
-    img = Image.open(from_location)  # open the image from the temp
-    max_height = 2000                                            # maximum height
-    h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
-    if h_percent >= 1:
-        w_size = 1
+
+    img = Image.open(from_location)                             # open the image from the temp
+    max_height = 3000                                           # maximum height
+
+    if img.size[1] > img.size[0]:
+        h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
+        if h_percent >= 1:
+            w_size = 1
+        else:
+            w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
+        img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
     else:
-        w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
-    img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
+        w_percent = (max_height/ float(img.size[0]))              # calculate what percentage the new height is of the old
+        if w_percent >= 1:
+            h_size = 1
+        else:
+            h_size = int((float(img.size[1]) * float(h_percent)))  # calculate the new size of the width
+        img = img.resize((max_height, h_size), Image.ANTIALIAS)     # translate the image
+      
     if not os.path.exists(os.path.dirname(to_blog_location)):                    # if the blog's directory doesn't exist
        os.makedirs(os.path.dirname(to_blog_location))          # make it
+    
     in_data = np.asarray(img, dtype=np.uint8)
     img_file = open(to_blog_location, "w")
     img.save(img_file, "JPEG")                                  # image save old_prefix
@@ -101,7 +113,7 @@ def save_to_two(image,  to_blog_location, to_copy):
     img.close()
 
     img = Image.open(image)  # open the image from the temp
-    max_height = 500  # maximum height
+    max_height = 2000  # maximum height
     h_percent = (max_height / float(img.size[1]))  # calculate what percentage the new height is of the old
     if h_percent >= 1:
         w_size = 1
