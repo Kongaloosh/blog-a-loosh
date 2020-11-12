@@ -3,6 +3,7 @@ import tempfile
 
 import pytest
 import kongaloosh
+import datetime
 
 
 @pytest.fixture
@@ -56,12 +57,84 @@ def test_login_logout(client):
 def test_messages(client):
     """Test that messages work."""
 
-    # login(client, flaskr.app.config['USERNAME'], flaskr.app.config['PASSWORD'])
+    # test that we cannot add a post if not logged in
     rv = client.post('/add', data=dict(
         title='<Hello>',
         text='<strong>HTML</strong> allowed here'
     ), follow_redirects=True)
-    assert 501 is not rv.status_code
-    # assert b'No entries here so far' not in rv.c
-    # assert b'&lt;Hello&gt;' in rv.data
-    # assert b'<strong>HTML</strong> allowed here' in rv.data
+    assert 401 == rv.status_code
+    assert b'Unauthorized' in rv.data
+
+    # test that we can add a post if logged imn
+    login(client, kongaloosh.app.config['USERNAME'], kongaloosh.app.config['PASSWORD'])
+    rv = client.post(
+        '/add',
+        data={
+            "Summary": "summary",
+            'Submit': "Submit",
+            "h": "",
+            "summary":"",
+            "published":"",
+            "updated":"",
+            "category":"",
+            "slug":"",
+            "location":"",
+            "location_name":"",
+            "location_id":"",
+            "in_reply_to":"",
+            "repost_of":"",
+            "syndication":"",
+            "photo":"",
+            "title":'Oh hey',
+            "content":'blah blah blah',
+            "submit":"Submit",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True
+    )
+
+    assert 'blah blah blah' in rv.data
+    assert 200 == rv.status_code
+
+    # test that we cannot add the same post twice
+    rv = client.post(
+        '/add',
+        data={
+            "Summary": "summary",
+            'Submit': "Submit",
+            "h": "",
+            "summary":"",
+            "published":"",
+            "updated":"",
+            "category":"",
+            "slug":"",
+            "location":"",
+            "location_name":"",
+            "location_id":"",
+            "in_reply_to":"",
+            "repost_of":"",
+            "syndication":"",
+            "photo":"",
+            "title":'Hello',
+            "content":'allowed here',
+            "submit":"Submit",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True
+    )
+    assert "already exists" in rv.data
+
+    # test that we can successfully remove a post
+    dt = datetime.datetime.today()
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )
+
+    assert 'blah blah blah' not in rv.data
+    assert 200 == rv.status_code
+
+
