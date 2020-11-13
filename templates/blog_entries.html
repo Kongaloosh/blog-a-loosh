@@ -3,7 +3,6 @@
 
 {% if session.logged_in %}
 <div class="add-entry flex-column">
-
     <div class="row justify-content-center">
         <a class="btn btn-success" style="width: 24%" href="/add">Add Post</a>
         <a class="btn btn-success" style="width: 24%" href="/drafts">Drafts</a>
@@ -78,7 +77,7 @@
 
         <div class="row d-flex justify-content-center imagetiles">
             {% for photo in entry.photo %}
-            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-6">
+            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6">
                 <img
                         src="/{{photo}}"
                         class="img-responsive img-fluid img-responsive center-block img-thumbnail img-rounded u-photo"
