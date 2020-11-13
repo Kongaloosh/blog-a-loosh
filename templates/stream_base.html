@@ -38,13 +38,17 @@
                 <div class="article-preview p-2">
                     <h3 class="preview "><a href="{{article.url}}">{{article.title}}</a></h3>
 
-                    {% if article.photo%}
-                    <div class="clearfix row justify-content-center">
-                    <a href="{{article.url}}">
-                        <img class="u-photo img-responsive center-block img-thumbnail img-rounded"
-                             style="image-orientation: from-image; max-height:500px"
+                    {% if article.photo is iterable and article.photo is not string %}
+                        <div class="flex-row justify-content-center">
+                            <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
+                             style="image-orientation: from-image; max-height:600px"
+                             src="/{{article.photo[0]}}">
+                        </div>
+                    {% else %}
+                        <div class="flex-row justify-content-center">
+                            <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
+                             style="image-orientation: from-image; max-height:600px"
                              src="/{{article.photo}}">
-                    </a>
                         </div>
                     {% endif %}
 

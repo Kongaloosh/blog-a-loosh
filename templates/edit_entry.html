@@ -40,14 +40,34 @@
                     <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large"
                           id="input" novalidate>
                         <p>
-                            <label>Title:</label> <input type="text" style="width: 100%" name="title" id="title_form"
-                                                         value="{% if entry.title%}{{entry.title}}{% endif %}">
+                            <input
+                                    type="text"
+                                    style="width: 100%"
+                                    name="title"
+                                    id="title_form"
+                                    value="{% if entry.title%}{{entry.title}}{% endif %}"
+                                    placeholder="title"
+
+                            >
                         </p>
                         <p>
-                            <label>Summary</label> <textarea type="text" style="width:100%" rows=2 name="summary"
-                                                             id="summary_form">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
+                            <textarea
+                                    type="text"
+                                    style="width:100%"
+                                    rows=2
+                                    name="summary"
+                                    id="summary_form"
+                                    placeholder="summary"
+                            >{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
                         </p>
-                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
+                        <p>
+                        <textarea
+                                style="width: 100%"
+                                rows=5"
+                                name="content"
+                                id="text_input"
+                                form_id="input"
+                                placeholder="Post content">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
                         </p>
                         <hr>
                         <p>
@@ -64,26 +84,48 @@
                         </p>
 
                         <p>
-                            <label>Tags</label>
-                            <input type="text" style="width: 100%" name="category"
-                                   value="{%if entry.category%}{{entry.category}}{%endif%}">
+
+                            <input type="text"
+                                   style="width: 100%"
+                                   name="category"
+                                   value="{%if entry.category%}{{entry.category}}{%endif%}"
+                                   placeholder="tags"
+                            >
                         </p>
 
-                        <p>
-                            <input type="datetime-local" name="published" value="{{entry.published}}" style="width:100%">
-
-                        </p>
                         {% if popular_tags %}
                         <p> Common tags include: {% for tag in popular_tags%} <a
                                 onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %},
                             {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
                         {%endif%}
-                        <p>
-                            <label>Reply-to</label>
-                            <input type="text" style="width: 100%" name="in_reply_to"
-                                   value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}">
 
+                        <p>
+                            <input type="datetime-local" name="published" value="{{entry.published}}" style="width:100%">
                         </p>
+
+
+                         <p>
+                            <label>Photo</label>
+                            <input
+                                    type="file"
+                                    name="photo_file[]"
+                                    id="img_input"
+                                    accept="image/*"
+                                    multiple
+                            />
+                            <input type="text" style="width:100%" name="photo" id="img_loc"
+                                   value="{%if entry.photo%}{{entry.photo}}{%endif%}"
+                            >
+                        </p>
+
+                        <p>
+                            <input  type="text" style="width: 100%" name="in_reply_to"
+                                    value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}"
+                                    placeholder="Reply-to URL"
+                            >
+                        </p>
+
+                        <hr>
 
                         <div id="form-div">
                             <label>Travel</label><br>
@@ -103,20 +145,21 @@
                         <div class="dash-add">
                             <button type="button" class="dash-add-button" onclick="addFieldFunction()">Add Stop</button>
                         </div>
+
+                        <hr>
+
                         <p>
-                            <label>Event</label><br>
-                            <b>name </b> <input type="text" name="event_name" value="{%if entry.event%}{{entry.event.event_name}}{%endif%}"><br>
+                            <input
+                                type="text"
+                                name="event_name"
+                                value="{%if entry.event%}{{entry.event.event_name}}{%endif%}"
+                                placeholder="event"
+                        ><br>
                             <b>start </b><input type="datetime-local" name="dt_start" value="{%if entry.event%}{{entry.event.dt_start}}{%endif%}"><br>
                             <b>end </b><input type="datetime-local" name="dt_end" value="{%if entry.event%}{{entry.event.dt_end}}{%endif%}">
                         </p>
 
-                        <p>
-                            <label>Photo</label>
-                            <input type="file" name="photo_file" id="img_input" accept="image/*"/>
-                            <input type="text" style="width:100%" name="photo" id="img_loc"
-                                   value="{%if entry.photo%}{{entry.photo}}{%endif%}">
-                        </p>
-
+                        <hr>
 
                         <p>
                             <label>twitter </label> <input type="checkbox" name="twitter" value="twitter"><br>
@@ -162,6 +205,7 @@
                             <div id="wysiwyg"></div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

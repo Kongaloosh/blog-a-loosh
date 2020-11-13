@@ -188,7 +188,6 @@ def post_from_request(request=None):
         'syndication': None,
         'photo': None,
     }
-    print(request.data)
     if request:
         try:
             # if the photo is a file, then go to beginning; otherwise, null.

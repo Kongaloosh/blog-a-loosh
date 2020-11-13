@@ -208,11 +208,21 @@
 
 
                 {% if entry.photo %}
-                <div class="flex-row justify-content-center">
-                    <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
-                     style="image-orientation: from-image; max-height:600px"
-                     src="/{{entry.photo}}">
-                </div>
+                    {% if entry.photo is iterable and entry.photo is not string %}
+                        <div class="flex-row justify-content-center">
+                            {% for photo in entry.photo %}
+                                <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
+                                 style="image-orientation: from-image; max-height:600px"
+                                 src="/{{photo}}">
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="flex-row justify-content-center">
+                            <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
+                             style="image-orientation: from-image; max-height:600px"
+                             src="/{{entry.photo}}">
+                        </div>
+                    {% endif %}
                 {% endif %}
                 {% if entry.content %}
                 {{entry.content | safe}}
