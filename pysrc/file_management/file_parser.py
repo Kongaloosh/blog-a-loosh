@@ -33,6 +33,30 @@ DOMAIN_NAME = config.get('Global', 'DomainName')
 GEONAMES = config.get('GeoNamesUsername', 'Username')
 FULLNAME = config.get('PersonalInfo', 'FullName')
 
+MAX_SIZE = 3000
+
+
+def resize(img, max_dim):
+    """Takes an image and resizes to max size along largest dimension.
+    Args:
+         img: a pillow image
+         max_dim: the maximum number of pixes on the largest side
+
+    Returns:
+        a pillow image
+    """
+    if img.size[1] > img.size[0]:
+        h_percent = (max_dim / float(img.size[1]))                   # calculate what percentage the new height is
+        h_size = min(max_dim, img.size[1])
+        w_size = int(float(img.size[0]) * min(float(h_percent), 1.))  # calculate the new size of the width
+    else:
+        w_percent = (max_dim / float(img.size[0]))                   # calculate what percentage the new height is
+        w_size = min(max_dim, img.size[0])
+        h_size = int(float(img.size[1]) * min(float(w_percent), 1.))  # calculate the new size of the width
+    img = img.resize((w_size, h_size), Image.ANTIALIAS)         # translate the image
+
+    return img
+
 
 def move_and_resize(from_location, to_blog_location, to_copy):
     """"
@@ -54,25 +78,8 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     img_file.close()
     img.close()
 
+    img = resize(Image.open(from_location), MAX_SIZE)            # open the image from the temp
 
-    img = Image.open(from_location)                             # open the image from the temp
-    max_height = 3000                                           # maximum height
-
-    if img.size[1] > img.size[0]:
-        h_percent = (max_height / float(img.size[1]))               # calculate what percentage the new height is of the old
-        if h_percent >= 1:
-            w_size = 1
-        else:
-            w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
-        img = img.resize((w_size, max_height), Image.ANTIALIAS)     # translate the image
-    else:
-        w_percent = (max_height/ float(img.size[0]))              # calculate what percentage the new height is of the old
-        if w_percent >= 1:
-            h_size = 1
-        else:
-            h_size = int((float(img.size[1]) * float(h_percent)))  # calculate the new size of the width
-        img = img.resize((max_height, h_size), Image.ANTIALIAS)     # translate the image
-      
     if not os.path.exists(os.path.dirname(to_blog_location)):                    # if the blog's directory doesn't exist
        os.makedirs(os.path.dirname(to_blog_location))          # make it
     
@@ -89,7 +96,7 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     os.remove(from_location)
 
 
-def save_to_two(image,  to_blog_location, to_copy):
+def save_to_two(image, to_blog_location, to_copy):
     """
     Saves two images: one image which is scaled down to optimize serving images, one which is put in a folder at
     original resolution for storage.
@@ -99,6 +106,7 @@ def save_to_two(image,  to_blog_location, to_copy):
     :param to_copy:
     :return:
     """
+
     to_blog_location = to_blog_location.lower()
     to_copy = to_copy.lower()
 
@@ -112,17 +120,10 @@ def save_to_two(image,  to_blog_location, to_copy):
     img_file.close()
     img.close()
 
-    img = Image.open(image)  # open the image from the temp
-    max_height = 2000  # maximum height
-    h_percent = (max_height / float(img.size[1]))  # calculate what percentage the new height is of the old
-    if h_percent >= 1:
-        w_size = 1
-    else:
-        w_size = int((float(img.size[0]) * float(h_percent)))  # calculate the new size of the width
-    img = img.resize((w_size, max_height), Image.ANTIALIAS)  # translate the image
+    img = resize(Image.open(image), MAX_SIZE)            # open the image from the temp
+
     if not os.path.exists(os.path.dirname(to_blog_location)):  # if the blog's directory doesn't exist
         os.makedirs(os.path.dirname(to_blog_location))  # make it
-    in_data = np.asarray(img, dtype=np.uint8)
     img_file = open(to_blog_location, "w")
     img.save(img_file, "JPEG")  # image save old_prefix
     img_file.flush()
@@ -245,22 +246,30 @@ def create_json_entry(data, g, draft=False, update=False):
                 ('photo', '.jpg')]:
             # todo: expand to other filetypes
             try:
-                if not os.path.isfile(total_path + extension) and data[key]:  # if there is no photo already
-                    # if the image is a location ref
-                    if type(data[key]) == unicode and data[key].startswith("/images/"):
-                        # move the image and resize it
-                        move_and_resize(
-                            new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
-                            total_path + extension,
-                            new_prefix + total_path + extension
-                        )
-                    else:   # if we have a buffer with the data already present, simply save and move it.
-                        save_to_two(
-                            data[key],
-                            total_path + extension,
-                            new_prefix + total_path + extension)
-                    data[key] = total_path + extension              # update the dict to a location refrence
-            except KeyError:
+                i = 0
+                file_list = []
+                for file_i in data[key]:
+                    print(data[key])
+                    if not os.path.isfile(total_path + extension) and file_i:  # if there is no photo already
+                        # if the image is a location ref
+                        if type(data[key]) == unicode and data[key].startswith("/images/"):
+                            # move the image and resize it
+                            move_and_resize(
+                                new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
+                                total_path + extension,
+                                new_prefix + total_path + extension
+                            )
+                            file_list.append(new_prefix+total_path+extension)
+                        else:   # if we have a buffer with the data already present, simply save and move it.
+                            print("FILE", file_i)
+                            save_to_two(
+                                file_i,
+                                total_path + extension,
+                                new_prefix + total_path + extension)
+                        file_list.append(total_path + extension)             # update the dict to a location refrence
+                    data[key] = file_list
+                    i += 1
+            except (KeyError, TypeError):
                 pass
 
         try:
