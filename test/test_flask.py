@@ -237,3 +237,11 @@ def test_img_post(client):
         content_type="multipart/form-data",
         follow_redirects=True
     )
+
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )

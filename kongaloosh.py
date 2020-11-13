@@ -13,7 +13,7 @@ from contextlib import closing
 from datetime import datetime
 from dateutil.parser import parse
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, Response, make_response, \
-    jsonify
+    jsonify, flash
 from jinja2 import Environment
 from markdown_albums.markdown_album_extension import AlbumExtension
 from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
@@ -64,7 +64,6 @@ def init_db():
 
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
-
 
 
 @app.errorhandler(500)
@@ -189,14 +188,24 @@ def post_from_request(request=None):
         'syndication': None,
         'photo': None,
     }
-
+    print(request.data)
     if request:
         try:
             # if the photo is a file, then go to beginning; otherwise, null.
-            data['photo'] = request.files['photo_file']
-            data['photo'].seek(0, 2)
-            if data['photo'].tell() < 1:
-                data['photo'] = None
+            files = request.files.getlist('photo_file[]')
+            if type(files) is type(list()):
+                if len(files) == 0:
+                    data['photo'] = None
+                else:
+                    data['photo'] = request.files.getlist('photo_file[]')
+            else:
+                data['photo'].seek(0, 2)
+                if data['photo'].tell() < 1:
+                    data['photo'] = None
+                else:
+                    data['photo'] = [request.files['photo_file']]
+            app.logger.info("a")
+
         except KeyError:
             pass
 
@@ -614,24 +623,28 @@ def add():
         return render_template('edit_entry.html', entry=post_from_request(), popular_tags=tags, type="add")
 
     elif request.method == 'POST':  # if we're adding a new post
-
         if not session.get('logged_in'):
             abort(401)
 
         if "Submit" in request.form:
-            thread = threading.Thread(target=add_entry, args=(
-                request))  # we spin off a thread to create
+            # thread = threading.Thread(target=add_entry, args=(
+            #     request))  # we spin off a thread to create
             # album processing can take time: we want to spin it off to avoid worker timeouts.
-            thread.start()
-            location = '/'
-            location = add_entry(request)
+            # thread.start()
+            return redirect(add_entry(request))
 
-        if "Save" in request.form:  # if we're simply saving the post as a draft
-
+        elif "Save" in request.form:  # if we're simply saving the post as a draft
             data = post_from_request(request)
-            location = create_json_entry(data, g=g, draft=True)
+            return redirect(create_json_entry(data, g=g, draft=True))
 
-        return redirect(location)  # send the user to the newly created post
+        # else:
+        #     return redirect("/")
+
+        # else:
+        #     flash("Invalid")
+        #     return redirect('/add')
+
+
 
 
 @app.route('/delete_draft/<name>', methods=['GET'])
@@ -666,12 +679,19 @@ def stream():
 
 @app.route('/delete_entry/e/<year>/<month>/<day>/<name>', methods=['POST', 'GET'])
 def delete_entry(year, month, day, name):
-    app.logger.info("delete requested")
-    app.logger.info(session.get('logged_in'))
     if not session.get('logged_in'):
         abort(401)
     else:
+
         totalpath = "data/{0}/{1}/{2}/{3}".format(year, month, day, name)
+        if not os.path.isfile(totalpath+".json"):
+            return redirect('/', 500)
+        entry = file_parser_json(totalpath+".json")
+
+        if type(entry['photo']) == type(list()):
+            for photo in entry['photo']:
+                os.remove(photo)
+
         for extension in [".md", '.json', '.jpg']:
             if os.path.isfile(totalpath + extension):
                 os.remove(totalpath + extension)
@@ -684,6 +704,7 @@ def delete_entry(year, month, day, name):
         )
         g.db.commit()
         return redirect('/', 200)
+    return redirect("/", 500)
 
 
 @app.route('/bulk_upload', methods=['GET', 'POST'])
@@ -1047,10 +1068,13 @@ def login():
     error = None
     if request.method == 'POST':
         if request.form['username'] != app.config['USERNAME']:
+            flash('Invalid credentials')
             error = 'Invalid username'
         elif request.form['password'] != app.config['PASSWORD']:
+            flash('Invalid credentials')
             error = 'Invalid password'
         else:
+            flash('You were successfully logged in')
             session['logged_in'] = True
             return redirect('/')
     return render_template('login.html', error=error)

@@ -83,7 +83,6 @@ def move_and_resize(from_location, to_blog_location, to_copy):
     if not os.path.exists(os.path.dirname(to_blog_location)):                    # if the blog's directory doesn't exist
        os.makedirs(os.path.dirname(to_blog_location))          # make it
     
-    in_data = np.asarray(img, dtype=np.uint8)
     img_file = open(to_blog_location, "w")
     img.save(img_file, "JPEG")                                  # image save old_prefix
     img_file.flush()
@@ -242,35 +241,35 @@ def create_json_entry(data, g, draft=False, update=False):
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
         # Find all the multimedia files which were added with the posts
-        for (key, extension) in [
-                ('photo', '.jpg')]:
-            # todo: expand to other filetypes
-            try:
-                i = 0
-                file_list = []
-                for file_i in data[key]:
-                    print(data[key])
-                    if not os.path.isfile(total_path + extension) and file_i:  # if there is no photo already
-                        # if the image is a location ref
-                        if type(data[key]) == unicode and data[key].startswith("/images/"):
-                            # move the image and resize it
-                            move_and_resize(
-                                new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
-                                total_path + extension,
-                                new_prefix + total_path + extension
-                            )
-                            file_list.append(new_prefix+total_path+extension)
-                        else:   # if we have a buffer with the data already present, simply save and move it.
-                            print("FILE", file_i)
-                            save_to_two(
-                                file_i,
-                                total_path + extension,
-                                new_prefix + total_path + extension)
-                        file_list.append(total_path + extension)             # update the dict to a location refrence
-                    data[key] = file_list
-                    i += 1
-            except (KeyError, TypeError):
-                pass
+        try:
+            key = "photo"
+            extension = ".jpg"
+            i = 0
+            file_list = []
+            for file_i in data[key]:
+                print(data[key])
+                if not os.path.isfile(total_path + extension) and file_i:  # if there is no photo already
+                    # if the image is a location ref
+                    if type(data[key]) == unicode and data[key].startswith("/images/"):
+                        # move the image and resize it
+                        move_and_resize(
+                            new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
+                            total_path + "-" + str(i) + extension,
+                            new_prefix + total_path + "-" + str(i) + extension
+                        )
+                        file_list.append(new_prefix + total_path + "-" + str(i) +extension)
+                    else:   # if we have a buffer with the data already present, simply save and move it.
+                        print("FILE", file_i)
+                        save_to_two(
+                            file_i,
+                            total_path + "-" + str(i) + extension,
+                            new_prefix + total_path + "-" + str(i) + extension)
+                file_list.append(total_path + "-" + str(i) + extension)             # update the dict to a location refrence
+                i += 1
+            data[key] = file_list
+            print(data[key])
+        except (KeyError, TypeError):
+            pass
 
         try:
             if data['travel']['map']:
