@@ -133,8 +133,8 @@ def test_messages(client):
             "repost_of":"",
             "syndication":"",
             "photo":"",
-            "title":'Hello',
-            "content":'allowed here',
+            "title":'Oh hey',
+            "content":'blah blah blah',
             "submit":"Submit",
         },
         content_type="multipart/form-data",
@@ -243,5 +243,78 @@ def test_img_post(client):
             year=dt.year,
             month=dt.month,
             day=dt.day),
+        follow_redirects=True
+    )
+
+
+def test_images_editing(client):
+    login(client, kongaloosh.app.config['USERNAME'], kongaloosh.app.config['PASSWORD'])
+
+    dt = datetime.datetime.today()
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )
+
+    rv = client.post(
+        '/add',
+        data={
+            "Summary": "summary",
+            'Submit': "Submit",
+            "h": "",
+            "summary": "",
+            "published": "",
+            "updated": "",
+            "category": "",
+            "slug": "",
+            "location": "",
+            "location_name": "",
+            "location_id": "",
+            "in_reply_to": "",
+            "repost_of": "",
+            "syndication": "",
+            "photo_file[]": [(BytesIO(open("test/test_img.jpeg", "rb").read()), "test")],
+            "photo": "",
+            "title": 'Oh hey',
+            "content": 'blah blah blah',
+            "submit": "Submit",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True
+    )
+
+    assert 'blah blah blah' in rv.data
+    assert 200 == rv.status_code
+
+    rv = client.post(
+        '/edit/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        data={
+            "Summary": "summary",
+            'Submit': "Submit",
+            "h": "",
+            "summary": "",
+            "published": "",
+            "updated": "",
+            "category": "",
+            "slug": "",
+            "location": "",
+            "location_name": "",
+            "location_id": "",
+            "in_reply_to": "",
+            "repost_of": "",
+            "syndication": "",
+            "photo_file[]": [(BytesIO(open("test/test_img.jpeg", "rb").read()), "test")],
+            "photo": "data/2020/11/13/tried-maki-0.jpg, data/2020/11/13/tried-maki-1.jpg",
+            "title": 'Oh hey',
+            "content": 'blah blah blah',
+            "submit": "Submit",
+        },
+        content_type="multipart/form-data",
         follow_redirects=True
     )

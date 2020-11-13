@@ -114,7 +114,7 @@
                                     multiple
                             />
                             <input type="text" style="width:100%" name="photo" id="img_loc"
-                                   value="{%if entry.photo%}{{entry.photo}}{%endif%}"
+                                   value="{%if entry.photo%}{% if entry.photo is iterable and entry.photo is not string %}{% for photo in entry.photo %}{{photo | safe}}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}{{entry.photo | safe}}{% endif %}{%endif%}"
                             >
                         </p>
 

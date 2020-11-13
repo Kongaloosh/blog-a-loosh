@@ -247,10 +247,9 @@ def create_json_entry(data, g, draft=False, update=False):
             i = 0
             file_list = []
             for file_i in data[key]:
-                print(data[key])
-                if not os.path.isfile(total_path + extension) and file_i:  # if there is no photo already
+                if not os.path.isfile(total_path + "-" + str(i) + extension) and file_i:  # if there is no photo already
                     # if the image is a location ref
-                    if type(data[key]) == unicode and data[key].startswith("/images/"):
+                    if type(file_i) == unicode and file_i.startswith("/images/"):
                         # move the image and resize it
                         move_and_resize(
                             new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
@@ -258,19 +257,21 @@ def create_json_entry(data, g, draft=False, update=False):
                             new_prefix + total_path + "-" + str(i) + extension
                         )
                         file_list.append(new_prefix + total_path + "-" + str(i) +extension)
-                    else:   # if we have a buffer with the data already present, simply save and move it.
-                        print("FILE", file_i)
+                    elif type(data[key]) == unicode:   # if we have a buffer with the data already present, simply save and move it.
+                        file_list.append(file_i)
+                    else:
                         save_to_two(
                             file_i,
                             total_path + "-" + str(i) + extension,
                             new_prefix + total_path + "-" + str(i) + extension)
-                file_list.append(total_path + "-" + str(i) + extension)             # update the dict to a location refrence
+                        file_list.append(
+                            total_path + "-" + str(i) + extension)  # update the dict to a location refrence
+                elif isinstance(file_i, unicode):
+                    file_list.append(total_path + "-" + str(i) + extension)             # update the dict to a location refrence
                 i += 1
             data[key] = file_list
-            print(data[key])
         except (KeyError, TypeError):
             pass
-
         try:
             if data['travel']['map']:
                 file_writer = open(total_path + "-map.png", 'w')  # save in the same place as post with map naming and as .png
@@ -321,6 +322,23 @@ def update_json_entry(data, old_entry, g, draft=False):
     # 1. ensure that privileged old info isn't over-written
     for key in ['slug', 'u-uid', 'url', 'published']:               # these things should never be updated
         data[key] = old_entry[key]
+
+    old_photos = data['old_photos']
+    new_uploads = data['photo']
+    data["photo"] = []
+
+    print("=============\n{0},\n{1}".format(old_photos,new_uploads))
+    if old_photos:
+        old_photos = [i.strip() for i in old_photos.split(",")]
+        data["photo"] = old_photos
+
+    if new_uploads:
+        data["photo"] += new_uploads
+
+    if len(data["photo"]) == 0:
+        data["photo"] = None
+
+    print("========\n{0}\n=======".format(data["photo"]))
 
     # 2. remove categories if they exist and replace (if not draft)
     if data['category'] and not draft and g:                        # if categories exist, update them
