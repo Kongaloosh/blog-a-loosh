@@ -80,15 +80,12 @@
                             {% for photo in entry.photo %}
                                 <div class="col-lg-3 col-md-3 col-sm-3 col-xs-6">
                                     <img
-                                            src="/{{photo}}}"
-                                            class="img-responsive"
+                                            src="/{{photo}}"
+                                            class="img-responsive img-fluid img-responsive center-block img-thumbnail img-rounded u-photo"
                                             style="image-orientation: from-image; max-height:600px"
                                     >
                                 </div>
 
-                                <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
-                                 style="image-orientation: from-image; max-height:600px"
-                                 src="/{{photo}}">
                             {% endfor %}
                             </div>
                         </div>
