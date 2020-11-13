@@ -203,10 +203,13 @@ def post_from_request(request=None):
                     data['photo'] = None
                 else:
                     data['photo'] = [request.files['photo_file']]
-
         except KeyError:
             pass
 
+        try:
+            data['old_photos'] = request.form['photo']
+        except KeyError:
+            pass
         try:
             trips = []
             geo = request.form.getlist('geo[]')
@@ -868,7 +871,6 @@ def recent_uploads():
         if not session.get('logged_in'):
             abort(401)
         try:
-            # app.logger.info(request.get_data())
             to_delete = json.loads(request.get_data())['to_delete']
 
             if os.path.isfile(new_prefix + to_delete[len('/images/'):]):
