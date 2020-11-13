@@ -203,7 +203,6 @@ def post_from_request(request=None):
                     data['photo'] = None
                 else:
                     data['photo'] = [request.files['photo_file']]
-            app.logger.info("a")
 
         except KeyError:
             pass
@@ -386,7 +385,7 @@ def search_by_tag(category):
         """.format(category=category))
 
     for (row,) in cur.fetchall():
-        app.logger.info(row)
+
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
     return entries
@@ -575,7 +574,7 @@ def map():
             except (KeyError, TypeError):
                 pass
 
-    app.logger.info(geo_coords)
+
     return render_template('map.html', geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
 
 
@@ -762,9 +761,6 @@ def mobile_upload():
             abort(401)
 
         file_path = ORIGINAL_PHOTOS_DIR
-        app.logger.info("uploading at" + file_path)
-        app.logger.info(request.files)
-        app.logger.info(request.files.getlist('files[]'))
         for uploaded_file in request.files.getlist('files[]'):
             app.logger.info("file " + uploaded_file.filename)
             file_loc = file_path + "{0}".format(uploaded_file.filename)
@@ -875,8 +871,6 @@ def recent_uploads():
             # app.logger.info(request.get_data())
             to_delete = json.loads(request.get_data())['to_delete']
 
-            app.logger.info("deleting...." + new_prefix +
-                            to_delete[len('/images/'):])
             if os.path.isfile(new_prefix + to_delete[len('/images/'):]):
                 os.remove(new_prefix + to_delete[len('/images/'):])
                 return "deleted"
@@ -942,7 +936,6 @@ def tag_search(category):
         query += "\nORDER BY entries.published DESC"
         cur = g.db.execute(query)
         for (row,) in cur.fetchall():
-            app.logger.info(row)
             if os.path.exists(row + ".json"):
                 entries.append(file_parser_json(row + ".json"))
         return jsonify(entries)
@@ -963,8 +956,6 @@ def all_tags():
         """)
 
     tags = cur.fetchall()
-
-    app.logger.info(tags)
 
     if request.headers.get('Accept') == "application/json":
         return jsonify(tags)
@@ -1215,7 +1206,6 @@ def handle_micropub():
 
 @app.route('/inbox', methods=['GET', 'POST', 'OPTIONS'])
 def handle_inbox():
-    app.logger.info(request)
     if request.method == 'GET':
         inbox_location = "inbox/"
         entries = [
