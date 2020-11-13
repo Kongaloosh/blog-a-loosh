@@ -37,7 +37,7 @@
             <div class="hidden-sm hidden-xs d-flex flex-column p-2 rounded ml-2 mr-2 center">
                 <div class="article-preview p-2">
                     <h3 class="preview "><a href="{{article.url}}">{{article.title}}</a></h3>
-
+                    {% if article.photo %}
                     {% if article.photo is iterable and article.photo is not string %}
                         <div class="flex-row justify-content-center">
                             <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
@@ -50,6 +50,7 @@
                              style="image-orientation: from-image; max-height:600px"
                              src="/{{article.photo}}">
                         </div>
+                    {% endif %}
                     {% endif %}
 
                     {% if article.summary %}
