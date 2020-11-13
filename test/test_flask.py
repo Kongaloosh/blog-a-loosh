@@ -1,3 +1,4 @@
+from io import BytesIO
 import os
 import tempfile
 
@@ -56,6 +57,15 @@ def test_login_logout(client):
 
 def test_messages(client):
     """Test that messages work."""
+    # test that we can successfully remove a post
+    dt = datetime.datetime.today()
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )
 
     # test that we cannot add a post if not logged in
     rv = client.post('/add', data=dict(
@@ -67,6 +77,14 @@ def test_messages(client):
 
     # test that we can add a post if logged imn
     login(client, kongaloosh.app.config['USERNAME'], kongaloosh.app.config['PASSWORD'])
+    dt = datetime.datetime.today()
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )
     rv = client.post(
         '/add',
         data={
@@ -138,3 +156,84 @@ def test_messages(client):
     assert 200 == rv.status_code
 
 
+def test_img_post(client):
+
+    # test that we can add a post with one picture if logged in
+    login(client, kongaloosh.app.config['USERNAME'], kongaloosh.app.config['PASSWORD'])
+
+    dt = datetime.datetime.today()
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )
+
+    rv = client.post(
+        '/add',
+        data={
+            "Summary": "summary",
+            'Submit': "Submit",
+            "h": "",
+            "summary": "",
+            "published": "",
+            "updated": "",
+            "category": "",
+            "slug": "",
+            "location": "",
+            "location_name": "",
+            "location_id": "",
+            "in_reply_to": "",
+            "repost_of": "",
+            "syndication": "",
+            "photo_file[]": [(BytesIO(open("test/test_img.jpeg", "rb").read()), "test")],
+            "title": 'Oh hey',
+            "content": 'blah blah blah',
+            "submit": "Submit",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True
+    )
+
+    assert 'blah blah blah' in rv.data
+    assert 200 == rv.status_code
+
+    # Check that a delete request also deletes associated images
+    dt = datetime.datetime.today()
+    rv = client.get(
+        '/delete_entry/e/{year}/{month}/{day}/oh-hey'.format(
+            year=dt.year,
+            month=dt.month,
+            day=dt.day),
+        follow_redirects=True
+    )
+
+    rv = client.post(
+        '/add',
+        data={
+            "Summary": "summary",
+            'Submit': "Submit",
+            "h": "",
+            "summary": "",
+            "published": "",
+            "updated": "",
+            "category": "",
+            "slug": "",
+            "location": "",
+            "location_name": "",
+            "location_id": "",
+            "in_reply_to": "",
+            "repost_of": "",
+            "syndication": "",
+            "photo_file[]": [
+                (BytesIO(open("test/test_img.jpeg", "rb").read()), "test"),
+                (BytesIO(open("test/test_img_2.jpg", "rb").read()), "test_2")
+            ],
+            "title": 'Oh hey',
+            "content": 'blah blah blah',
+            "submit": "Submit",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True
+    )
