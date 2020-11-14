@@ -241,37 +241,40 @@ def create_json_entry(data, g, draft=False, update=False):
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(total_path+'.md') and not os.path.isfile(total_path+'.json') or update:
         # Find all the multimedia files which were added with the posts
-        try:
-            key = "photo"
+        if data['photo']:
             extension = ".jpg"
             i = 0
             file_list = []
-            for file_i in data[key]:
-                if not os.path.isfile(total_path + "-" + str(i) + extension) and file_i:  # if there is no photo already
+            for file_i in data['photo']:
+                print("file_i", file_i, type(file_i))
+                if file_i:  # if there is no photo already
                     # if the image is a location ref
-                    if type(file_i) == unicode and file_i.startswith("/images/"):
+                    if isinstance(file_i, unicode) and file_i.startswith("/images/"):
+                        print("is unnicode and is /img/", file_i)
+                        while os.path.isfile(total_path + "-" + str(i) + extension):
+                            i+=1
                         # move the image and resize it
                         move_and_resize(
-                            new_prefix + data[key][len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
+                            new_prefix + file_i[len('/images/'):],  # we remove the head to get rid of preceeding "/images/"
                             total_path + "-" + str(i) + extension,
                             new_prefix + total_path + "-" + str(i) + extension
                         )
-                        file_list.append(new_prefix + total_path + "-" + str(i) +extension)
-                    elif type(data[key]) == unicode:   # if we have a buffer with the data already present, simply save and move it.
+                        file_list.append(new_prefix + total_path + "-" + str(i) + extension)
+                    elif isinstance(file_i, unicode):   # if we have a buffer with the data already present, simply save and move it.
+                        print("Is unicode, but not new", file_i)
                         file_list.append(file_i)
                     else:
+                        print("Is not unicode, and is new", file_i)
+                        while os.path.isfile(total_path + "-" + str(i) + extension):
+                            i += 1
                         save_to_two(
                             file_i,
                             total_path + "-" + str(i) + extension,
                             new_prefix + total_path + "-" + str(i) + extension)
                         file_list.append(
                             total_path + "-" + str(i) + extension)  # update the dict to a location refrence
-                elif isinstance(file_i, unicode):
-                    file_list.append(total_path + "-" + str(i) + extension)             # update the dict to a location refrence
                 i += 1
-            data[key] = file_list
-        except (KeyError, TypeError):
-            pass
+            data['photo'] = file_list
         try:
             if data['travel']['map']:
                 file_writer = open(total_path + "-map.png", 'w')  # save in the same place as post with map naming and as .png
