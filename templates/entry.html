@@ -209,11 +209,13 @@
 
                 {% if entry.photo %}
                     {% if entry.photo is iterable and entry.photo is not string %}
-                        <div class="flex-row justify-content-center">
+                        <div class="row d-flex justify-content-center imagetiles">
                             {% for photo in entry.photo %}
-                                <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
+                                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6">
+                                    <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
                                  style="image-orientation: from-image; max-height:600px"
                                  src="/{{photo}}">
+                                </div>
                             {% endfor %}
                         </div>
                     {% else %}
