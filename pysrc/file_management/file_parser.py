@@ -274,6 +274,8 @@ def create_json_entry(data, g, draft=False, update=False):
                         file_list.append(
                             total_path + "-" + str(i) + extension)  # update the dict to a location refrence
                 i += 1
+
+
             data['photo'] = file_list
         try:
             if data['travel']['map']:
@@ -331,9 +333,18 @@ def update_json_entry(data, old_entry, g, draft=False):
     data["photo"] = []
 
     print("=============\n{0},\n{1}".format(old_photos,new_uploads))
+
     if old_photos:
         old_photos = [i.strip() for i in old_photos.split(",")]
         data["photo"] = old_photos
+
+    print("~~~~~~~~~~~~\n{0}\n~~~~~~~~~~~~\n{1}\n~~~~~~~~~~~~\n{2}\n~~~~~~~~~~~~".format(data["photo"], old_entry['photo'], old_photos))
+    print(type(old_entry['photo']), type(old_photos))
+    print(old_photos, old_entry['photo'])
+    to_delete = [i for i in old_entry['photo'] if i not in old_photos]
+    # print("TO D"to_delete)
+    for i in to_delete:
+        os.remove(i)
 
     if new_uploads:
         data["photo"] += new_uploads
@@ -341,7 +352,7 @@ def update_json_entry(data, old_entry, g, draft=False):
     if len(data["photo"]) == 0:
         data["photo"] = None
 
-    print("========\n{0}\n=======".format(data["photo"]))
+
 
     # 2. remove categories if they exist and replace (if not draft)
     if data['category'] and not draft and g:                        # if categories exist, update them
