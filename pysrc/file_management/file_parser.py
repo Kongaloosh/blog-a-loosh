@@ -341,10 +341,18 @@ def update_json_entry(data, old_entry, g, draft=False):
     print("~~~~~~~~~~~~\n{0}\n~~~~~~~~~~~~\n{1}\n~~~~~~~~~~~~\n{2}\n~~~~~~~~~~~~".format(data["photo"], old_entry['photo'], old_photos))
     print(type(old_entry['photo']), type(old_photos))
     print(old_photos, old_entry['photo'])
-    to_delete = [i for i in old_entry['photo'] if i not in old_photos]
+
+    if old_photos is None:
+        to_delete = old_photos
+    else:
+        to_delete = [i for i in old_entry['photo'] if i not in old_photos]
+
     # print("TO D"to_delete)
-    for i in to_delete:
-        os.remove(i)
+    try:
+        for i in to_delete:
+            os.remove(i)
+    except TypeError:
+        pass
 
     if new_uploads:
         data["photo"] += new_uploads
