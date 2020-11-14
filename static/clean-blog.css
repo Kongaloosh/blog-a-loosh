@@ -361,7 +361,7 @@ form .row:first-child .floating-label-form-group {
   color: white;
 }
 .pager {
-  margin: 20px 0 0;
+  margin: 0 0 0;
   list-style: none;
 }
 .pager li > a,
