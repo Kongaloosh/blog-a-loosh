@@ -399,8 +399,20 @@ def show_entries():
     """ The main view: presents author info and entries. """
     try:
         if 'application/atom+xml' in request.headers.get('Accept'):
-            # if the header is requesting an xml or atom feed, simply return it
             return show_atom()
+
+        elif 'application/as+json' in request.headers.get('Accept'):
+            moi = {"@context": "https://www.w3.org/ns/activitystreams",
+             "type": "Person",
+             "id": "https://kongaloosh.com",
+             "name": "Alex Kearney",
+             "preferredUsername": "Kongaloosh",
+             "summary": "Hi, I'm a PhD candidate focused on Artificial Intelligence and Reinforcement Learning. I'm supervised by Rich Sutton and Patrick Pilarski at the University of Alberta in the Reinforcement Learning & Artificial Intelligence Lab.\n My research addresses how artificial intelligence systems can construct knowledge by deciding both what to learn and how to learn, independent of designer instruction. I predominantly use Reinforcement Learning methods.",
+             "inbox": "https://kongaloosh.com/inbox/",
+             "outbox": "https://kongaloosh.com/outbox/",
+             "followers": "https://kongaloosh.com/followers/",
+             "following": "https://kongaloosh.com/following/"}
+            return jsonify(moi)
     except TypeError:  # if there are empty headers
         pass
 
@@ -1257,7 +1269,6 @@ def handle_inbox():
 
         if sender == 'https://rhiaro.co.uk' or sender == "https://rhiaro.co.uk/#me":  # check if the sender is whitelisted
             # todo: make better names for notifications
-            app.logger.info("it's Rhiaro!")
             location = 'inbox/' + slugify(str(datetime.now())) + '.json'
             notification = open(location, 'w+')
             notification.write(request.data)
