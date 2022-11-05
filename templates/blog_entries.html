@@ -11,6 +11,13 @@
     </div>
     <hr>
 </div>
+    {% else %}
+    <form action="/ap-subscribe" method="post">
+        <input type="text" id="handle" name="handle" value="@example@mastodon.social"><br><br>
+        <button class="btn" type="submit"></button>
+    </form>
+{% endif %}
+
 {% endif %}
 
 {% for entry in entries %}
@@ -19,9 +26,7 @@
     {% if session.logged_in %}
     <div class="p-2 edit-entry">
         <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
-    </div>
     {% endif %}
-
     {% if entry.title %}
     <div class="p-2">
         <h2 class="post-title p-name">

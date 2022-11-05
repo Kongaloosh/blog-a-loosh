@@ -1172,7 +1172,6 @@ def handle_micropub():
                         data['location_id'] = geo_id
 
                 location = create_json_entry(data, g=g)
-                send_mention('http://' + DOMAIN_NAME + data['url'],https://fed.brid.gy)
                 if data['in_reply_to']:
                     send_mention('https://' + DOMAIN_NAME +
                                  '/e/' + location, data['in_reply_to'])
@@ -1402,6 +1401,17 @@ def show_draft(name):
                 os.remove("drafts/" + name + ".json")
             return redirect(location)
 
+@app.route('ap-subscribe', methods=['POST'])
+def subscribe_request():
+    if request.method=="POST":
+        #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
+        social_name = request.form['handle']
+        user_name, social_domain = social_name.split('@')
+        response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
+        links = response.json()['links']
+        for link in links:
+            if link['rel'] == 'http://ostatus.org/schema/1.0/subscribe':
+                redirect(link['template'].format(uri="https://kongaloosh.com"))
 
 @app.route('/notification', methods=['GET', 'POST'])
 def notification():
