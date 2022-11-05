@@ -17,7 +17,7 @@
 <!-- START ENTRIES -->
 <div class="flex-row p-2 post-preview hentry h-entry">
     {% if session.logged_in %}
-    <div class="p-2">
+    <div class="p-2 edit-entry">
         <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
     </div>
     {% endif %}
@@ -77,7 +77,7 @@
 
         <div class="row d-flex justify-content-center imagetiles">
             {% for photo in entry.photo %}
-            <div class="col-lg]-4 col-md-4 col-sm-6 col-xs-6">
+            <div class="col-lg-8 col-md-8 col-sm-6 col-xs-6">
                 <img
                         src="/{{photo}}"
                         class="img-responsive img-fluid img-responsive center-block img-thumbnail img-rounded u-photo"
