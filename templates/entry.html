@@ -357,14 +357,15 @@
 
             <p>{{ mention.content | safe | striptags }}</p>
 
-            <div class="mentions-footer">
+            <div class="mentions-footer col-6">
                 <div class="mention">
                     <p>
                         {% if mention.author.photo %}
                         <img src="{{mention.author.photo}}" class="img-circle" style="width:50px;height:50px">
                         {% endif %}
                         Posted by
-                        <a href="{{mention.url}}">{{mention.author.name}}</a>
+                        <a href="{{mention.url}}">
+                            {% if mention.author.name %}{{mention.author.name}}{% else %}{{mention.url}}{% endifß %}</a>
                     </p>
                 </div>
             </div>
