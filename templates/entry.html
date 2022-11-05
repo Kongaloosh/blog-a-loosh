@@ -344,20 +344,17 @@
 
              {% for mention in mentions %}
         <div class="row flex-row mention">
-            <!--<div class="mention-header">-->
-            <!--{% if mention.name != mention.content %}-->
-            <!--{{mention.name}}-->
-            <!--{% endif %}-->
-            <!--</div>-->
-            {% if mention.photo %}
-            <img class="img-responsive center-block img-thumbnail img-rounded"
+            <div class="mention-header col-md-6 col-lg-6 col-sm-6 col-xs-6">
+                  {% if mention.photo %}
+                <img class="img-responsive center-block img-thumbnail img-rounded"
                  style="image-orientation: from-image; width:30%; height:30%"
                  src="{{mention.photo}}">
             {% endif %}
 
             <p>{{ mention.content | safe | striptags }}</p>
+            </div>
 
-            <div class="mentions-footer col-6">
+            <div class="mentions-footer col-md-6 col-lg-6 col-sm-6 col-xs-6">
                 <div class="mention">
                     <p>
                         {% if mention.author.photo %}
@@ -365,7 +362,7 @@
                         {% endif %}
                         Posted by
                         <a href="{{mention.url}}">
-                            {% if mention.author.name %}{{mention.author.name}}{% else %}{{mention.url}}{% endifß %}</a>
+                            {% if mention.author.name %}{{mention.author.name}}{% else %}{{mention.url}}{% endif %}</a>
                     </p>
                 </div>
             </div>
