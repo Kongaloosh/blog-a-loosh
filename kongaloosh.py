@@ -306,6 +306,7 @@ def syndicate_from_form(creation_request, data):
     """
     post_loc = 'http://' + DOMAIN_NAME + data['url']
     # Check to see if the post is in reply to another post and send a mention
+    send_mention(post_loc,https://fed.brid.gy)
     try:
         for reply in data['in_reply_to']:
             app.logger.info(
@@ -1160,7 +1161,7 @@ def handle_micropub():
                         data['location_id'] = geo_id
 
                 location = create_json_entry(data, g=g)
-
+                send_mention('http://' + DOMAIN_NAME + data['url'],https://fed.brid.gy)
                 if data['in_reply_to']:
                     send_mention('https://' + DOMAIN_NAME +
                                  '/e/' + location, data['in_reply_to'])
