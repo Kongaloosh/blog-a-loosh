@@ -114,7 +114,7 @@
 {% endif %}
 
 <article>
-    <div class="container intro-head">
+    <div class="container-fluid">
         {% if reply_to %}
         <div class="reply-topper row col-lg-8 col-lg-offset-2 col-md-10 col-xs-offset-1 col-md-10 col-xs-offset-1 align-center">
             <!-- REPLY DECORATOR END -->
@@ -151,7 +151,7 @@
         <a href="https://brid.gy/publish/flickr"></a>
 
         {% if session.logged_in %}
-        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="row col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 edit-button">
             <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
         </div>
         {% endif %}
@@ -366,8 +366,8 @@
                     </p>
                 </div>
             </div>
-            <hr>
         </div>
+            <hr>
         {% endfor %} <!-- END MENTION ROLL -->
         </div> <!-- END TOPPER -->
         {% endif %}
