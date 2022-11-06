@@ -470,3 +470,9 @@ a.tag:hover {
 .intro-head{
     padding-top: 10%;
 }
+
+.subscribe-btn{
+    padding-right:10px;
+    width:300px;
+    margin:10px;
+}

@@ -311,7 +311,7 @@ def syndicate_from_form(creation_request, data):
             app.logger.info(
                 "MENTIONING: {0} \nTO\n {1}".format(post_loc, reply))
 
-            send_mention(post_loc, reply)
+            # send_mention(post_loc, reply)
     except TypeError:
         pass
 
@@ -368,6 +368,7 @@ def add_entry(creation_request, draft=False):
 
     location = create_json_entry(data, g=g)  # create the entry
     syndicate_from_form(creation_request, data)
+    requests.post('https://fed.brid.gy/webmentions', data={'target':'http://' + DOMAIN_NAME + data['url']})
     return location
 
 
@@ -402,16 +403,17 @@ def show_entries():
             return show_atom()
 
         elif 'application/as+json' in request.headers.get('Accept'):
+            print("\n\n\n\n ---- Looking at AS ---- \n\n\n")
             moi = {"@context": "https://www.w3.org/ns/activitystreams",
              "type": "Person",
-             "id": "https://kongaloosh.com",
+             "id": "https://fed.brid.gy/kongaloosh.com",
              "name": "Alex Kearney",
              "preferredUsername": "Kongaloosh",
              "summary": "Hi, I'm a PhD candidate focused on Artificial Intelligence and Reinforcement Learning. I'm supervised by Rich Sutton and Patrick Pilarski at the University of Alberta in the Reinforcement Learning & Artificial Intelligence Lab.\n My research addresses how artificial intelligence systems can construct knowledge by deciding both what to learn and how to learn, independent of designer instruction. I predominantly use Reinforcement Learning methods.",
-             "inbox": "https://kongaloosh.com/inbox/",
-             "outbox": "https://kongaloosh.com/outbox/",
-             "followers": "https://kongaloosh.com/followers/",
-             "following": "https://kongaloosh.com/following/"}
+             "inbox": "https://fed.brid.gy/kongaloosh.com/inbox",
+             "outbox": "https://fed.brid.gy/kongaloosh.com/outbox",
+             "followers": "https://fed.brid.gy/kongaloosh.com/followers",
+             "following": "https://fed.brid.gy/kongaloosh.com/following"}
             return jsonify(moi)
     except TypeError:  # if there are empty headers
         pass
@@ -675,7 +677,7 @@ def delete_drafts():
             os.remove(totalpath + extension)  # ... delete it
 
     # note: because this is a draft, the images associated with the post will still be in the temp folder
-    return redirect('/', 200)
+    return redirect('/')
 
 
 @app.route('/photo_stream', methods=['GET', 'POST'])
@@ -698,7 +700,7 @@ def delete_entry(year, month, day, name):
 
         totalpath = "data/{0}/{1}/{2}/{3}".format(year, month, day, name)
         if not os.path.isfile(totalpath+".json"):
-            return redirect('/', 500)
+            return redirect('/')
         entry = file_parser_json(totalpath+".json")
 
         if type(entry['photo']) == type(list()):
@@ -716,7 +718,7 @@ def delete_entry(year, month, day, name):
             """, (totalpath,)
         )
         g.db.commit()
-        return redirect('/', 200)
+        return redirect('/')
     return redirect("/", 500)
 
 
@@ -1173,8 +1175,9 @@ def handle_micropub():
 
                 location = create_json_entry(data, g=g)
                 if data['in_reply_to']:
-                    send_mention('https://' + DOMAIN_NAME +
-                                 '/e/' + location, data['in_reply_to'])
+                    pass
+                    # send_mention('https://' + DOMAIN_NAME +
+                    #             '/e/' + location, data['in_reply_to'])
 
                 # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
                 try:
@@ -1401,17 +1404,21 @@ def show_draft(name):
                 os.remove("drafts/" + name + ".json")
             return redirect(location)
 
-@app.route('ap-subscribe', methods=['POST'])
+@app.route('/ap_subscribe', methods=['POST'])
 def subscribe_request():
+    print('HALP\n\n\n\n\n\n\n')
+    print(request, request.method)
     if request.method=="POST":
         #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
         social_name = request.form['handle']
         user_name, social_domain = social_name.split('@')
         response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
+        print(response, response.json())
         links = response.json()['links']
         for link in links:
             if link['rel'] == 'http://ostatus.org/schema/1.0/subscribe':
-                redirect(link['template'].format(uri="https://kongaloosh.com"))
+                print(link['template'].format(uri='@kongaloosh.com@kongaloosh.com'))
+                return redirect(link['template'].format(uri="@kongaloosh.com@kongaloosh.com"))
 
 @app.route('/notification', methods=['GET', 'POST'])
 def notification():

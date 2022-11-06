@@ -12,13 +12,20 @@
     <hr>
 </div>
     {% else %}
-    <form action="/ap-subscribe" method="post">
-        <input type="text" id="handle" name="handle" value="@example@mastodon.social"><br><br>
-        <button class="btn" type="submit"></button>
+    <div class="row">
+    <form action="/ap_subscribe" method="post">
+    
+    <div class='float-left'>
+        <input class='subscribe-btn' type="text" id="handle" name="handle" value="" placeholder="example@mastodon.social"><br><br>
+    </div>
+    <div class='float-left'>    
+    	<input class="btn" type="submit" value="subscribe"></input>
+    </div>
     </form>
+    <div>
+<hr>
 {% endif %}
 
-{% endif %}
 
 {% for entry in entries %}
 <!-- START ENTRIES -->

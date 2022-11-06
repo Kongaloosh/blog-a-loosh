@@ -112,6 +112,8 @@ def save_to_two(image, to_blog_location, to_copy):
     if not os.path.exists(os.path.dirname(to_copy)):  # if the target directory doesn't exist ...
         os.makedirs(os.path.dirname(to_copy))  # ... make it.
     img = Image.open(image)  # open the image from the temp
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
     img_file = open(to_copy, "w")
     img.save(img_file, "JPEG")  # open the new location
     img_file.flush()
@@ -124,6 +126,8 @@ def save_to_two(image, to_blog_location, to_copy):
     if not os.path.exists(os.path.dirname(to_blog_location)):  # if the blog's directory doesn't exist
         os.makedirs(os.path.dirname(to_blog_location))  # make it
     img_file = open(to_blog_location, "w")
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
     img.save(img_file, "JPEG")  # image save old_prefix
     img_file.flush()
     os.fsync(img_file)
@@ -141,7 +145,7 @@ def file_parser_json(filename, g=None, md=True):
         g: the database connection
         md: boolean flag whether the markdown content should be parsed.
     """
-    print(filename)
+    # print(filename)
     entry = json.loads(open(filename, 'rb').read())
     try:
         entry['published'] = parse(entry['published'])      # parse the string for time
@@ -246,11 +250,11 @@ def create_json_entry(data, g, draft=False, update=False):
             i = 0
             file_list = []
             for file_i in data['photo']:
-                print("file_i", file_i, type(file_i))
+                # print("file_i", file_i, type(file_i))
                 if file_i:  # if there is no photo already
                     # if the image is a location ref
                     if isinstance(file_i, unicode) and file_i.startswith("/images/"):
-                        print("is unnicode and is /img/", file_i)
+                        # print("is unnicode and is /img/", file_i)
                         while os.path.isfile(total_path + "-" + str(i) + extension):
                             i+=1
                         # move the image and resize it
@@ -261,10 +265,10 @@ def create_json_entry(data, g, draft=False, update=False):
                         )
                         file_list.append(new_prefix + total_path + "-" + str(i) + extension)
                     elif isinstance(file_i, unicode):   # if we have a buffer with the data already present, simply save and move it.
-                        print("Is unicode, but not new", file_i)
+                        # print("Is unicode, but not new", file_i)
                         file_list.append(file_i)
                     else:
-                        print("Is not unicode, and is new", file_i)
+                        # print("Is not unicode, and is new", file_i)
                         while os.path.isfile(total_path + "-" + str(i) + extension):
                             i += 1
                         save_to_two(
@@ -427,7 +431,7 @@ def create_entry_markdown(data, path):
     entry += "repost-of:" + str(data['repost-of']) + "\n"
     entry += "syndication:" + str(data['syndication']) + "\n"
     entry += "content:" + data['content'] + "\n"
-    print(path)
+    # print(path)
     total_path = path + ".md"
     file_writer = open(total_path, 'wb')
     file_writer.write(entry.encode('utf-8'))
