@@ -1,0 +1,81 @@
+{% extends "layout.html"%}
+{% block content %}
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header media-heading"
+        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+        background-size:cover;
+">
+    <div class="container intro-container">
+            <div class="site-heading jumbotron row">
+                    <div class="col col-lg-4 col-md-4 row-sm-12 row-xs-12 profile-image-holder">
+                        <img style="max-height:200px" src="{{ url_for('static', filename='img/profile.jpg') }}"
+                             class="u-photo img-responsive img-thumbnail img-circle profile-image">
+                    </div>
+
+                    <div class="d-none d-md-block d-lg-block col col-lg-8 col-md-8 intro-text">
+                        <p class="d-none d-md-block d-lg-block">
+                            I'm <a href="http://alexkearney.com" class="tag">Alex Kearney</a>, a PhD student studying Computer
+                            Science at the <a href="https://rlai-lab.github.io/" class="tag">University of Alberta</a>. I focus on Artificial
+                            Intelligence and Epistemology.
+                        </p>
+
+                        {% if popular_tags %}
+                        <p class="clearfix d-none d-md-block d-lg-block">
+                            I talk a lot about {% for tag in popular_tags%}<a href="/t/{{tag}}" class="tag" >{{tag}}</a>, and {%endfor%} <a href="/t/" class="tag">other things.</a>
+                        </p>
+                        {% endif %}
+                    </div>
+        </div>
+    </div>
+</header>
+<!-- Main Content -->
+<div class="container-fluid">
+    <div class="d-none d-lg-block">
+        <div class="d-flex flex-row entry-preview text-center mr-5 ml-5">
+            {% for mention in mentions%}
+                <div>
+                    <p>Activity: {{mention.activity.type}}</p>
+                    <p>{{activity.type.sentence_html}}</p>
+                </div>
+            {%endfor%} <!-- end search  --->
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <hr>
+    {% block body %}
+    {% endblock %}
+    <!-- Pager -->
+    {% if before %}
+    <div class="row">
+        <div class="pull-left col">
+            <ul class="pager pull-left">
+                {% if before > 1 %}
+                <li class="next">
+                    <a href="/page/{{before - 2}}">&larr; Newer Posts </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="pull-right col">
+            <ul class="pager pull-right">
+                {% if before > 0 %}
+                <li class="next">
+                    <a href="/page/{{before}}">Older Posts &rarr;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+{% endblock %}

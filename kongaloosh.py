@@ -1219,6 +1219,12 @@ def handle_micropub():
         resp.status_code = 501
         return resp
 
+@app.route('/mentions', methods=['GET'])
+def print_mentions():
+    r = request.get('https://webmention.io/api/mentions?target=https://kongaloosh.com/').json()
+    return render_template('mentions.html', mentions=r)
+
+
 
 @app.route('/inbox', methods=['GET', 'POST', 'OPTIONS'])
 def handle_inbox():
@@ -1406,7 +1412,6 @@ def show_draft(name):
 
 @app.route('/ap_subscribe', methods=['POST'])
 def subscribe_request():
-    print('HALP\n\n\n\n\n\n\n')
     print(request, request.method)
     if request.method=="POST":
         #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
