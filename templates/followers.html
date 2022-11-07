@@ -113,6 +113,34 @@
 
 <article>
     <div class="container-fluid">
+        {% if session.logged_in %}
+        <div class="add-entry flex-column">
+            <div class="row justify-content-center">
+            <form action="/ap_follow" method="post">
+
+            <div class='float-left'>
+                <input class='subscribe-btn' type="text" id="handle" name="handle" value="" placeholder="example@mastodon.social"><br><br>
+            </div>
+            <div class='float-left'>
+                <input class="btn" type="submit" value="follow on mastodon"></input>
+            </div>
+            <hr>
+        </div>
+            {% else %}
+            <div class="row">
+            <form action="/ap_subscribe" method="post">
+
+            <div class='float-left'>
+                <input class='subscribe-btn' type="text" id="handle" name="handle" value="" placeholder="example@mastodon.social"><br><br>
+            </div>
+            <div class='float-left'>
+                <input class="btn" type="submit" value="follow on mastodon"></input>
+            </div>
+            </form>
+            <div>
+        <hr>
+        {% endif %}
+
         {% for follower in followers%}
         <div class="hentry h-entry d-flex flex-column p-2">
             <a class="u-follow-of" href="{{follower.url}}">{{follower.actor}}</a>

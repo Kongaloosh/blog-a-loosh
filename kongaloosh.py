@@ -1426,6 +1426,40 @@ def subscribe_request():
                 print(link['template'].format(uri='@kongaloosh.com@kongaloosh.com'))
                 return redirect(link['template'].format(uri="@kongaloosh.com@kongaloosh.com"))
 
+@app.route('/ap_follow', methods=['POST'])
+def subscribe_request():
+    print(request, request.method)
+    if not session.get('logged_in'):  # check permissions before deleting
+        abort(401)
+    if request.method=="POST":
+        #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
+        social_name = request.form['handle']
+        user_name, social_domain = social_name.split('@')
+        url = "https://" + social_domain + "/@" + user_name
+        with open('followers.json', 'w') as jsonf:
+            data = json.load(jsonf)
+            data['following'].append(
+                {
+                    'actor': social_name,
+                    'url': "https://" + url[1] + "/@" + url[0]
+                })
+            jsonf.write(json.dumps(data))
+
+        r = requests.post(
+            "https://fed.brid.gy/webmention",
+            data={"target": "https//fed.brigy.gy",
+                  "source": "https://kongaloosh.com/following/" + social_name})
+
+        
+        # response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
+        # print(response, response.json())
+        # links = response.json()['links']
+        # for link in links:
+        #     if link['rel'] == 'http://ostatus.org/schema/1.0/subscribe':
+        #         print(link['template'].format(uri='@kongaloosh.com@kongaloosh.com'))
+        #         return redirect(link['template'].format(uri="@kongaloosh.com@kongaloosh.com"))
+
+
 @app.route('/notification', methods=['GET', 'POST'])
 def notification():
     pass
