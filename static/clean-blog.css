@@ -31,6 +31,15 @@ img{
 max-height: 400px;
 }
 
+.mention-part{
+    padding-right:25px;
+}
+
+.mention-wrapper a{
+    padding-right:25px;
+    padding-left:25px;
+}
+
 .intro-container{
     padding-top: 1%;
     padding-bottom: 2%;

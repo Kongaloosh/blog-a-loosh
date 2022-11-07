@@ -310,7 +310,7 @@ def syndicate_from_form(creation_request, data):
         for reply in data['in_reply_to']:
             app.logger.info(
                 "MENTIONING: {0} \nTO\n {1}".format(post_loc, reply))
-
+            requests.post('https://fed.brid.gy/webmention', data={'source':'https://' + DOMAIN_NAME + data['url'], 'target':reply})
             # send_mention(post_loc, reply)
     except TypeError:
         pass
@@ -368,7 +368,7 @@ def add_entry(creation_request, draft=False):
 
     location = create_json_entry(data, g=g)  # create the entry
     syndicate_from_form(creation_request, data)
-    requests.post('https://fed.brid.gy/webmentions', data={'target':'http://' + DOMAIN_NAME + data['url']})
+    requests.post('https://fed.brid.gy/webmention', data={'source':'https://' + DOMAIN_NAME + data['url'], 'target':"https://fed.brid.gy"})
     return location
 
 
@@ -1219,9 +1219,11 @@ def handle_micropub():
         resp.status_code = 501
         return resp
 
-@app.route('/mentions', methods=['GET'])
+@app.route('/list_mentions')
 def print_mentions():
-    r = request.get('https://webmention.io/api/mentions?target=https://kongaloosh.com/').json()
+    print('We are here!!!!')
+    r = requests.get('https://webmention.io/api/mentions?target=https://kongaloosh.com/', headers={"Accept":"application/json"}).json()['links']
+    print(r)
     return render_template('mentions.html', mentions=r)
 
 
