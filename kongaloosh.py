@@ -283,7 +283,6 @@ def get_post_for_editing(draft_location, md=False):
             entry['published'] = None
     return entry
 
-
 def syndicate_tweet(data):
     """Syndicates a tweet and updates the post.
     Args:
@@ -1431,6 +1430,18 @@ def subscribe_request():
 def notification():
     pass
 
+@app.route('/followers', methods=['GET'])
+def folower_list():
+    followers = json.load(open('followers.json'))
+    render_template('followers.html', followers=followers)
+
+@app.route('/followers/<account>', methods=['VET'])
+def folower_list(account):
+    followers = json.load(open('followers.json'))
+    if account in followers:
+        render_template('follower.html', follower=account)
+    else:
+        redirect('/404')
 
 @app.route('/already_made', methods=['GET'])
 def post_already_exists():
