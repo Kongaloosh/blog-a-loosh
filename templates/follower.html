@@ -114,8 +114,10 @@
 <article>
     <div class="container-fluid">
         <div class="hentry h-entry d-flex flex-column p-2">
-            <a class="u-follow-of" href="{{follower}}">{{follower}}</a>
-        </div>
+            <a class="u-follow-of" href="{{follower.url}}">{{follower.actor}}</a>
+            <a class="u-url" href="/following/{{follower}}"></a>
+            <a href="https://fed.brid.gy/"></a>
+         </div>
     </div>
 </article>
 

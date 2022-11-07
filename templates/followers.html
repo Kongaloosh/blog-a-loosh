@@ -115,7 +115,8 @@
     <div class="container-fluid">
         {% for follower in followers%}
         <div class="hentry h-entry d-flex flex-column p-2">
-            <a class="u-follow-of" href="{{follower}}">{{follower}}</a>
+            <a class="u-follow-of" href="{{follower.url}}">{{follower.actor}}</a>
+            <a href="https://fed.brid.gy/"></a>
         </div>
         {% endfor %}
     </div>

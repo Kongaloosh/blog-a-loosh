@@ -1431,17 +1431,22 @@ def notification():
     pass
 
 @app.route('/followers', methods=['GET'])
-def folower_list():
+def follower_list():
     followers = json.load(open('followers.json'))
-    render_template('followers.html', followers=followers)
+    print(followers)
+    #followers = []
+    return render_template('followers.html', followers=followers['following'])
 
-@app.route('/followers/<account>', methods=['VET'])
-def folower_list(account):
+@app.route('/following/<account>', methods=['GET'])
+def follower_individual(account):
     followers = json.load(open('followers.json'))
-    if account in followers:
-        render_template('follower.html', follower=account)
-    else:
-        redirect('/404')
+    print(account, account in followers['following'])
+    for actor in followers['following']:
+        if actor['actor'] ==  account:
+            #account =  followers['following'][int(account)]
+            return render_template('follower.html', follower=actor)
+    
+    return redirect('/404')
 
 @app.route('/already_made', methods=['GET'])
 def post_already_exists():
