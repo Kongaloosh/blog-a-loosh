@@ -430,6 +430,7 @@ def show_entries():
         return show_atom()
     elif request.headers.get("Accept") == "application/as+json":
         print("\n\n\n\n ---- Looking at AS ---- \n\n\n")
+        # TODO: this shouldn't be hard-coded. Pull this from the config.
         moi = {
             "@context": "https://www.w3.org/ns/activitystreams",
             "type": "Person",
@@ -564,11 +565,10 @@ def show_json():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
 
-    try:
-        entries = entries[:10]  # get the 10 newest
-    except IndexError:
-        entries = None  # there are no entries
+    if len(entries) == 0:
+        return jsonify({"message": "No entries found"}), 404
 
+    entries = entries[:10]  # get the 10 newest
     feed_items = []
 
     for entry in entries:
@@ -867,109 +867,73 @@ def md_to_html():
 def geonames_wrapper(query):
     if request.method == "GET":
         resp = requests.get(
-            "http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q=" + query
+            f"http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q={query}"
         )
-        return jsonify(resp.json()), resp.status_code, resp.headers.items()
+        response = jsonify(resp.json())
+        response.status_code = resp.status_code
+        response.headers.extend(resp.headers)
+        return response
     else:
         return redirect("/404"), 404
 
 
 @app.route("/recent_uploads", methods=["GET", "POST"])
 def recent_uploads():
-    """
-    :returns a formatted list of all the images in the current day's directory
-    """
+    """Return a formatted list of all images in the current day's directory."""
     if request.method == "GET":
-
         directory = ORIGINAL_PHOTOS_DIR
+        insert_pattern = "%s" if request.args.get("stream") else "[](%s)"
 
-        try:
-            if request.args.get("stream"):
-                insert_pattern = "%s"
-            else:
-                insert_pattern = "[](%s)"
-        except KeyError:
-            insert_pattern = "[](%s)"
+        file_list = [PHOTOS_URL + file for file in os.listdir(directory)]
 
-        file_list = []
-        for file in os.listdir(directory):
-            path = PHOTOS_URL + file
-            file_list.append(path)
-
-        preview = ""
-        j = 0
-        while True:
-            row = ""
-            for i in range(0, 3):  # for every row we want to make
-                image_index = (3 * j) + i
-                if image_index >= len(file_list):
-                    preview += """
-                        <div class="row">
-                            %s
-                        </div>
-                        """ % (
-                        row
-                    )
-                    return preview
-
-                image_location = file_list[image_index]
-                text_box_insert = insert_pattern % image_location
-                img_id = (3 * j) + i
-                row += """
-                        <a class="p-2 text-center" onclick="insertAtCaret('text_input','%s', 'img_%s');return false;">
-                            <img src="%s" id="img_%s" class="img-fluid" style="max-height:auto; width:25%%;">
-                        </a>
-                    """ % (
-                    text_box_insert,
-                    img_id,
-                    image_location,
-                    img_id,
-                )
-
-            preview += """
-                <div class="d-flexbox flexbox-row">
-                    %s
-                </div>
-                """ % (
-                row
+        rows = []
+        for i in range(0, len(file_list), 3):
+            row_images = file_list[i : i + 3]
+            row = "".join(
+                [
+                    f"""
+                <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
+                    <img src="{image}" id="img_{j}" class="img-fluid" style="max-height:auto; width:25%;">
+                </a>
+                """
+                    for j, image in enumerate(row_images, start=i)
+                ]
             )
-            j += 1
+            rows.append(f'<div class="d-flex flex-row">{row}</div>')
 
-        return preview
+        return "\n".join(rows)
 
     elif request.method == "POST":
         if not session.get("logged_in"):
             abort(401)
         try:
             to_delete = json.loads(request.get_data())["to_delete"]
-
-            if os.path.isfile(new_prefix + to_delete[len("/images/") :]):
-                os.remove(new_prefix + to_delete[len("/images/") :])
+            file_path = new_prefix + to_delete[len("/images/") :]
+            if os.path.isfile(file_path):
+                os.remove(file_path)
                 return "deleted"
+            return "file not found", 404
         except KeyError:
-            return abort(404)
-    else:
-        return redirect("/404"), 404
+            abort(400)
+
+    abort(405)  # Method Not Allowed
 
 
 @app.route("/edit/e/<year>/<month>/<day>/<name>", methods=["GET", "POST"])
 def edit(year, month, day, name):
     """The form for user-submission"""
     if request.method == "GET":
-        file_name = "data/{year}/{month}/{day}/{name}.json".format(
-            year=year, month=month, day=day, name=name
-        )
+        file_name = f"data/{year}/{month}/{day}/{name}.json"
         entry = get_post_for_editing(file_name)
         return render_template("edit_entry.html", type="edit", entry=entry)
-
     elif request.method == "POST":
         if not session.get("logged_in"):
             abort(401)
-
         if "Submit" in request.form:
             update_entry(request, year, month, day, name)
-
         return redirect("/")
+    # Add a default return statement
+    return "", 405  # Method Not Allowed
 
 
 @app.route("/e/<year>/<month>/<day>/<name>")
@@ -1318,6 +1282,7 @@ def handle_micropub():
         resp = Response(status="not implemented")
         resp.status_code = 501
         return resp
+    return "", 501
 
 
 @app.route("/list_mentions")
@@ -1335,164 +1300,94 @@ def print_mentions():
 def handle_inbox():
     if request.method == "GET":
         inbox_location = "inbox/"
-        entries = [
-            f
-            for f in os.listdir(inbox_location)
-            if os.path.isfile(os.path.join(inbox_location, f)) and f.endswith(".json")
-        ]
+        entries = [f for f in os.listdir(inbox_location) if f.endswith(".json")]
+        for_approval = [e for e in entries if e.startswith("approval_")]
+        entries = [e for e in entries if not e.startswith("approval_")]
 
-        for_approval = [entry for entry in entries if entry.startswith("approval_")]
-        entries = [entry for entry in entries if not entry.startswith("approval_")]
-        if "text/html" in request.headers.get("Accept"):
+        if "text/html" in request.headers.get("Accept", ""):
             return render_template(
                 "inbox.html", entries=entries, for_approval=for_approval
             )
-        elif "application/ld+json" in request.headers.get("Accept"):
-            inbox_items = {}
-            inbox_items["@context"] = "https://www.w3.org/ns/ldp"
-            inbox_items["@id"] = "http://" + DOMAIN_NAME + "/inbox"
-            inbox_items["http://www.w3.org/ns/ldp#contains"] = [
-                {"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry}
-                for entry in entries
-            ]
-            resp = Response(inbox_items, content_type="application/ld+json", status=200)
-            resp.data = json.dumps(inbox_items)
-            return resp
-        # else:
-        #     resp = Response(content_type="application/ld+json", status=200)
-        #     resp.data = """
-        #         <inbox>
-        #         a ldp:Container
-        #         ldp:contains {0}
-        #         </inbox>
-        #         """.format([{"@id": "http://" + DOMAIN_NAME + "/inbox/" + entry} for entry in entries])
-        #     return resp
+        elif "application/ld+json" in request.headers.get("Accept", ""):
+            inbox_items = {
+                "@context": "https://www.w3.org/ns/ldp",
+                "@id": f"http://{DOMAIN_NAME}/inbox",
+                "http://www.w3.org/ns/ldp#contains": [
+                    {"@id": f"http://{DOMAIN_NAME}/inbox/{entry}"} for entry in entries
+                ],
+            }
+            return jsonify(inbox_items), 200
         else:
-            resp = Response(status=501)
-            return resp
-    elif request.method == "POST":
-        data = json.loads(request.data)
-        try:
-            sender = data["actor"]["@id"]
-        except TypeError:
-            sender = data["actor"]
-        except KeyError:
-            try:
-                sender = data["actor"]["id"]
-            except KeyError:
-                sender = None
+            return "", 501
 
-        if (
-            sender == "https://rhiaro.co.uk" or sender == "https://rhiaro.co.uk/#me"
-        ):  # check if the sender is whitelisted
-            # todo: make better names for notifications
-            location = "inbox/" + slugify(str(datetime.now())) + ".json"
-            notification = open(location, "w+")
-            notification.write(request.data)
-            resp = Response(status=201, headers={"Location": location})
-            return resp
-        else:  # if the sender isn't whitelisted
+    elif request.method == "POST":
+        data = request.json
+        sender = (
+            data.get("actor", {}).get("@id")
+            or data.get("actor", {}).get("id")
+            or data.get("actor")
+        )
+
+        if sender in ["https://rhiaro.co.uk", "https://rhiaro.co.uk/#me"]:
+            location = f"inbox/{slugify.slugify(str(datetime.now()))}.json"
+            with open(location, "w") as f:
+                json.dump(data, f)
+            return "", 201, {"Location": location}
+        else:
             try:
-                try:
-                    data["context"]
-                    notification = open(
-                        "inbox/approval_" + slugify(str(datetime.now())) + ".json", "w+"
+                if data and "context" in data:
+                    location = (
+                        f"inbox/approval_{slugify.slugify(str(datetime.now()))}.json"
                     )
-                    notification.write(request.data)
-                    resp = Response(status="queued")
-                    resp.data = {"@id": "", "http://www.w3.org/ns/ldp#contains": []}
-                    resp.status_code = 202
-                    return resp
-                except KeyError:
-                    resp = Response(403)
-                    resp.status_code = 403
-                    return resp
+                    with open(location, "w") as f:
+                        json.dump(data, f)
+                    return (
+                        jsonify({"@id": "", "http://www.w3.org/ns/ldp#contains": []}),
+                        202,
+                    )
+                else:
+                    return "", 403
             except requests.ConnectionError:
-                resp = Response(status="unauthorized")
-                resp.status_code = 403
-                return resp
-    else:
-        resp = Response(status="Not Implemented")
-        resp.status_code = 501
-        app.logger.info(resp)
-        return resp
+                return "", 403
+
+    return "", 501
 
 
 @app.route("/inbox/send/", methods=["GET", "POST"])
 def notifier():
-    return 501
+    return "method not allowed", 501
 
 
 @app.route("/inbox/<name>", methods=["GET"])
 def show_inbox_item(name):
-    if request.method == "GET":
-        entry = json.loads(open("inbox/" + name).read())
-        app.logger.info((request, request.data))
-        try:
-            # if someone else is consuming
-            if request.headers.get("Accept") == "application/ld+json":
-                inbox_items = {}
-                resp = Response(content_type="application/ld+json", status=200)
-                resp.data = json.dumps(entry)
-                return resp
+    entry = json.loads(open("inbox/" + name).read())
 
-            if "text/html" in request.headers.get("Accept"):
-                try:
-                    sender = entry["actor"]["@id"]
-                except KeyError:
-                    try:
-                        sender = entry["actor"]["id"]
-                    except KeyError:
-                        sender = entry["@id"]
-                except TypeError:
-                    sender = entry["actor"]
-                return render_template(
-                    "inbox_notification.html", entry=entry, sender=sender
-                )
+    if request.headers.get("Accept") == "application/ld+json":
+        return jsonify(entry), 200
 
-            else:
-                # app.logger.info(request.headers.get('Accept'))
-                # resp = Response(content_type="application/ld+json", status=200)
-                # resp.data = """
-                #     <inbox>
-                #     a ldp:Container
-                #     ldp:contains {0}
-                #     </inbox>
-                #     """.format(str(entry))
-                inbox_items = {}
-                resp = Response(content_type="application/ld+json", status=200)
-                resp.data = json.dumps(entry)
-            return resp
+    if "text/html" in request.headers.get("Accept", ""):
+        sender = (
+            entry.get("actor", {}).get("@id")
+            or entry.get("actor", {}).get("id")
+            or entry.get("actor")
+            or entry.get("@id")
+        )
+        return render_template("inbox_notification.html", entry=entry, sender=sender)
 
-        except TypeError:
-            # app.logger.info("empyt")
-            # resp = Response(content_type="application/ld+json", status=200)
-            # resp.data = """
-            #     <inbox>
-            #     a ldp:Container
-            #     ldp:contains {0}
-            #     </inbox>
-            #     """.format(str(entry))
-            # return resp
-            inbox_items = {}
-            resp = Response(content_type="application/ld+json", status=200)
-            resp.data = json.dumps(entry)
-            return resp
+    return jsonify(entry), 200
 
 
 @app.route("/drafts", methods=["GET"])
 def show_drafts():
-    if request.method == "GET":
-        if not session.get("logged_in"):
-            abort(401)
-        drafts_location = "drafts/"
-        entries = [
-            drafts_location + f
-            for f in os.listdir(drafts_location)
-            if os.path.isfile(os.path.join(drafts_location, f)) and f.endswith(".json")
-        ]
-        entries = [file_parser_json(entry) for entry in entries]
-        return render_template("drafts_list.html", entries=entries)
+    if not session.get("logged_in"):
+        abort(401)
+    drafts_location = "drafts/"
+    entries = [
+        file_parser_json(os.path.join(drafts_location, f))
+        for f in os.listdir(drafts_location)
+        if f.endswith(".json")
+    ]
+    return render_template("drafts_list.html", entries=entries)
 
 
 @app.route("/drafts/<name>", methods=["GET", "POST"])
@@ -1521,6 +1416,7 @@ def show_draft(name):
             if os.path.isfile("drafts/" + name + ".json"):
                 os.remove("drafts/" + name + ".json")
             return redirect(location)
+    return "", 405  # Method Not Allowed
 
 
 @app.route("/ap_subscribe", methods=["POST"])
@@ -1544,6 +1440,7 @@ def subscribe_request():
                 return redirect(
                     link["template"].format(uri="@kongaloosh.com@kongaloosh.com")
                 )
+    return "", 501
 
 
 @app.route("/ap_follow", methods=["POST"])
@@ -1569,14 +1466,6 @@ def follow_request():
             },
         )
     return redirect("/following/" + social_name)
-
-    # response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
-    # print(response, response.json())
-    # links = response.json()['links']
-    # for link in links:
-    #     if link['rel'] == 'http://ostatus.org/schema/1.0/subscribe':
-    #         print(link['template'].format(uri='@kongaloosh.com@kongaloosh.com'))
-    #         return redirect(link['template'].format(uri="@kongaloosh.com@kongaloosh.com"))
 
 
 @app.route("/notification", methods=["GET", "POST"])
