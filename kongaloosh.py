@@ -653,7 +653,7 @@ def page_not_found(e):
 
 
 @app.errorhandler(500)
-def page_not_found(e):
+def five_oh_oh(e):
     return render_template("server_error.html"), 500
 
 
@@ -681,12 +681,7 @@ def add():
             data = post_from_request(request)
             return redirect(create_json_entry(data, g=g, draft=True))
 
-        # else:
-        #     return redirect("/")
-
-        # else:
-        #     flash("Invalid")
-        #     return redirect('/add')
+    return "", 501
 
 
 @app.route("/delete_draft/<name>", methods=["GET"])
@@ -711,12 +706,12 @@ def delete_drafts():
 def stream():
     """The form for user-submission"""
     if request.method == "GET":
-        tags = get_most_popular_tags()[:10]
         return render_template("photo_stream.html")
 
     elif request.method == "POST":  # if we're adding a new post
         if not session.get("logged_in"):
             abort(401)
+    return "", 501
 
 
 @app.route("/delete_entry/e/<year>/<month>/<day>/<name>", methods=["POST", "GET"])
