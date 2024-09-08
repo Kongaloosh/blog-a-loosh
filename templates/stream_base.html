@@ -22,7 +22,7 @@
 
                         {% if popular_tags %}
                         <p class="clearfix d-none d-md-block d-lg-block">
-                            I talk a lot about {% for tag in popular_tags%}<a href="/t/{{tag}}" class="tag" >{{tag}}</a>, and {%endfor%} <a href="/t/" class="tag">other things.</a>
+                            I talk a lot about {% for tag in popular_tags%}<a href="/t/{{tag}}" class="tag" >{{tag}}</a>, {%endfor%} and <a href="/t/" class="tag">other things.</a>
                         </p>
                         {% endif %}
                     </div>

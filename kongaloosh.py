@@ -1560,8 +1560,8 @@ def subscribe_request():
                 )
 
 
-@app.route("/ap_follow", methods=["POST"])
-def subscribe_request():
+@app.route('/ap_follow', methods=['POST'])
+def follow_request():
     print(request, request.method)
     if not session.get("logged_in"):  # check permissions before deleting
         abort(401)
@@ -1570,21 +1570,21 @@ def subscribe_request():
         social_name = request.form["handle"]
         user_name, social_domain = social_name.split("@")
         url = "https://" + social_domain + "/@" + user_name
-        with open("followers.json", "w") as jsonf:
-            data = json.load(jsonf)
-            data["following"].append(
-                {"actor": social_name, "url": "https://" + url[1] + "/@" + url[0]}
-            )
-            jsonf.write(json.dumps(data))
+        data = json.load(open('followers.json'))
+        data['following'].append(
+                {
+                    'actor': social_name,
+                    'url': url
+                })
+        with open('followers.json', 'w') as jsonf:
+       	    jsonf.write(json.dumps(data))
 
         r = requests.post(
             "https://fed.brid.gy/webmention",
-            data={
-                "target": "https//fed.brigy.gy",
-                "source": "https://kongaloosh.com/following/" + social_name,
-            },
-        )
-
+            data={"target": "https//fed.brigy.gy",
+                  "source": "https://kongaloosh.com/following/" + social_name})
+	return redirect("/following/"+social_name)
+        
         # response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
         # print(response, response.json())
         # links = response.json()['links']
