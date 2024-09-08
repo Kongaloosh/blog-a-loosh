@@ -847,7 +847,7 @@ def md_to_html():
         return jsonify(
             {
                 "html": markdown.markdown(
-                    request.data,
+                    request.data.decode("utf-8"),
                     extensions=[
                         "fenced_code",
                         "mdx_math",
