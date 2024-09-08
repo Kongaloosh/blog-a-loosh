@@ -967,7 +967,7 @@ def tag_search(category):
 
     if request.headers.get("Accept") == "application/json":
         entries = []
-        query = """SELECT entries.location 
+        query = """SELECT entries.location
          FROM categories
          INNER JOIN entries ON
          entries.slug = categories.slug AND
@@ -1198,7 +1198,6 @@ def handle_micropub():
 
                 cat = request.form.get("category[]")
                 if cat:
-                    app.logger.info(request.form.get("category[]"))
                     data["category"] = cat
 
                 if type(data["category"]) is unicode:
@@ -1286,7 +1285,6 @@ def handle_micropub():
 
 @app.route("/list_mentions")
 def print_mentions():
-    print("We are here!!!!")
     r = requests.get(
         "https://webmention.io/api/mentions?target=https://kongaloosh.com/",
         headers={"Accept": "application/json"},
@@ -1321,6 +1319,7 @@ def handle_inbox():
 
     elif request.method == "POST":
         data = request.json
+        assert data
         sender = (
             data.get("actor", {}).get("@id")
             or data.get("actor", {}).get("id")
