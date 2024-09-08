@@ -814,13 +814,16 @@ def mobile_upload():
 
         file_path = ORIGINAL_PHOTOS_DIR
         for uploaded_file in request.files.getlist("files[]"):
+            assert uploaded_file.filename
             app.logger.info("file " + uploaded_file.filename)
             file_loc = file_path + "{0}".format(uploaded_file.filename)
-            image = Image.open(uploaded_file)
+            image = Image.open(uploaded_file.stream)
+
             for orientation in ExifTags.TAGS.keys():
                 if ExifTags.TAGS[orientation] == "Orientation":
                     break
-            exif = dict(image._getexif().items())
+
+            exif = dict(image.getexif().items())
 
             if exif[orientation] == 3:
                 image = image.rotate(180, expand=True)
@@ -828,6 +831,7 @@ def mobile_upload():
                 image = image.rotate(270, expand=True)
             elif exif[orientation] == 8:
                 image = image.rotate(90, expand=True)
+
             image.save(file_loc)
         return redirect("/")
     else:
