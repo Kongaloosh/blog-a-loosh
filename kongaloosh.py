@@ -84,29 +84,34 @@ def it_broke(error):
 
 
 @app.errorhandler(404)
-def not_found(error):
+def not_found(error) -> str:
     return render_template("page_not_found.html")
-
-
-# @app.errorhandler(Exception)
-# def no_clue(error):
-#     return render_template("it_broke.html")
 
 
 @app.before_request
 def before_request():
-    """Befo"""
+    """Establish a database connection before each request.
+
+    This function runs before every request and sets up a database
+    connection, storing it in Flask's 'g' object for use during
+    the request lifecycle."""
     g.db = connect_db()
 
 
 @app.teardown_request
 def teardown_request(exception):
+    """Close the database connection after each request."""
     db = getattr(g, "db", None)
     if db is not None:
         db.close()
 
 
 def get_entries_by_date():
+    """Get all entries from the database, ordered by date.
+
+    Returns:
+        List of entries, each represented as a dictionary.
+    """
     entries = []
     cur = g.db.execute(
         """SELECT entries.location FROM entries
@@ -145,7 +150,7 @@ def get_most_popular_tags():
     return tags
 
 
-def resolve_placename(location):
+def resolve_placename(location: str) -> tuple[str, int] | tuple[None, None]:
     """Given a location, returns the closest placename and geoid of a location.
     Args:
         location (str): the geocoords of some location
@@ -435,27 +440,23 @@ def search_by_tag(category):
 @app.route("/")
 def show_entries():
     """The main view: presents author info and entries."""
-    try:
-        if "application/atom+xml" in request.headers.get("Accept"):
-            return show_atom()
-
-        elif "application/as+json" in request.headers.get("Accept"):
-            print("\n\n\n\n ---- Looking at AS ---- \n\n\n")
-            moi = {
-                "@context": "https://www.w3.org/ns/activitystreams",
-                "type": "Person",
-                "id": "https://fed.brid.gy/kongaloosh.com",
-                "name": "Alex Kearney",
-                "preferredUsername": "Kongaloosh",
-                "summary": "Hi, I'm a PhD candidate focused on Artificial Intelligence and Reinforcement Learning. I'm supervised by Rich Sutton and Patrick Pilarski at the University of Alberta in the Reinforcement Learning & Artificial Intelligence Lab.\n My research addresses how artificial intelligence systems can construct knowledge by deciding both what to learn and how to learn, independent of designer instruction. I predominantly use Reinforcement Learning methods.",
-                "inbox": "https://fed.brid.gy/kongaloosh.com/inbox",
-                "outbox": "https://fed.brid.gy/kongaloosh.com/outbox",
-                "followers": "https://fed.brid.gy/kongaloosh.com/followers",
-                "following": "https://fed.brid.gy/kongaloosh.com/following",
-            }
-            return jsonify(moi)
-    except TypeError:  # if there are empty headers
-        pass
+    if request.headers.get("Accept") == "application/atom+xml":
+        return show_atom()
+    elif request.headers.get("Accept") == "application/as+json":
+        print("\n\n\n\n ---- Looking at AS ---- \n\n\n")
+        moi = {
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "type": "Person",
+            "id": "https://fed.brid.gy/kongaloosh.com",
+            "name": "Alex Kearney",
+            "preferredUsername": "Kongaloosh",
+            "summary": "Hi, I'm a PhD candidate focused on Artificial Intelligence and Reinforcement Learning. I'm supervised by Rich Sutton and Patrick Pilarski at the University of Alberta in the Reinforcement Learning & Artificial Intelligence Lab.\n My research addresses how artificial intelligence systems can construct knowledge by deciding both what to learn and how to learn, independent of designer instruction. I predominantly use Reinforcement Learning methods.",
+            "inbox": "https://fed.brid.gy/kongaloosh.com/inbox",
+            "outbox": "https://fed.brid.gy/kongaloosh.com/outbox",
+            "followers": "https://fed.brid.gy/kongaloosh.com/followers",
+            "following": "https://fed.brid.gy/kongaloosh.com/following",
+        }
+        return jsonify(moi)
 
     # getting the entries we want to display.
     entries = []  # store the entries which will be presented
