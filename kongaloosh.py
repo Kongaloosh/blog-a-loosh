@@ -2,7 +2,7 @@
 # coding: utf-8
 import configparser
 import json
-import markdown2 as markdown
+import markdown
 import os
 import re
 import requests
@@ -309,20 +309,6 @@ def get_post_for_editing(draft_location, md=False):
         except AttributeError:
             entry["published"] = None
     return entry
-
-
-def syndicate_tweet(data):
-    """Syndicates a tweet and updates the post.
-    Args:
-        data (dict): the contents of a post to be syndicated.
-    Returns:
-        None
-    """
-    old_data = data
-    tweet_url = send_tweet(data)
-    tweet_id = tweet_url.split("/")[-1:]
-    data["twitter"] = {"url": tweet_url, "id": tweet_id}
-    update_json_entry(data=data, old_entry=old_data, g=None)
 
 
 def syndicate_from_form(creation_request, data):
@@ -1560,7 +1546,7 @@ def subscribe_request():
                 )
 
 
-@app.route('/ap_follow', methods=['POST'])
+@app.route("/ap_follow", methods=["POST"])
 def follow_request():
     print(request, request.method)
     if not session.get("logged_in"):  # check permissions before deleting
@@ -1570,33 +1556,32 @@ def follow_request():
         social_name = request.form["handle"]
         user_name, social_domain = social_name.split("@")
         url = "https://" + social_domain + "/@" + user_name
-        data = json.load(open('followers.json'))
-        data['following'].append(
-                {
-                    'actor': social_name,
-                    'url': url
-                })
-        with open('followers.json', 'w') as jsonf:
-       	    jsonf.write(json.dumps(data))
+        data = json.load(open("followers.json"))
+        data["following"].append({"actor": social_name, "url": url})
+        with open("followers.json", "w") as jsonf:
+            jsonf.write(json.dumps(data))
 
         r = requests.post(
             "https://fed.brid.gy/webmention",
-            data={"target": "https//fed.brigy.gy",
-                  "source": "https://kongaloosh.com/following/" + social_name})
-	return redirect("/following/"+social_name)
-        
-        # response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
-        # print(response, response.json())
-        # links = response.json()['links']
-        # for link in links:
-        #     if link['rel'] == 'http://ostatus.org/schema/1.0/subscribe':
-        #         print(link['template'].format(uri='@kongaloosh.com@kongaloosh.com'))
-        #         return redirect(link['template'].format(uri="@kongaloosh.com@kongaloosh.com"))
+            data={
+                "target": "https//fed.brigy.gy",
+                "source": "https://kongaloosh.com/following/" + social_name,
+            },
+        )
+    return redirect("/following/" + social_name)
+
+    # response = requests.get("https://"+social_domain+"/.well-known/webfinger/?resource=acct:"+social_name)
+    # print(response, response.json())
+    # links = response.json()['links']
+    # for link in links:
+    #     if link['rel'] == 'http://ostatus.org/schema/1.0/subscribe':
+    #         print(link['template'].format(uri='@kongaloosh.com@kongaloosh.com'))
+    #         return redirect(link['template'].format(uri="@kongaloosh.com@kongaloosh.com"))
 
 
 @app.route("/notification", methods=["GET", "POST"])
 def notification():
-    pass
+    return jsonify({"message": "This feature is not implemented yet"}), 501
 
 
 @app.route("/followers", methods=["GET"])
