@@ -112,13 +112,11 @@ def get_entries_by_date():
     cur = g.db.execute(
         """SELECT entries.location FROM entries
         ORDER BY entries.published DESC
-        """.format()
+        """
     )
-
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
-
     return entries
 
 
