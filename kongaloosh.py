@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # coding: utf-8
-import ConfigParser
+import configparser
 import json
-import markdown
+import markdown2 as markdown
 import os
 import re
 import requests
@@ -24,13 +24,12 @@ from flask import (
     Response,
     make_response,
     jsonify,
-    flash,
 )
 from jinja2 import Environment
-from markdown_albums.markdown_album_extension import AlbumExtension
-from markdown_hashtags.markdown_hashtag_extension import HashtagExtension
-from pysrc.python_webmention.mentioner import send_mention, get_mentions
-from slugify import slugify
+from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
+from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
+from pysrc.python_webmention.mentioner import get_mentions
+import slugify
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.file_management.file_parser import (
     create_json_entry,
@@ -42,7 +41,7 @@ from pysrc.file_management.markdown_album_pre_process import new_prefix
 
 jinja_env = Environment(extensions=["jinja2.ext.with_"])
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read("config.ini")
 
 # configuration
@@ -75,7 +74,7 @@ def init_db():
         db.commit()
 
 
-def connect_db():
+def connect_db() -> sqlite3.Connection:
     return sqlite3.connect(app.config["DATABASE"])
 
 
