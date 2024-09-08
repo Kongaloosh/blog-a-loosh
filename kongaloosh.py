@@ -38,8 +38,6 @@ from pysrc.file_management.file_parser import (
 )
 from pysrc.file_management.markdown_album_pre_process import run
 from pysrc.file_management.markdown_album_pre_process import new_prefix
-from pydantic import ValidationError
-from pysrc.post import BlogPost, Event, Trip, Travel
 
 jinja_env = Environment(extensions=["jinja2.ext.with_"])
 
@@ -152,43 +150,35 @@ def get_most_popular_tags():
     return tags
 
 
-def resolve_placename(location: str) -> tuple[str, int] | tuple[None, None]:
-    """Given a location, returns the closest placename and geoid of a location.
+def resolve_placename(location: str) -> tuple[str | None, int | None]:
+    """
+    Given a location, returns the closest placename and geoid of a location.
     Args:
-        location (str): the geocoords of some location
+        location (str): the geocoords of some location in the format 'geo:lat,long'
     Returns:
-        placename (str), geoid (int): the name resolution and geoid of the place resolved
+        tuple[str | None, int | None]: the placename and geoid of the resolved place, or (None, None) if not found
     """
     try:
-        # we take off the first four characters 'geo:'
-        # and then we split
-        (lat, long) = location[4:].split(",")
+        lat, long = location[4:].split(",")
+        long = long.split(";")[0]  # Remove any additional parameters after semicolon
 
-        # no clue what's going on here :o
-        try:
-            float(long)
-        except ValueError:
-            long = re.search("(.)*(?=;)", long).group(0)
+        url = f"http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat={lat}&lng={long}&username={GEONAMES}"
+        geo_results = requests.get(url).json()
 
-        #  make a request to the geonames API to find nearest placename
-        geo_results = requests.get(
-            "http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat="
-            + lat
-            + "&lng="
-            + long
-            + "&username="
-            + GEONAMES
-        )
+        if not geo_results.get("geonames"):
+            return None, None
 
-        place_name = geo_results.json()["geonames"][0]["name"]
-        if geo_results.json()["geonames"][0]["adminName2"]:
-            place_name += ", " + geo_results.json()["geonames"][0]["adminName2"]
-        elif geo_results.json()["geonames"][0]["adminName1"]:
-            place_name += ", " + geo_results.json()["geonames"][0]["adminName1"]
-        else:
-            place_name += ", " + geo_results.json()["geonames"][0]["countryName"]
-        return place_name, geo_results.json()["geonames"][0]["geonameId"]
-    except IndexError:
+        place_info = geo_results["geonames"][0]
+        place_name = place_info["name"]
+
+        for admin_level in ["adminName2", "adminName1", "countryName"]:
+            if place_info.get(admin_level):
+                place_name += f", {place_info[admin_level]}"
+                break
+
+        return place_name, place_info["geonameId"]
+    except (IndexError, KeyError, requests.RequestException) as e:
+        app.logger.error(f"Error resolving placename: {e}")
         return None, None
 
 
