@@ -2,9 +2,10 @@
 # coding: utf-8
 import configparser
 import json
+from typing import List
 import markdown
 import os
-import re
+from pydantic import ValidationError
 import requests
 import sqlite3
 from PIL import Image, ExifTags
@@ -13,6 +14,7 @@ from datetime import datetime
 from dateutil.parser import parse
 from flask import (
     Flask,
+    Request,
     request,
     session,
     g,
@@ -25,9 +27,11 @@ from flask import (
     make_response,
     jsonify,
 )
+from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
+from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip
 from pysrc.python_webmention.mentioner import get_mentions
 import slugify
 from pysrc.authentication.indieauth import checkAccessToken
@@ -39,7 +43,7 @@ from pysrc.file_management.file_parser import (
 from pysrc.file_management.markdown_album_pre_process import run
 from pysrc.file_management.markdown_album_pre_process import new_prefix
 
-jinja_env = Environment(extensions=["jinja2.ext.with_"])
+jinja_env = Environment()
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -57,8 +61,6 @@ GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
 ORIGINAL_PHOTOS_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 # the url to use for showing recent bulk uploads
 PHOTOS_URL = config.get("PhotoLocations", "URLPhotos")
-
-print(DATABASE, USERNAME, PASSWORD, DOMAIN_NAME)
 
 # create our little application :)
 app = Flask(__name__)
@@ -106,7 +108,7 @@ def teardown_request(exception):
         db.close()
 
 
-def get_entries_by_date():
+def get_entries_by_date() -> List[BlogPost]:
     """Get all entries from the database, ordered by date.
 
     Returns:
@@ -124,39 +126,31 @@ def get_entries_by_date():
     return entries
 
 
-def get_most_popular_tags():
-    """gets the tags (excluding post type declarations) and returns them in descending order of usage.
+def get_most_popular_tags() -> List[str]:
+    """Get tags in descending order of usage, excluding post type declarations.
 
     Returns:
         List of tags in descending order by usage.
     """
     cur = g.db.execute(
         """
-        SELECT category
-        FROM (
-            SELECT category as category, count(category) as count
-            FROM categories
-            GROUP BY category
-        )ORDER BY count DESC
-    """
+        SELECT category, COUNT(*) as count
+        FROM categories
+        WHERE category NOT IN ('None', 'image', 'album', 'bookmark', 'note')
+        GROUP BY category
+        ORDER BY count DESC
+        """
     )
-    tags = [row for (row,) in cur.fetchall()]
-    # strip type declarations
-    for element in ["None", "image", "album", "bookmark", "note"]:
-        try:
-            tags.remove(element)
-        except ValueError:
-            pass
-    return tags
+    return [row[0] for row in cur.fetchall()]
 
 
-def resolve_placename(location: str) -> tuple[str | None, int | None]:
+def resolve_placename(location: str) -> PlaceInfo:
     """
     Given a location, returns the closest placename and geoid of a location.
     Args:
         location (str): the geocoords of some location in the format 'geo:lat,long'
     Returns:
-        tuple[str | None, int | None]: the placename and geoid of the resolved place, or (None, None) if not found
+        Optional[PlaceInfo]: the placename info of the resolved place, or None if not found
     """
     try:
         lat, long = location[4:].split(",")
@@ -166,141 +160,133 @@ def resolve_placename(location: str) -> tuple[str | None, int | None]:
         geo_results = requests.get(url).json()
 
         if not geo_results.get("geonames"):
-            return None, None
+            return None
 
         place_info = geo_results["geonames"][0]
         place_name = place_info["name"]
+        admin_name = None
 
-        for admin_level in ["adminName2", "adminName1", "countryName"]:
+        for admin_level in ["adminName2", "adminName1"]:
             if place_info.get(admin_level):
-                place_name += f", {place_info[admin_level]}"
+                admin_name = place_info[admin_level]
                 break
 
-        return place_name, place_info["geonameId"]
-    except (IndexError, KeyError, requests.RequestException) as e:
-        app.logger.error(f"Error resolving placename: {e}")
-        return None, None
+        return PlaceInfo(
+            name=place_name,
+            geoname_id=place_info["geonameId"],
+            admin_name=admin_name,
+            country_name=place_info.get("countryName"),
+        )
+    except (IndexError, KeyError, requests.RequestException, ValidationError) as e:
+        raise ValueError(f"Error resolving placename: {e}")
 
 
-def post_from_request(request=None):
+def post_from_request(request: Request) -> BlogPost:
+    data = {}
 
-    data = {
-        "h": None,
-        "title": None,
-        "summary": None,
-        "content": None,
-        "published": None,
-        "updated": None,
-        "category": None,
-        "slug": None,
-        "location": None,
-        "location_name": None,
-        "location_id": None,
-        "in_reply_to": None,
-        "repost-of": None,
-        "syndication": None,
-        "photo": None,
-    }
     if request:
-        try:
-            # if the photo is a file, then go to beginning; otherwise, null.
-            files = request.files.getlist("photo_file[]")
-            if type(files) is type(list()):
-                if len(files) == 0:
-                    data["photo"] = None
-                else:
-                    data["photo"] = request.files.getlist("photo_file[]")
-            else:
-                data["photo"].seek(0, 2)
-                if data["photo"].tell() < 1:
-                    data["photo"] = None
-                else:
-                    data["photo"] = [request.files["photo_file"]]
-        except KeyError:
-            pass
+        # Handle photo files
+        data["photo"] = handle_photo_files(request)
 
-        try:
-            data["old_photos"] = request.form["photo"]
-        except KeyError:
-            pass
-        try:
-            trips = []
-            geo = request.form.getlist("geo[]")
-            location = request.form.getlist("location[]")
-            date = request.form.getlist("date[]")
-            # if the trips are well-formatted, then parse them accordingly
-            if len(geo) == len(location) and len(location) == len(date):
-                while True:
-                    try:
-                        trips.append(
-                            {
-                                "location": geo.pop(0),
-                                "location_name": location.pop(0),
-                                "date": date.pop(0),
-                            }
-                        )
-                    except IndexError:
-                        break
-            data["travel"] = {}
-            data["travel"]["trips"] = trips
-            if len(trips) > 0:  # if there's more than one location, make the map
-                markers = "|".join(
-                    [destination["location"][4:] for destination in trips]
-                )  # make the trips
-                r = requests.get(
-                    "https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{0}&path=color:green|weight:5|{1}&key={2}".format(
-                        markers, markers, GOOGLE_MAPS_KEY
-                    )
-                )
-                data["travel"]["map"] = r.content
-        except KeyError:
-            pass
+        # Handle old photos
+        data["old_photos"] = request.form.get("photo")
 
-        try:
-            # create an event
-            data["event"] = {}
-            for key in ["dt_start", "dt_end", "event_name"]:
-                if request.form[key] == "":
-                    data["event"] = None
-                    break
-                else:
-                    data["event"][key] = request.form[key]
-        except KeyError:
-            pass
+        # Handle travel data
+        travel_data = handle_travel_data(request)
+        if travel_data:
+            data["travel"] = travel_data
 
-        for title in request.form:
-            try:
-                # check if the element is already written
-                # we privilege files over location refs
-                if data[title] is None:
-                    data[title] = request.form[title]
-            except KeyError:
-                data[title] = request.form[title]
+        # Handle event data
+        event_data = handle_event_data(request)
+        if event_data:
+            data["event"] = event_data
 
-        for key in data:
-            if data[key] == "None" or data[key] == "":
-                data[key] = None
+        # Handle all other form data
+        for key in request.form:
+            if key not in data or data[key] is None:
+                data[key] = request.form[key]
 
-        if data["published"]:
+        # Clean up data
+        data = {k: v for k, v in data.items() if v not in (None, "", "None")}
+
+        # Parse published date
+        if data.get("published"):
             data["published"] = parse(data["published"])
-    return data
+
+        # Parse categories
+        if data.get("category"):
+            data["category"] = [cat.strip() for cat in data["category"].split(",")]
+
+    try:
+        return BlogPost(**data)
+    except ValidationError as e:
+        raise ValueError(f"Invalid blog post data: {e}")
 
 
-def get_post_for_editing(draft_location, md=False):
+def handle_photo_files(request: Request) -> List[FileStorage]:
+    files = request.files.getlist("photo_file[]")
+    if files:
+        return files
+    # TODO: This is another situation where I should just write a
+    # script to make sure old posts are formatted correctly. so we
+    # don't have to do this.
+    photo_file = request.files.get("photo_file")
+    if photo_file:
+        photo_file.seek(0, 2)
+        if photo_file.tell() > 0:
+            photo_file.seek(0)
+            return [photo_file]
+    raise ValueError("No photo files found")
 
-    entry = file_parser_json(draft_location, md=False)
-    if entry["category"]:
-        entry["category"] = ", ".join(entry["category"])
 
-    if entry["in_reply_to"]:
-        entry["in_reply_to"] = ", ".join([e["url"] for e in entry["in_reply_to"]])
+def handle_travel_data(request: Request) -> Travel:
+    geo = request.form.getlist("geo[]")
+    location = request.form.getlist("location[]")
+    date = request.form.getlist("date[]")
 
-    if entry["published"]:
-        try:
-            entry["published"] = entry["published"].strftime("%Y-%m-%d")
-        except AttributeError:
-            entry["published"] = None
-    return entry
+    if len(geo) == len(location) == len(date):
+        trips: list[Trip] = [
+            Trip(location=g, location_name=l, date=parse(d))
+            for g, l, d in zip(geo, location, date)
+        ]
+
+        if trips:
+            markers = "|".join([trip.location[len("geo:") :] for trip in trips])
+            map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"
+            map_content = requests.get(map_url).content
+            return Travel(trips=trips, map=map_content)
+
+    return Travel(trips=[])
+
+
+def handle_event_data(request: Request) -> Event:
+    event_data = {}
+    for key in ["dt_start", "dt_end", "event_name"]:
+        value = request.form.get(key)
+        if value:
+            event_data[key] = (
+                datetime.date.parse(value) if key.startswith("dt_") else value
+            )
+        else:
+            return Event()
+    return Event(**event_data)
+
+
+# def get_post_for_editing(draft_location, md=False):
+
+#     entry = file_parser_json(draft_location, md=False)
+#     if entry.category:
+#         entry["category"] = ", ".join(entry["category"])
+
+#     if entry["in_reply_to"]:
+#         entry["in_reply_to"] = ", ".join([e["url"] for e in entry["in_reply_to"]])
+
+#     if entry["published"]:
+#         try:
+#             entry["published"] = entry["published"].strftime("%Y-%m-%d")
+#         except AttributeError:
+#             entry["published"] = None
+#     return entry
 
 
 def syndicate_from_form(creation_request, data):
@@ -321,39 +307,31 @@ def syndicate_from_form(creation_request, data):
                     "target": reply,
                 },
             )
-            # send_mention(post_loc, reply)
-    except TypeError:
-        pass
-
-    if creation_request.form.get("twitter"):
-        # if we're syndicating to twitter, spin off a thread and send the request.
-        send_tweet(data)
-    if creation_request.form.get("bridgy_twitter"):
-        t = Timer(30, bridgy_twitter, [data["url"]])
-        t.start()
+    except TypeError as e:
+        app.logger.error("Error mentioning: {0}. Error: {1}".format(reply, e))
 
 
 def update_entry(update_request, year, month, day, name, draft=False):
     data = post_from_request(update_request)
-    if data["location"] is not None and data["location"].startswith("geo:"):
+    if data.location is not None and data.location.startswith("geo:"):
         # get the place name for the item in the data.
-        (place_name, geo_id) = resolve_placename(data["location"])
-        data["location_name"] = place_name
-        data["location_id"] = geo_id
+        location_info = resolve_placename(data.location)
+        data.location_name = location_info.name
+        data.location_id = location_info.geoname_id
 
-    location = "{year}/{month}/{day}/{name}".format(
+    file_location = "{year}/{month}/{day}/{name}".format(
         year=year, month=month, day=day, name=name
     )
-    data["content"] = run(data["content"], date=data["published"])
+    data.content = run(data.content, date=data.published)
 
     file_name = "data/{year}/{month}/{day}/{name}".format(
         year=year, month=month, day=day, name=name
     )
     # get the file which will be updated
-    entry = file_parser_json(file_name + ".json", g=g)
-    update_json_entry(data, entry, g=g, draft=draft)
+    entry = file_parser_json(file_name + ".json")
+    update_json_entry(data.model_dump(), entry.model_dump(), g=g.db, draft=draft)
     syndicate_from_form(update_request, data)
-    return location
+    return file_location
 
 
 def add_entry(creation_request, draft=False):
@@ -365,24 +343,23 @@ def add_entry(creation_request, draft=False):
         location (str): the url of the new post.
     """
     data = post_from_request(creation_request)
-    if data["published"] is None:  # we're publishing it now; give it the present time
+    if data.published is None:  # we're publishing it now; give it the present time
         data["published"] = datetime.now()
     # find all images in albums and move them
-    data["content"] = run(data["content"], date=data["published"])
+    data.content = run(data.content, date=data.published)
 
     # if we were given a geotag
-    if data["location"] is not None and data["location"].startswith("geo:"):
-        (place_name, geo_id) = resolve_placename(data["location"])  # get the placename
-        data["location_name"] = place_name
-        data["location_id"] = geo_id
-        # todo: you'll be left with a rogue 'location' in the dict... should clean that...
+    if data.location is not None and data.location.startswith("geo:"):
+        location_data = resolve_placename(data.location)  # get the placename
+        data.location = location_data.name
+        data.location_id = location_data.geoname_id
 
-    location = create_json_entry(data, g=g)  # create the entry
+    location = create_json_entry(data, g=g)
     syndicate_from_form(creation_request, data)
     requests.post(
         "https://fed.brid.gy/webmention",
         data={
-            "source": "https://" + DOMAIN_NAME + data["url"],
+            "source": "https://" + DOMAIN_NAME + data.url,
             "target": "https://fed.brid.gy",
         },
     )
@@ -600,16 +577,15 @@ def map():
         # if the file fetched exists, append the parsed details
         if os.path.exists(row + ".json"):
             entry = file_parser_json(row + ".json")
-            try:
-                geo_coords.append(entry["location"][4:].split(";")[0])
-            except (AttributeError, TypeError):
-                pass
-            try:
-                trips = entry["travel"]["trips"]
+            if entry.location:
+                geo_coords.append(entry.location[len("geo:") :].split(";")[0])
+
+            if entry.travel:
+                trips = entry.travel.trips
                 if len(trips) > 0:  # if there's more than one location, make the map
-                    geo_coords += [destination["location"][4:] for destination in trips]
-            except (KeyError, TypeError):
-                pass
+                    geo_coords += [
+                        destination.location[len("geo:") :] for destination in trips
+                    ]
 
     return render_template("map.html", geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
 
@@ -655,7 +631,7 @@ def add():
     if request.method == "GET":
         tags = get_most_popular_tags()[:10]
         return render_template(
-            "edit_entry.html", entry=post_from_request(), popular_tags=tags, type="add"
+            "edit_entry.html", entry=None, popular_tags=tags, type="add"
         )
 
     elif request.method == "POST":  # if we're adding a new post
@@ -663,10 +639,6 @@ def add():
             abort(401)
 
         if "Submit" in request.form:
-            # thread = threading.Thread(target=add_entry, args=(
-            #     request))  # we spin off a thread to create
-            # album processing can take time: we want to spin it off to avoid worker timeouts.
-            # thread.start()
             return redirect(add_entry(request))
 
         elif "Save" in request.form:  # if we're simply saving the post as a draft
@@ -717,9 +689,11 @@ def delete_entry(year, month, day, name):
             return redirect("/")
         entry = file_parser_json(totalpath + ".json")
 
-        if type(entry["photo"]) == type(list()):
-            for photo in entry["photo"]:
+        if isinstance(entry.photo, list):
+            for photo in entry.photo:
                 os.remove(photo)
+        elif isinstance(entry.photo, str):
+            os.remove(entry.photo)
 
         for extension in [".md", ".json", ".jpg"]:
             if os.path.isfile(totalpath + extension):

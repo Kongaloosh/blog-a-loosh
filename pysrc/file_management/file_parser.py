@@ -1,11 +1,8 @@
 import configparser
-import re
 import os
 import sqlite3
-import sys
 import slugify
 import json
-from dateutil.parser import parse
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.file_management.markdown_album_pre_process import new_prefix
@@ -15,13 +12,8 @@ import markdown as markdown
 from datetime import datetime
 from flask import current_app as app
 from pysrc.post import BlogPost, ReplyTo, Event
-from pydantic import HttpUrl, ValidationError
+from pydantic import ValidationError
 from typing import Any
-
-
-sys.path.insert(0, os.getcwd())  # todo: this is bad.
-
-__author__ = "kongaloosh"
 
 config = configparser.ConfigParser()
 config.read("config.ini")

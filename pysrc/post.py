@@ -3,6 +3,13 @@ from typing import List, Optional, Union
 from datetime import datetime
 
 
+class PlaceInfo(BaseModel):
+    name: str
+    geoname_id: int
+    admin_name: Optional[str] = None
+    country_name: Optional[str] = None
+
+
 class TwitterInfo(BaseModel):
     url: HttpUrl
     id: str
@@ -17,11 +24,12 @@ class Event(BaseModel):
 class Trip(BaseModel):
     date: Optional[datetime] = None
     location_name: Optional[str] = None
-    location: Optional[str] = None
+    location: str
 
 
 class Travel(BaseModel):
-    map: Optional[str] = None
+    map: Optional[bytes] = None
+    map_location: Optional[str] = None
     trips: List[Trip] = Field(default_factory=list)
 
 
