@@ -72,10 +72,10 @@ def move(loc, date):
     )  # of form data/yyyy/mm/dd/name.extension
 
 
-def run(lines, date=None):
+def run(lines: str, date=None):
     """
-    Finds all references to images, removes them from their temporary directory, moves them to their new location,
-    and replaces references to them in the original post text.
+    Finds all references to images, removes them from their temporary directory, moves
+    them to their new location, and replaces references to them in the original post.
     :param lines: the text of an entry which may, or may or may not have photos.
     :param date: the date this post was made.
     """
@@ -94,56 +94,56 @@ def run(lines, date=None):
             current_index = 0
             while True:
                 try:
-                    collection = collections.next()
-                    current_index += 1
-                    if current_index > last_index:
-                        # split a daisy chain of images in an album
-                        images = re.split(  # split the collection into images
-                            "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})",
-                            collection.group("album"),
-                        )
-                        album = ""  # where we place reformatted images
-                        for index in range(
-                            len(images)
-                        ):  # for image in the whole collection
-                            last_index = current_index  # update
-
-                            image_ref = re.search(
-                                "(?<=\({1})(.)*(?=\){1})", images[index]
-                            ).group()  # get the image location
-
-                            alt = re.search(
-                                "(?<=\[{1})(.)*(?=\]{1})", images[index]
-                            ).group()  # get the text
-
-                            if image_ref.startswith(
-                                "/images/temp/"
-                            ):  # if the location is in our temp folder...
-                                image_ref = move(
-                                    image_ref, date
-                                )  # ... move and resize photos
-                            album += "[%s](%s)" % (alt, image_ref)  # album
-                            if (
-                                index != len(images) - 1
-                            ):  # if this isn't the last image in the set...
-                                album += "-\n"  # ... then make room for another image
-
-                        current_index = last_index
-
-                        if album != "":  # if the album isn't empty
-                            text = "%s@@@%s@@@%s" % (
-                                text[
-                                    : collection.start()
-                                ],  # sub it into where the old images were
-                                album,
-                                text[collection.end() :],
-                            )
-                        last_index = current_index
-                        break
+                    collection = next(collections)
                 except StopIteration:
                     if current_index == last_index or last_index == -1:
                         finished = True
                     break
+                current_index += 1
+                if current_index > last_index:
+                    # split a daisy chain of images in an album
+                    images = re.split(  # split the collection into images
+                        "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})",
+                        collection.group("album"),
+                    )
+                    album = ""  # where we place reformatted images
+                    for index in range(
+                        len(images)
+                    ):  # for image in the whole collection
+                        last_index = current_index  # update
+                        image_ref_search = re.search(
+                            "(?<=\({1})(.)*(?=\){1})", images[index]
+                        )
+                        assert image_ref_search is not None
+                        image_ref = image_ref_search.group()
+
+                        alt_search = re.search("(?<=\[{1})(.)*(?=\]{1})", images[index])
+                        assert alt_search is not None
+                        alt = alt_search.group()
+
+                        if image_ref.startswith(
+                            "/images/temp/"
+                        ):  # if the location is in our temp folder...
+                            image_ref = move(
+                                image_ref, date
+                            )  # ... move and resize photos
+                        album += "[%s](%s)" % (alt, image_ref)  # album
+                        if (
+                            index != len(images) - 1
+                        ):  # if this isn't the last image in the set...
+                            album += "-\n"  # ... then make room for another image
+
+                    current_index = last_index
+
+                    if album != "":  # if the album isn't empty
+                        text = "%s@@@%s@@@%s" % (
+                            text[
+                                : collection.start()
+                            ],  # sub it into where the old images were
+                            album,
+                            text[collection.end() :],
+                        )
+                    last_index = current_index
         else:
             finished = True
             break

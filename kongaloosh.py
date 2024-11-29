@@ -2,7 +2,7 @@
 # coding: utf-8
 import configparser
 import json
-from typing import List
+from typing import List, Optional, Union
 import markdown
 import os
 from pydantic import ValidationError
@@ -31,9 +31,9 @@ from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
-from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip
+from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost
 from pysrc.python_webmention.mentioner import get_mentions
-import slugify
+from slugify import slugify
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.file_management.file_parser import (
     create_json_entry,
@@ -42,6 +42,8 @@ from pysrc.file_management.file_parser import (
 )
 from pysrc.file_management.markdown_album_pre_process import run
 from pysrc.file_management.markdown_album_pre_process import new_prefix
+from dataclasses import dataclass
+import uuid
 
 jinja_env = Environment()
 
@@ -61,6 +63,7 @@ GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
 ORIGINAL_PHOTOS_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 # the url to use for showing recent bulk uploads
 PHOTOS_URL = config.get("PhotoLocations", "URLPhotos")
+BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
 
 # create our little application :)
 app = Flask(__name__)
@@ -181,45 +184,114 @@ def resolve_placename(location: str) -> PlaceInfo:
         raise ValueError(f"Error resolving placename: {e}")
 
 
-def post_from_request(request: Request) -> BlogPost:
-    data = {}
+@dataclass
+class PostFormData:
+    title: Optional[str] = None
+    content: Optional[str] = None
+    summary: Optional[str] = None
+    category: Optional[List[str]] = None
+    published: Optional[datetime] = None
+    in_reply_to: Optional[List[str]] = None
+    location: Optional[str] = None
+    event: Optional[Event] = None
+    travel: Optional[Travel] = None
+    photo: Optional[List[str]] = None  # Stores existing photo paths
 
-    if request:
-        # Handle photo files
-        data["photo"] = handle_photo_files(request)
 
-        # Handle old photos
-        data["old_photos"] = request.form.get("photo")
+def process_form_data(request: Request) -> PostFormData:
+    """Process only the form fields from the request"""
+    data = PostFormData()
 
-        # Handle travel data
-        travel_data = handle_travel_data(request)
-        if travel_data:
-            data["travel"] = travel_data
+    # Basic text fields
+    data.title = request.form.get("title")
+    data.content = request.form.get("content")
+    data.summary = request.form.get("summary")
 
-        # Handle event data
-        event_data = handle_event_data(request)
-        if event_data:
-            data["event"] = event_data
+    # Handle categories/tags
+    if category := request.form.get("category"):
+        data.category = [cat.strip() for cat in category.split(",")]
 
-        # Handle all other form data
-        for key in request.form:
-            if key not in data or data[key] is None:
-                data[key] = request.form[key]
+    # Handle published date
+    if published := request.form.get("published"):
+        data.published = parse(published)
+    else:
+        data.published = datetime.now()
 
-        # Clean up data
-        data = {k: v for k, v in data.items() if v not in (None, "", "None")}
+    # Handle reply-to
+    if reply_to := request.form.get("in_reply_to"):
+        data.in_reply_to = [r.strip() for r in reply_to.split(",")]
 
-        # Parse published date
-        if data.get("published"):
-            data["published"] = parse(data["published"])
+    # Handle existing photos
+    if photo_list := request.form.get("photo"):
+        data.photo = [p.strip() for p in photo_list.split(",")]
 
-        # Parse categories
-        if data.get("category"):
-            data["category"] = [cat.strip() for cat in data["category"].split(",")]
+    return data
 
+
+def handle_uploaded_files(request: Request) -> List[str]:
+    """Process only the file uploads from the request"""
+    photo_paths = []
+
+    if files := request.files.getlist("photo_file[]"):
+        for file in files:
+            if file and file.filename:
+                # Save file and get path
+                path = f"uploads/{secure_filename(file.filename)}"
+                file.save(path)
+                photo_paths.append(path)
+
+    return photo_paths
+
+
+def post_from_request(
+    request: Request, existing_post: Optional[BlogPost] = None
+) -> Union[DraftPost, BlogPost]:
+    """Process form data into a Post model based on the form action (Save vs Submit)"""
     try:
-        return BlogPost(**data)
-    except ValidationError as e:
+        # Get form data
+        form_data = process_form_data(request)
+        uploaded_photos = handle_uploaded_files(request)
+
+        # Combine existing photos with new uploads
+        all_photos = (form_data.photo or []) + uploaded_photos
+
+        # Base post data suitable for both drafts and published posts
+        post_data = {
+            "title": form_data.title,
+            "content": form_data.content,
+            "summary": form_data.summary,
+            "category": form_data.category,
+            "photo": all_photos if all_photos else None,
+            "in_reply_to": form_data.in_reply_to,
+        }
+
+        # If this is a Save action OR it's a new post (not existing)
+        if "Save" in request.form or not existing_post:
+            # For existing posts being saved, preserve metadata
+            if existing_post and "Save" in request.form:
+                post_data.update(
+                    {
+                        "slug": existing_post.slug,
+                        "u_uid": existing_post.u_uid,
+                        "url": existing_post.url,
+                        "published": existing_post.published,
+                    }
+                )
+            return DraftPost(**post_data)
+
+        # Only return BlogPost for explicit Submit actions on existing posts
+        post_data.update(
+            {
+                "published": form_data.published or datetime.now(),
+                "slug": existing_post.slug,
+                "u_uid": existing_post.u_uid,
+                "url": existing_post.url,
+            }
+        )
+
+        return BlogPost(**post_data)
+
+    except Exception as e:
         raise ValueError(f"Invalid blog post data: {e}")
 
 
@@ -253,8 +325,10 @@ def handle_travel_data(request: Request) -> Travel:
         if trips:
             markers = "|".join([trip.location[len("geo:") :] for trip in trips])
             map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"
-            map_content = requests.get(map_url).content
-            return Travel(trips=trips, map=map_content)
+
+            return Travel(
+                trips=trips, map_data=requests.get(map_url).content, map_url=map_url
+            )
 
     return Travel(trips=[])
 
@@ -272,38 +346,69 @@ def handle_event_data(request: Request) -> Event:
     return Event(**event_data)
 
 
-# def get_post_for_editing(draft_location, md=False):
+def get_post_for_editing(file_path: str) -> BlogPost:
+    """Get a post from the filesystem and prepare it for editing.
 
-#     entry = file_parser_json(draft_location, md=False)
-#     if entry.category:
-#         entry["category"] = ", ".join(entry["category"])
+    Args:
+        file_path: Path to the JSON file containing the post data
 
-#     if entry["in_reply_to"]:
-#         entry["in_reply_to"] = ", ".join([e["url"] for e in entry["in_reply_to"]])
+    Returns:
+        BlogPost: The post data ready for editing
 
-#     if entry["published"]:
-#         try:
-#             entry["published"] = entry["published"].strftime("%Y-%m-%d")
-#         except AttributeError:
-#             entry["published"] = None
-#     return entry
+    Raises:
+        FileNotFoundError: If the post file doesn't exist
+    """
+    if not os.path.exists(f"{file_path}.json"):
+        raise FileNotFoundError(f"Post not found at {file_path}.json")
+
+    # Load the post data
+    with open(f"{file_path}.json", "r") as f:
+        data = json.load(f)
+
+    # Convert categories list to comma-separated string for form
+    if data.get("category"):
+        data["category"] = ", ".join(data["category"])
+
+    # Convert in_reply_to list to comma-separated string for form
+    if data.get("in_reply_to"):
+        if isinstance(data["in_reply_to"], list):
+            data["in_reply_to"] = ", ".join(
+                [
+                    reply["url"] if isinstance(reply, dict) else reply
+                    for reply in data["in_reply_to"]
+                ]
+            )
+
+    # Parse dates back to datetime objects
+    for date_field in ["published", "updated", "dt_start", "dt_end"]:
+        if data.get(date_field):
+            try:
+                data[date_field] = datetime.fromisoformat(data[date_field])
+            except (ValueError, TypeError):
+                data[date_field] = None
+
+    try:
+        return BlogPost(**data)
+    except ValidationError as e:
+        raise ValueError(f"Invalid blog post data: {e}")
 
 
-def syndicate_from_form(creation_request, data):
+def syndicate_from_form(creation_request, data: BlogPost) -> None:
     """Using the data from a post just submitted, syndicate to social networks.
     Args:
         creation_request (Response): the response from an /add post form.
         data (dict): represents a new entry.
     """
-    post_loc = "http://" + DOMAIN_NAME + data["url"]
     # Check to see if the post is in reply to another post and send a mention
+    if not data.in_reply_to:
+        return
     try:
-        for reply in data["in_reply_to"]:
-            app.logger.info("MENTIONING: {0} \nTO\n {1}".format(post_loc, reply))
+        post_loc = "http://" + DOMAIN_NAME + data.url
+        for reply in data.in_reply_to:
             requests.post(
                 "https://fed.brid.gy/webmention",
                 data={
-                    "source": "https://" + DOMAIN_NAME + data["url"],
+                    "source": post_loc,
                     "target": reply,
                 },
             )
@@ -311,55 +416,79 @@ def syndicate_from_form(creation_request, data):
         app.logger.error("Error mentioning: {0}. Error: {1}".format(reply, e))
 
 
-def update_entry(update_request, year, month, day, name, draft=False):
-    data = post_from_request(update_request)
-    if data.location is not None and data.location.startswith("geo:"):
-        # get the place name for the item in the data.
-        location_info = resolve_placename(data.location)
-        data.location_name = location_info.name
-        data.location_id = location_info.geoname_id
+def update_entry(
+    update_request: Request,
+    year: str,
+    month: str,
+    day: str,
+    name: str,
+    draft: bool = False,
+) -> str:
+    """Update an existing blog post"""
+    try:
+        # Get the updated post data
+        file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        existing_entry = get_post_for_editing(file_name)
 
-    file_location = "{year}/{month}/{day}/{name}".format(
-        year=year, month=month, day=day, name=name
-    )
-    data.content = run(data.content, date=data.published)
+        updated_post = post_from_request(update_request, existing_entry)
 
-    file_name = "data/{year}/{month}/{day}/{name}".format(
-        year=year, month=month, day=day, name=name
-    )
-    # get the file which will be updated
-    entry = file_parser_json(file_name + ".json")
-    update_json_entry(data.model_dump(), entry.model_dump(), g=g.db, draft=draft)
-    syndicate_from_form(update_request, data)
-    return file_location
+        # Handle location data if present
+        if updated_post.location and updated_post.location.startswith("geo:"):
+            location_info = resolve_placename(updated_post.location)
+            updated_post.location_name = location_info.name
+            updated_post.location_id = location_info.geoname_id
+
+        # Process markdown content
+        updated_post.content = run(updated_post.content, date=updated_post.published)
+
+        # Update the entry
+        update_json_entry(updated_post, existing_entry, g=g.db, draft=draft)
+
+        # Handle webmentions
+        syndicate_from_form(update_request, updated_post)
+
+        return file_name
+
+    except Exception as e:
+        app.logger.error(f"Error updating entry: {e}")
+        raise ValueError(f"Failed to update entry: {str(e)}")
 
 
-def add_entry(creation_request, draft=False):
-    """Adds a post based on a request.
-    Args:
-        creation_request (request): the request received from a post at /add or /edit
-        draft (bool): A flag determining whether the post should be considered a draft. If true, saves instead of post.
-    Returns:
-        location (str): the url of the new post.
-    """
+def add_entry(creation_request: Request, draft: bool = False) -> str:
+    """Add a new entry to the blog."""
     data = post_from_request(creation_request)
-    if data.published is None:  # we're publishing it now; give it the present time
-        data["published"] = datetime.now()
-    # find all images in albums and move them
-    data.content = run(data.content, date=data.published)
 
-    # if we were given a geotag
-    if data.location is not None and data.location.startswith("geo:"):
-        location_data = resolve_placename(data.location)  # get the placename
-        data.location = location_data.name
-        data.location_id = location_data.geoname_id
+    # Convert Pydantic model to dictionary
+    data_dict = data.model_dump()
 
-    location = create_json_entry(data, g=g)
-    syndicate_from_form(creation_request, data)
+    # Add required fields for new posts
+    if not data_dict.get("published"):
+        data_dict["published"] = datetime.now()
+    if not data_dict.get("slug"):
+        data_dict["slug"] = slugify(data_dict.get("title", str(uuid.uuid4())))
+    if not data_dict.get("u_uid"):
+        data_dict["u_uid"] = str(uuid.uuid4())
+    if not data_dict.get("url"):
+        data_dict["url"] = (
+            f"/e/{data_dict['published'].strftime('%Y/%m/%d')}/{data_dict['slug']}"
+        )
+
+    # Handle location data if present
+    if data_dict.get("location") and data_dict["location"].startswith("geo:"):
+        location_info = resolve_placename(data_dict["location"])
+        data_dict["location_name"] = location_info.name
+        data_dict["location_id"] = location_info.geoname_id
+
+    # Create the entry
+    post = BlogPost(**data_dict)
+    location = create_json_entry(post, g=g.db, draft=draft)
+
+    # Handle webmentions if needed
+    syndicate_from_form(creation_request, post)
     requests.post(
         "https://fed.brid.gy/webmention",
         data={
-            "source": "https://" + DOMAIN_NAME + data.url,
+            "source": "https://" + DOMAIN_NAME + data_dict["url"],
             "target": "https://fed.brid.gy",
         },
     )
@@ -398,7 +527,6 @@ def show_entries():
     if request.headers.get("Accept") == "application/atom+xml":
         return show_atom()
     elif request.headers.get("Accept") == "application/as+json":
-        print("\n\n\n\n ---- Looking at AS ---- \n\n\n")
         # TODO: this shouldn't be hard-coded. Pull this from the config.
         moi = {
             "@context": "https://www.w3.org/ns/activitystreams",
@@ -684,7 +812,7 @@ def delete_entry(year, month, day, name):
         abort(401)
     else:
 
-        totalpath = "data/{0}/{1}/{2}/{3}".format(year, month, day, name)
+        totalpath = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
         if not os.path.isfile(totalpath + ".json"):
             return redirect("/")
         entry = file_parser_json(totalpath + ".json")
@@ -888,13 +1016,14 @@ def recent_uploads():
 def edit(year, month, day, name):
     """The form for user-submission"""
     if request.method == "GET":
-        file_name = f"data/{year}/{month}/{day}/{name}.json"
+        file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
         entry = get_post_for_editing(file_name)
         return render_template("edit_entry.html", type="edit", entry=entry)
     elif request.method == "POST":
         if not session.get("logged_in"):
             abort(401)
         if "Submit" in request.form:
+            post = post_from_request(request)
             update_entry(request, year, month, day, name)
         return redirect("/")
     # Add a default return statement
@@ -905,9 +1034,7 @@ def edit(year, month, day, name):
 def profile(year, month, day, name):
     """Get a specific article"""
 
-    file_name = "data/{year}/{month}/{day}/{name}".format(
-        year=year, month=month, day=day, name=name
-    )
+    file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
     # if someone else is consuming
     if request.headers.get("Accept") == "application/json":
         return jsonify(file_parser_json(file_name + ".json"))
@@ -1203,18 +1330,6 @@ def handle_micropub():
                         data["location_id"] = geo_id
 
                 location = create_json_entry(data, g=g)
-                if data["in_reply_to"]:
-                    pass
-                    # send_mention('https://' + DOMAIN_NAME +
-                    #             '/e/' + location, data['in_reply_to'])
-
-                # regardless of whether or not syndication is called for, if there's a photo, send it to FB and twitter
-                try:
-                    if request.form.get("twitter") or data["photo"]:
-                        t = Timer(30, bridgy_twitter, [location])
-                        t.start()
-                except KeyError:
-                    pass
 
                 resp = Response(
                     status="created",
@@ -1359,7 +1474,7 @@ def show_draft(name):
     if request.method == "GET":
         if not session.get("logged_in"):
             abort(401)
-        draft_location = "drafts/" + name + ".json"
+        draft_location = f"drafts/{name}"
         entry = get_post_for_editing(draft_location)
         return render_template("edit_entry.html", entry=entry, type="draft")
 
@@ -1369,16 +1484,16 @@ def show_draft(name):
         data = post_from_request(request)
 
         if "Save" in request.form:  # if we're updating a draft
-            file_name = "drafts/{0}".format(name)
-            entry = file_parser_json(file_name + ".json")
+            file_name = f"drafts/{name}"
+            entry = file_parser_json(file_name)
             update_json_entry(data, entry, g=g, draft=True)
             return redirect("/drafts")
 
         if "Submit" in request.form:  # if we're publishing it now
             location = add_entry(request, draft=True)
             # this won't always be the slug generated
-            if os.path.isfile("drafts/" + name + ".json"):
-                os.remove("drafts/" + name + ".json")
+            if os.path.isfile(f"drafts/{name}.json"):
+                os.remove(f"drafts/{name}.json")
             return redirect(location)
     return "", 405  # Method Not Allowed
 

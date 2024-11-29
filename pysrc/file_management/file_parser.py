@@ -1,7 +1,7 @@
 import configparser
 import os
 import sqlite3
-import slugify
+from slugify import slugify
 import json
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
@@ -196,20 +196,48 @@ def slug_from_post(data: dict[str, Any]) -> str:
         return slugify.slugify(data["published"].date().isoformat())
 
 
-def create_post_from_data(data: dict[str, Any]) -> BlogPost:
+def save_map_file(map_data: bytes, file_path: str) -> str:
+    """
+    Saves map data to a file and returns the file path.
+
+    Args:
+        map_data: Raw binary map data
+        file_path: Base path for the file (without extension)
+
+    Returns:
+        str: Path to the saved map file
+    """
+    map_file_path = f"{file_path}-map.png"
+    with open(map_file_path, "wb") as f:
+        f.write(map_data)
+    return map_file_path
+
+
+def create_post_from_data(data: BlogPost | dict[str, Any]) -> BlogPost:
     """
     Cleans and prepares a dictionary based on posted form info for JSON dump.
     Returns a validated BlogPost object.
     """
-    # 1. Create slug if not present
-    if not data.get("slug"):
-        slug = slug_from_post(data)
-        data["slug"] = slug
-        data["u_uid"] = slug
+    # If data is already a BlogPost, convert it back to dict for processing
+    if isinstance(data, BlogPost):
+        data = data.model_dump()
 
-    # 2. Parse categories
-    if isinstance(data.get("category"), str):
-        data["category"] = [cat.strip().lower() for cat in data["category"].split(",")]
+    # 1. Clean up None values
+    data = {k: v for k, v in data.items() if v not in (None, "", "None")}
+
+    # 2. Generate slug if missing
+    if not data.get("slug"):
+        if data.get("title"):
+            data["slug"] = slugify(data["title"])[:50]
+        elif data.get("content"):
+            data["slug"] = slugify(data["content"].split(".")[0])[:50]
+        else:
+            data["slug"] = slugify(data["published"].date().isoformat())
+
+    # 3. Handle categories
+    if data.get("category"):
+        if isinstance(data["category"], str):
+            data["category"] = [cat.strip() for cat in data["category"].split(",")]
 
     # 3. Parse reply-tos
     if data.get("in_reply_to"):
@@ -242,7 +270,9 @@ def create_post_from_data(data: dict[str, Any]) -> BlogPost:
         raise ValueError(f"Invalid blog post data: {e}")
 
 
-def create_json_entry(data, g, draft=False, update=False) -> str:
+def create_json_entry(
+    data: BlogPost, g, draft: bool = False, update: bool = False
+) -> str:
     """
     creates a json entry based on recieved dictionary
     """
@@ -318,39 +348,38 @@ def create_json_entry(data, g, draft=False, update=False) -> str:
 
             data.photo = file_list
         try:
-            if data.travel and data.travel.map:
-                # TODO: this is messed up if the map is a url.
-                file_writer = open(total_path + "-map.png", "wb")
-                file_writer.write(data.travel.map)  # save the buffer from the request
-                file_writer.close()
-                data.travel.map = (
-                    total_path + "-map.png"
-                )  # where the post should point to fetch the map
-        except KeyError:
-            pass
+            if data.travel and data.travel.map_data:
+                map_file_path = save_map_file(data.travel.map_data, total_path)
+                data.travel.map_path = map_file_path
+                data.travel.map_data = None
 
-        file_writer = open(
-            total_path + ".json", "w"
-        )  # open and dump the actual post meta-data
-        file_writer.write(json.dumps(data))
-        file_writer.close()
+        except (KeyError, AttributeError) as e:
+            logger.error(f"Error saving map file: {e}")
+
+        json_data = data.model_dump(mode="json")
+
+        with open(total_path + ".json", "w") as file_writer:
+            json.dump(json_data, file_writer)
+
+        logger.info(f"Saved post to {total_path}.json")
+        logger.info(type(g))
 
         if not draft and not update and g:  # if this isn't a draft, put it in the dbms
-            g.db.execute(
+            g.execute(
                 """
                 insert into entries
                 (slug, published, location) values (?, ?, ?)
                 """,
                 [data.slug, data.published, total_path],
             )
-            g.db.commit()
+            g.commit()
             if data.category:
                 for c in data.category:
-                    g.db.execute(
+                    g.execute(
                         "insert or replace into categories (slug, published, category) values (?, ?, ?)",  # noqa
                         [data.slug, data.published, c],
                     )
-                    g.db.commit()
+                    g.commit()
         return data.url
 
     else:
@@ -358,68 +387,43 @@ def create_json_entry(data, g, draft=False, update=False) -> str:
 
 
 def update_json_entry(
-    data: dict, old_entry: dict, g: sqlite3.Connection, draft: bool = False
+    data: BlogPost, old_entry: BlogPost, g: sqlite3.Connection, draft: bool = False
 ) -> None:
-    """
-    Update old entry based on differences in new entry and saves file.
-    """
-    # 1. Preserve privileged old info
-    for key in ["slug", "u-uid", "url", "published"]:
-        data[key] = old_entry[key]
-
-    # 2. Handle photos
-    old_photos = data.pop("old_photos", [])
-    new_uploads = data.pop("photo", [])
-
-    old_photos = (
-        [i.strip() for i in old_photos.split(",")]
-        if isinstance(old_photos, str)
-        else old_photos
-    )
-    to_delete = [i for i in old_entry.get("photo", []) if i not in old_photos]
-
-    for i in to_delete:
-        if os.path.exists(i):
-            os.remove(i)
-
-    data["photo"] = old_photos + new_uploads if new_uploads else old_photos
-    data["photo"] = data["photo"] or None
-
-    # 3. Handle categories
-    if data.get("category") and not draft and g:
-        data["category"] = (
-            [i.strip().lower() for i in data["category"].split(",")]
-            if isinstance(data["category"], str)
-            else data["category"]
-        )
-
-        for c in old_entry.get("category", []):
-            g.db.execute(
-                "DELETE FROM categories WHERE slug = ? AND category = ?",
-                (data["slug"], c),
-            )
-
-        for c in data["category"]:
-            g.db.execute(
-                "INSERT OR REPLACE INTO categories (slug, published, category) VALUES (?, ?, ?)",
-                [old_entry["slug"], old_entry["published"], c],
-            )
-        g.db.commit()
-
-    # 4. Handle in_reply_to
-    if isinstance(data.get("in_reply_to"), str):
-        data["in_reply_to"] = [
-            reply.strip() for reply in data["in_reply_to"].split(",")
-        ]
-
-    # 5. Validate data using BlogPost model
+    """Update old entry based on differences in new entry and saves file."""
     try:
-        updated_post = BlogPost(**data)
-    except ValidationError as e:
-        raise ValueError(f"Invalid blog post data: {e}")
+        # 1. Preserve privileged old info
+        data.slug = old_entry.slug
+        data.url = old_entry.url
+        data.published = old_entry.published
 
-    # 6. Update old_entry with validated data
-    old_entry.update(updated_post.dict(exclude_unset=True))
+        # 2. Handle photos
+        old_photos = data.photo or []
+        to_delete = [i for i in (old_entry.photo or []) if i not in old_photos]
 
-    # 7. Save the updated entry
-    create_json_entry(data=old_entry, g=g, draft=draft, update=True)
+        for i in to_delete:
+            if os.path.exists(i):
+                os.remove(i)
+
+        # 3. Handle categories
+        if data.category and not draft and g:
+            # Delete old categories
+            for c in old_entry.category or []:
+                g.execute(
+                    "DELETE FROM categories WHERE slug = ? AND category = ?",
+                    (data.slug, c),
+                )
+
+            # Insert new categories
+            for c in data.category:
+                g.execute(
+                    "INSERT OR REPLACE INTO categories (slug, published, category) VALUES (?, ?, ?)",
+                    [data.slug, data.published, c],
+                )
+            g.commit()
+
+        # 4. Save the updated entry
+        create_json_entry(data=data, g=g, draft=draft, update=True)
+
+    except Exception as e:
+        app.logger.error(f"Error in update_json_entry: {e}")
+        raise ValueError(f"Failed to update entry: {str(e)}")
