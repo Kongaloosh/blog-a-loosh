@@ -267,6 +267,11 @@ def post_from_request(
         form_data = process_form_data(request)
         uploaded_photos = handle_uploaded_files(request)
 
+        # Handle travel data
+        travel_data = None
+        if "geo[]" in request.form:
+            travel_data = handle_travel_data(request)
+
         # Combine existing photos with new uploads
         all_photos = (form_data.photo or []) + uploaded_photos
 
@@ -278,6 +283,7 @@ def post_from_request(
             "category": form_data.category,
             "photo": all_photos if all_photos else None,
             "in_reply_to": form_data.in_reply_to,
+            "travel": travel_data,
         }
 
         # If this is a Save action OR it's a new post (not existing)
