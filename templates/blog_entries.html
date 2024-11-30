@@ -11,18 +11,19 @@
     </div>
     <hr>
 </div>
-    {% else %}
-    <div class="row">
+{% else %}
+<div class="row">
     <form action="/ap_subscribe" method="post">
-    
-    <div class='float-left'>
-        <input class='subscribe-btn' type="text" id="handle" name="handle" value="" placeholder="example@mastodon.social"><br><br>
-    </div>
-    <div class='float-left'>    
-    	<input style="margin-left:10px" class="btn" type="submit" value="follow on mastodon"></input>
-    </div>
+
+        <div class='float-left'>
+            <input class='subscribe-btn' type="text" id="handle" name="handle" value=""
+                placeholder="example@mastodon.social"><br><br>
+        </div>
+        <div class='float-left'>
+            <input style="margin-left:10px" class="btn" type="submit" value="follow on mastodon"></input>
+        </div>
     </form>
-    </div>
+</div>
 
 <hr>
 {% endif %}
@@ -34,197 +35,190 @@
     {% if session.logged_in %}
     <div class="p-2 edit-entry">
         <a href="/edit{{entry.url}}"><i class="fa fa-pencil-square-o pull-right"></i></a>
-    {% endif %}
-    {% if entry.title %}
-    <div class="p-2">
-        <h2 class="post-title p-name">
-            <a href="{{entry.url}}">{{ entry.title }}</a>
-        </h2>
-    </div>
-
-    {% endif %}
-    {% if entry.in_reply_to is sequence%}
-    <div class="p-2 reply reply-header reply-topper reply-footer">
-        {% for site in entry.in_reply_to %}
-        {% if site.photo is defined %}
-        <a href="{{site.url}}">
-            <img
-                    class="u-photo img-responsive center-block img-thumbnail img-rounded  mx-auto d-block"
-                    style="image-orientation: from-image; max-height:300px"
-                    src="/{{site.photo}}"
-            >
-        </a>
         {% endif %}
-        In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to" href="{{site.url}}">{%
-        if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="flex-column e-content {% if not entry.title %}p-name{% endif %}">
-        {% if entry.summary %}
-        <div class="post-subtitle p-summary">
-            <p>
-                <i>
-                    {{entry.summary}}
-                </i>
-            </p>
+        {% if entry.title %}
+        <div class="p-2">
+            <h2 class="post-title p-name">
+                <a href="{{entry.url}}">{{ entry.title }}</a>
+            </h2>
         </div>
-        {% endif%}
 
-        {% if entry.video %}
-        <div class="flex-row justify-content-center">
-            <video class="u-video" controls="controls"
-                   src="{{entry.video}}"
-                   poster="https://kongaloosh.com"
-                   style="max-height:300px;">
-                alternate text content only for browsers that do not support the video tag
-            </video>
-        </div>
         {% endif %}
-
-
-        {% if entry.photo %}
-        {% if entry.photo is iterable and entry.photo is not string %}
-
-
-        <div class="row d-flex justify-content-center imagetiles">
-            {% for photo in entry.photo %}
-            <div class="col-lg-8 col-md-8 col-sm-6 col-xs-6">
-                <img
-                        src="/{{photo}}"
-                        class="img-responsive img-fluid img-responsive center-block img-thumbnail img-rounded u-photo"
-                        style="image-orientation: from-image; max-height:600px"
-                >
-            </div>
-
+        {% if entry.in_reply_to is sequence%}
+        <div class="p-2 reply reply-header reply-topper reply-footer">
+            {% for site in entry.in_reply_to %}
+            {% if site.photo is defined %}
+            <a href="{{site.url}}">
+                <img class="u-photo img-responsive center-block img-thumbnail img-rounded  mx-auto d-block"
+                    style="image-orientation: from-image; max-height:300px" src="/{{site.photo}}">
+            </a>
+            {% endif %}
+            In Reply To <i class="fa fa-reply"></i> <br> <a class="u-in-reply-to" rel="in_reply_to"
+                href="{{site.url}}">{%
+                if site.title %} {{site.title}}{%else%}{{site.url}}{%endif%}</a>
             {% endfor %}
         </div>
-
-        {% else %}
-        <div class="flex-row justify-content-center">
-            <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
-                 style="image-orientation: from-image; max-height:600px"
-                 src="/{{entry.photo}}">
-        </div>
-        {% endif %}
-        {% endif %}
-        {% if entry.content %}
-        {{entry.content | safe}}
         {% endif %}
 
-        {% if entry.travel %}
-        <div class="flex-row p-2 text-center">
-            <p>{%for destination in entry.travel.trips%}
-                {{destination.location_name}}
-                {% if not loop.last %} &rarr;{% endif %}
-                {% endfor %}</p>
-            {% if entry.travel.map %}
-            <div class="clearfix">
-                <img class="u-photo img-fluid center-block img-thumbnail img-rounded mx-auto d-block"
-                     src="/{{entry.travel.map}}">
+        <div class="flex-column e-content {% if not entry.title %}p-name{% endif %}">
+            {% if entry.summary %}
+            <div class="post-subtitle p-summary">
+                <p>
+                    <i>
+                        {{entry.summary}}
+                    </i>
+                </p>
+            </div>
+            {% endif%}
+
+            {% if entry.video %}
+            <div class="flex-row justify-content-center">
+                <video class="u-video" controls="controls" src="{{entry.video}}" poster="https://kongaloosh.com"
+                    style="max-height:300px;">
+                    alternate text content only for browsers that do not support the video tag
+                </video>
             </div>
             {% endif %}
-        </div>
-        {% endif %}
 
 
-        {%if entry.event%}
-        <div class="p-2">
-            <h4>At: {{entry.event.event_name}}</h4>
-            <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
-            <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
-        </div>
-        {%endif%}
+            {% if entry.photo %}
+            {% if entry.photo is iterable and entry.photo is not string %}
 
 
-        <div class="p-2 entry-footer clearfix">                         <!-- Footer -->
-            <div class="categories">                                <!-- Catagories -->
-                {% if entry.category %}
-                <i class="fa fa-tags"></i>
-                {% for c in entry.category %}
-                <a class="category" href="/t/{{c}}">{{c}}</a>
+            <div class="row d-flex justify-content-center imagetiles">
+                {% for photo in entry.photo %}
+                <div class="col-lg-8 col-md-8 col-sm-6 col-xs-6">
+                    <img src="/{{photo}}"
+                        class="img-responsive img-fluid img-responsive center-block img-thumbnail img-rounded u-photo"
+                        style="image-orientation: from-image; max-height:600px">
+                </div>
+
                 {% endfor %}
-                {% endif %}
+            </div>
+
+            {% else %}
+            <div class="flex-row justify-content-center">
+                <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
+                    style="image-orientation: from-image; max-height:600px" src="/{{entry.photo}}">
+            </div>
+            {% endif %}
+            {% endif %}
+            {% if entry.content %}
+            {{entry.content | safe}}
+            {% endif %}
+
+            {% if entry.travel and entry.travel.trips %}
+            {% if entry.travel.map_path %}
+            <img src="/{{ entry.travel.map_path }}" class="img-fluid">
+            {% endif %}
+
+            <div class="travel-details">
+                {% for trip in entry.travel.trips %}
+                <div class="trip">
+                    <p>{{ trip.location_name }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+
+
+            {%if entry.event%}
+            <div class="p-2">
+                <h4>At: {{entry.event.event_name}}</h4>
+                <p></p><b>From</b> <a class="dt-start">{{entry.event.dt_start}}</a>
+                <b>To</b> <a class="dt-end">{{entry.event.dt_end}}</p></a>
+            </div>
+            {%endif%}
+
+
+            <div class="p-2 entry-footer clearfix"> <!-- Footer -->
+                <div class="categories"> <!-- Catagories -->
+                    {% if entry.category %}
+                    <i class="fa fa-tags"></i>
+                    {% for c in entry.category %}
+                    <a class="category" href="/t/{{c}}">{{c}}</a>
+                    {% endfor %}
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="p-2 entry-footer row align-items-end">
-        <div class="text-left col-lg-9 col-md-9 col-sm-9 col-xs-9">
-            	<a href="https://fed.brid.gy/"></a>
-		<p>Posted on
-                <a class="u-url" href="{{entry.url}}">
-                    <time class="dt-published">{{entry.published}}</time>
-                </a>
-                {% if entry.location and entry.location_name%} <!-- If there's a location -->
-                in
-                {% if entry.location_name %}
-                <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
-                {% else %}
-                <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
-                {% endif %}
-                {% endif %}
-                By <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
-            </p>
-        </div> <!-- END POST DETAILS -->
+        <div class="p-2 entry-footer row align-items-end">
+            <div class="text-left col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                <a href="https://fed.brid.gy/"></a>
+                <p>Posted on
+                    <a class="u-url" href="{{entry.url}}">
+                        <time class="dt-published">{{entry.published}}</time>
+                    </a>
+                    {% if entry.location and entry.location_name%} <!-- If there's a location -->
+                    in
+                    {% if entry.location_name %}
+                    <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
+                    {% else %}
+                    <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
+                    {% endif %}
+                    {% endif %}
+                    By <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
+                </p>
+            </div> <!-- END POST DETAILS -->
 
-        <div class="text-right col-lg-3 col-md-3 col-sm-3 col-xs-3">
-            <p>
-                {% if entry.in_reply_to%}
-                <span>{{entry.in_reply_to | length}}</span>
-                <i class="fa fa-reply"></i>
-                {% endif %}
-                <span data-webmention-count data-url="http://kongaloosh.com{{entry.url}}"></span>
-                <i class="fa fa-comments"></i>
-                <a href="{{entry.url}}"><i class="fa fa-link"></i></a>
-            </p>
-        </div> <!-- END PERMALINK -->
-    </div> <!-- END AUTHORSHIP -->
-
-    <div class="p-2 entry-footer row">
-        <div class="actions col-md-9 pull-left">
-            {% if entry.twitter %}
-            <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
-                <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
-                    <i class="fa fa-star"></i>
-                    Like
-                </a>
-            </indie-action>
-            <indie-action do="repost" with="http://kongaloosh.com{{entry.url}}">
-                <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
-                    <i class="fa fa-retweet"></i>
-                    Repost
-                </a>
-            </indie-action>
-            <indie-action do="reply" with="http://kongaloosh.com{{entry.url}}">
-                <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
+            <div class="text-right col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                <p>
+                    {% if entry.in_reply_to%}
+                    <span>{{entry.in_reply_to | length}}</span>
                     <i class="fa fa-reply"></i>
-                    Reply
-                </a>
-            </indie-action>
-            {% endif %}
-        </div> <!-- END ACTIONS -->
+                    {% endif %}
+                    <span data-webmention-count data-url="http://kongaloosh.com{{entry.url}}"></span>
+                    <i class="fa fa-comments"></i>
+                    <a href="{{entry.url}}"><i class="fa fa-link"></i></a>
+                </p>
+            </div> <!-- END PERMALINK -->
+        </div> <!-- END AUTHORSHIP -->
 
-        <div class="actions col-md-3 text-right">
-            {% if entry.twitter %}
-            <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
-                On Twitter
-                <i class="fa fa-twitter"></i>
-            </a>
-            {% endif %}
-            {% if entry.facebook %}
-            <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
-                On facebook
-                <i class="fa fa-facebook-square"></i>
-            </a>
-            {% endif %}
-        </div> <!-- END TWITTER LINK -->
-    </div><!-- END TWITTER SYNDICATION -->
-</div>
-<hr>
-{% else %}
-<p>No entries here so far </p> <!-- When we have nothing left -->
-{% endfor %}
-{% endblock %}
+        <div class="p-2 entry-footer row">
+            <div class="actions col-md-9 pull-left">
+                {% if entry.twitter %}
+                <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
+                    <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
+                        <i class="fa fa-star"></i>
+                        Like
+                    </a>
+                </indie-action>
+                <indie-action do="repost" with="http://kongaloosh.com{{entry.url}}">
+                    <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
+                        <i class="fa fa-retweet"></i>
+                        Repost
+                    </a>
+                </indie-action>
+                <indie-action do="reply" with="http://kongaloosh.com{{entry.url}}">
+                    <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
+                        <i class="fa fa-reply"></i>
+                        Reply
+                    </a>
+                </indie-action>
+                {% endif %}
+            </div> <!-- END ACTIONS -->
+
+            <div class="actions col-md-3 text-right">
+                {% if entry.twitter %}
+                <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
+                    On Twitter
+                    <i class="fa fa-twitter"></i>
+                </a>
+                {% endif %}
+                {% if entry.facebook %}
+                <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
+                    On facebook
+                    <i class="fa fa-facebook-square"></i>
+                </a>
+                {% endif %}
+            </div> <!-- END TWITTER LINK -->
+        </div><!-- END TWITTER SYNDICATION -->
+    </div>
+    <hr>
+    {% else %}
+    <p>No entries here so far </p> <!-- When we have nothing left -->
+    {% endfor %}
+    {% endblock %}
 </div>

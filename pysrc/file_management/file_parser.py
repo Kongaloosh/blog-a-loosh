@@ -10,9 +10,9 @@ from PIL import Image
 import markdown as markdown
 from datetime import datetime
 from flask import current_app as app
-from pysrc.post import BlogPost, ReplyTo, Event
+from pysrc.post import BlogPost, ReplyTo, Event, DraftPost
 from pydantic import ValidationError
-from typing import Any
+from typing import Any, Union
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -105,7 +105,7 @@ def save_to_two(image: str, to_blog_location: str, to_copy: str) -> None:
     # Original-size photos in the self-hosting image server directory
 
 
-def file_parser_json(filename: str, md: bool = True) -> BlogPost:
+def file_parser_json(filename: str, md: bool = True) -> Union[BlogPost, DraftPost]:
     """
     Parses a json file into a BlogPost object.
     """
@@ -176,6 +176,9 @@ def file_parser_json(filename: str, md: bool = True) -> BlogPost:
                     in_reply_to.append({"url": i})
             data["in_reply_to"] = in_reply_to
 
+        # Choose model based on file location
+        if DRAFTS_STORAGE in filename:
+            return DraftPost(**data)
         return BlogPost(**data)
     except ValidationError as e:
         app.logger.error(f"Validation error for {filename}: {e}")
@@ -217,13 +220,11 @@ def save_map_file(map_data: bytes, file_path: str) -> str:
     return map_file_path
 
 
-def create_post_from_data(data: BlogPost | dict[str, Any]) -> BlogPost:
-    """
-    Cleans and prepares a dictionary based on posted form info for JSON dump.
-    Returns a validated BlogPost object.
-    """
-    # If data is already a BlogPost, convert it back to dict for processing
-    if isinstance(data, BlogPost):
+def create_post_from_data(
+    data: BlogPost | DraftPost | dict[str, Any]
+) -> Union[BlogPost, DraftPost]:
+    # Convert Pydantic models to dict first
+    if isinstance(data, (BlogPost, DraftPost)):
         data = data.model_dump()
 
     # 1. Clean up None values
@@ -273,12 +274,15 @@ def create_post_from_data(data: BlogPost | dict[str, Any]) -> BlogPost:
     # 6. Create and validate BlogPost
     try:
         return BlogPost(**data)
-    except ValidationError as e:
-        raise ValueError(f"Invalid blog post data: {e}")
+    except ValidationError:
+        try:
+            return DraftPost(**data)
+        except ValidationError as e:
+            raise ValueError(f"Invalid blog post data: {e}")
 
 
 def create_json_entry(
-    data: BlogPost, g, draft: bool = False, update: bool = False
+    data: Union[BlogPost, DraftPost], g, draft: bool = False, update: bool = False
 ) -> str:
     """
     creates a json entry based on recieved dictionary

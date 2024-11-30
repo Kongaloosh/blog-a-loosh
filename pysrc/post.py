@@ -26,9 +26,19 @@ class Event(BaseModel):
 
 
 class Trip(BaseModel):
-    dt_start: Optional[datetime] = None
-    dt_end: Optional[datetime] = None
-    event_name: Optional[str] = None
+    location: str
+    location_name: Optional[str] = None
+    date: Optional[datetime] = None  # Single date per trip
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+    def model_dump(self, **kwargs):
+        data = super().model_dump(**kwargs)
+        if kwargs.get("mode") == "json":
+            if self.date:
+                data["date"] = self.date.isoformat()
+        return data
 
 
 class Travel(BaseModel):
@@ -52,7 +62,9 @@ class DraftPost(BaseModel):
     """Model for posts being created/edited before storage"""
 
     # Content fields
-    content: str  # Only required field for a draft
+    content: str
+    slug: str
+    url: str
     title: Optional[str] = None
     summary: Optional[str] = None
 

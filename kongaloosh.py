@@ -38,6 +38,7 @@ from slugify import slugify
 from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.file_management.file_parser import (
     create_json_entry,
+    create_post_from_data,
     update_json_entry,
     file_parser_json,
 )
@@ -261,7 +262,7 @@ def handle_uploaded_files(request: Request) -> List[str]:
 def post_from_request(
     request: Request, existing_post: Optional[BlogPost] = None
 ) -> Union[DraftPost, BlogPost]:
-    """Process form data into a Post model based on the form action (Save vs Submit)"""
+    """Process form data into a Post model based on the form action"""
     try:
         # Get form data
         form_data = process_form_data(request)
@@ -269,50 +270,68 @@ def post_from_request(
 
         # Handle travel data
         travel_data = None
-        if "geo[]" in request.form:
-            travel_data = handle_travel_data(request)
+        if "geo[]" in request.form and request.form.getlist("geo[]")[0]:
+            try:
+                travel_data = handle_travel_data(request)
+            except TravelValidationError:
+                raise
+        else:
+            travel_data = Travel()
 
-        # Combine existing photos with new uploads
-        all_photos = (form_data.photo or []) + uploaded_photos
-
-        # Base post data suitable for both drafts and published posts
+        # Base post data
         post_data = {
             "title": form_data.title,
             "content": form_data.content,
             "summary": form_data.summary,
             "category": form_data.category,
-            "photo": all_photos if all_photos else None,
+            "photo": (form_data.photo or []) + uploaded_photos,
             "in_reply_to": form_data.in_reply_to,
             "travel": travel_data,
         }
 
-        # If this is a Save action OR it's a new post (not existing)
-        if "Save" in request.form or not existing_post:
-            # For existing posts being saved, preserve metadata
-            if existing_post and "Save" in request.form:
-                post_data.update(
-                    {
-                        "slug": existing_post.slug,
-                        "u_uid": existing_post.u_uid,
-                        "url": existing_post.url,
-                        "published": existing_post.published,
-                    }
-                )
-            return DraftPost(**post_data)
-
-        # Only return BlogPost for explicit Submit actions on existing posts
-        post_data.update(
-            {
-                "published": form_data.published or datetime.now(),
-                "slug": existing_post.slug,
-                "u_uid": existing_post.u_uid,
-                "url": existing_post.url,
-            }
-        )
+        if existing_post:
+            # Preserve existing data
+            post_data.update(
+                {
+                    "slug": existing_post.slug,
+                    "url": existing_post.url,
+                    "published": existing_post.published,
+                    "u_uid": existing_post.u_uid,
+                }
+            )
+        elif "Save" in request.form:  # If saving as draft
+            # Generate temporary values for required fields
+            now = datetime.now()
+            post_data.update(
+                {
+                    "slug": (
+                        slugify(form_data.title)
+                        if form_data.title
+                        else f"draft-{now.timestamp()}"
+                    ),
+                    "url": f"/drafts/{now.strftime('%Y/%m/%d')}/untitled",
+                    "published": now,
+                    "u_uid": str(uuid.uuid4()),
+                }
+            )
+            return DraftPost(**post_data)  # Use DraftPost model for drafts
+        else:
+            # Normal submission - these will be set by add_entry
+            post_data.update(
+                {
+                    "slug": "",
+                    "url": "",
+                    "published": datetime.now(),
+                    "u_uid": str(uuid.uuid4()),
+                }
+            )
 
         return BlogPost(**post_data)
 
+    except TravelValidationError:
+        raise
     except Exception as e:
+        flash(f"Error creating post: {str(e)}", "error")
         raise ValueError(f"Invalid blog post data: {e}")
 
 
@@ -332,15 +351,31 @@ def handle_photo_files(request: Request) -> List[FileStorage]:
     raise ValueError("No photo files found")
 
 
+class TravelValidationError(ValueError):
+    pass
+
+
 def handle_travel_data(request: Request) -> Travel:
     geo = request.form.getlist("geo[]")
     location = request.form.getlist("location[]")
     date = request.form.getlist("date[]")
 
+    # Validate that we have dates for all locations
+    missing_dates = []
+    for i, (g, l, d) in enumerate(zip(geo, location, date), 1):
+        if g and l and not d:  # If we have location but no date
+            missing_dates.append(i)
+
+    if missing_dates:
+        locations = [f"location {i}" for i in missing_dates]
+        flash(f"Missing dates for {', '.join(locations)}", "error")
+        raise TravelValidationError("Missing required dates for travel entries")
+
     if len(geo) == len(location) == len(date):
         trips: list[Trip] = [
             Trip(location=g, location_name=l, date=parse(d))
             for g, l, d in zip(geo, location, date)
+            if g and l and d  # Only create trips with complete data
         ]
 
         if trips:
@@ -367,26 +402,14 @@ def handle_event_data(request: Request) -> Event:
     return Event(**event_data)
 
 
-def get_post_for_editing(file_path: str) -> BlogPost:
-    """Get a post from the filesystem and prepare it for editing.
-
-    Args:
-        file_path: Path to the JSON file containing the post data
-
-    Returns:
-        BlogPost: The post data ready for editing
-
-    Raises:
-        FileNotFoundError: If the post file doesn't exist
-    """
+def get_post_for_editing(file_path: str) -> Union[BlogPost, DraftPost]:
+    """Get a post from the filesystem and prepare it for editing."""
     if not os.path.exists(f"{file_path}.json"):
         raise FileNotFoundError(f"Post not found at {file_path}.json")
 
-    # Load the post data
     with open(f"{file_path}.json", "r") as f:
         data = json.load(f)
 
-    # Convert in_reply_to list to comma-separated string for form
     if data.get("in_reply_to"):
         if isinstance(data["in_reply_to"], list):
             data["in_reply_to"] = ", ".join(
@@ -396,7 +419,6 @@ def get_post_for_editing(file_path: str) -> BlogPost:
                 ]
             )
 
-    # Parse dates back to datetime objects
     for date_field in ["published", "updated", "dt_start", "dt_end"]:
         if data.get(date_field):
             try:
@@ -406,8 +428,11 @@ def get_post_for_editing(file_path: str) -> BlogPost:
 
     try:
         return BlogPost(**data)
-    except ValidationError as e:
-        raise ValueError(f"Invalid blog post data: {e}")
+    except (ValidationError, ValueError):
+        try:
+            return DraftPost(**data)
+        except ValidationError as e:
+            raise ValueError(f"Invalid blog post data: {e}")
 
 
 def syndicate_from_form(creation_request, data: BlogPost) -> None:
@@ -780,15 +805,21 @@ def add():
         )
 
     elif request.method == "POST":
+        print(f"Received POST request: {request.form}")
         if not session.get("logged_in"):
             abort(401)
 
-        if "Submit" in request.form:
-            return redirect(add_entry(request))
-
-        elif "Save" in request.form:  # if we're simply saving the post as a draft
+        try:
             data = post_from_request(request)
-            return redirect(create_json_entry(data, g=g, draft=True))
+            if "Save" in request.form:  # if we're saving as a draft
+                # Convert to dict and create draft post
+                data = create_post_from_data(data)
+                location = create_json_entry(data, g=g.db, draft=True)
+                return redirect(location)
+            else:  # normal submission
+                return redirect(add_entry(request))
+        except TravelValidationError:
+            return redirect(url_for("add"))
 
     return "", 501
 
@@ -1594,6 +1625,19 @@ def follower_individual(account):
 @app.route("/already_made", methods=["GET"])
 def post_already_exists():
     return render_template("already_exists.html")
+
+
+@app.route("/verify_url", methods=["POST"])
+def verify_url():
+    url = request.json.get("url")
+    if not url:
+        return jsonify({"valid": False, "error": "No URL provided"})
+
+    try:
+        response = requests.head(url, allow_redirects=True, timeout=5)
+        return jsonify({"valid": response.status_code < 400})
+    except requests.RequestException as e:
+        return jsonify({"valid": False, "error": str(e)})
 
 
 if __name__ == "__main__":

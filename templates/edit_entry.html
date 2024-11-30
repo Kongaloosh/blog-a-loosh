@@ -38,8 +38,8 @@
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-6 col-sm-12">
-                <form enctype="multipart/form-data" action="/edit{{entry.url}}" method="post" class="input-large"
-                    id="input" novalidate>
+                <form enctype="multipart/form-data" action="{{ '/add' if type == 'add' else '/edit' + entry.url }}"
+                    method="post" class="input-large" id="input" onsubmit="return validateTravelForm()" novalidate>
                     <p>
                         <input type="text" style="width: 100%" name="title" id="title_form"
                             value="{% if entry.title%}{{entry.title}}{% endif %}" placeholder="title">
@@ -143,21 +143,12 @@
                             id="geo_coord">{%if entry.location%}{{entry.location}}{%endif%}</textarea>
                     </p>
 
-                    <p>
-                        {% if type == "draft" %}
-                        <input formaction="/drafts/{{entry.slug}}" type="submit" value="Save" name="Save"
-                            style="width:49%">
-                        <input formaction="/drafts/{{entry.slug}}" type="submit" value="Submit" name="Submit"
-                            style="width:49%" formnovalidate>
-
-                        {% elif type == "edit" %}
-                        <input type="submit" style="width:49%" value="Submit" name="Submit">
-                        {% elif type == "add"%}
-                        <input formaction="/add" type="submit" style="width:49%" value="Save" name="Save"> <input
-                            formaction="/add" type="submit" style="width:49%" value="Submit" name="Submit">
+                    <div class="form-actions">
+                        <button type="submit" name="Submit" class="btn btn-primary">Submit</button>
+                        {% if type == 'add' or (type == 'draft' and entry) %}
+                        <button type="submit" name="Save" value="Save" class="btn btn-secondary">Save Draft</button>
                         {% endif %}
-
-                    </p>
+                    </div>
                 </form>
                 <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
             </div>
@@ -199,6 +190,7 @@ MathJax.Hub.Config({
 <script src="/static/js/add_trip.js"></script>
 <script src="/static/js/photostream.js"></script>
 <script src="/static/js/geolocation.js"></script>
+<script src="/static/js/travel_validation.js"></script>
 
 <script>
     function readURL(input) {
@@ -216,7 +208,15 @@ MathJax.Hub.Config({
 
 </script>
 
-
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
 {% else %}
 <div class="row">
@@ -226,3 +226,7 @@ MathJax.Hub.Config({
 </div>
 {% endif %}
 {% endblock %}
+
+<script>
+    console.log("All scripts loaded");
+</script>
