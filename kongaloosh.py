@@ -26,6 +26,7 @@ from flask import (
     Response,
     make_response,
     jsonify,
+    Blueprint,
 )
 from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
@@ -44,6 +45,7 @@ from pysrc.file_management.markdown_album_pre_process import run
 from pysrc.file_management.markdown_album_pre_process import new_prefix
 from dataclasses import dataclass
 import uuid
+from werkzeug.utils import secure_filename
 
 jinja_env = Environment()
 
@@ -62,13 +64,23 @@ FULLNAME = config.get("PersonalInfo", "FullName")
 GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
 ORIGINAL_PHOTOS_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 # the url to use for showing recent bulk uploads
-PHOTOS_URL = config.get("PhotoLocations", "URLPhotos")
 BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
+BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config["STATIC_FOLDER"] = os.getcwd()
+
+# Add a second static folder specifically for serving photos
+photos_path = os.path.join(os.getcwd(), BLOG_STORAGE)
+photos = Blueprint(
+    "blog_data_storage",
+    __name__,
+    static_url_path=f"/{BLOG_STORAGE}",
+    static_folder=photos_path,
+)
+app.register_blueprint(photos)
 cfg = None
 
 
@@ -163,7 +175,7 @@ def resolve_placename(location: str) -> PlaceInfo:
         geo_results = requests.get(url).json()
 
         if not geo_results.get("geonames"):
-            return None
+            raise ValueError("No geonames api key found")
 
         place_info = geo_results["geonames"][0]
         place_name = place_info["name"]
@@ -231,14 +243,17 @@ def process_form_data(request: Request) -> PostFormData:
 def handle_uploaded_files(request: Request) -> List[str]:
     """Process only the file uploads from the request"""
     photo_paths = []
+    # Ensure uploads directory exists
+    upload_dir = os.path.join(os.getcwd(), BULK_UPLOAD_DIR)
+    os.makedirs(upload_dir, exist_ok=True)
 
     if files := request.files.getlist("photo_file[]"):
         for file in files:
             if file and file.filename:
-                # Save file and get path
-                path = f"uploads/{secure_filename(file.filename)}"
+                filename = secure_filename(file.filename)
+                path = os.path.join(upload_dir, filename)
                 file.save(path)
-                photo_paths.append(path)
+                photo_paths.append(os.path.join(BULK_UPLOAD_DIR, filename))
 
     return photo_paths
 
@@ -364,10 +379,6 @@ def get_post_for_editing(file_path: str) -> BlogPost:
     # Load the post data
     with open(f"{file_path}.json", "r") as f:
         data = json.load(f)
-
-    # Convert categories list to comma-separated string for form
-    if data.get("category"):
-        data["category"] = ", ".join(data["category"])
 
     # Convert in_reply_to list to comma-separated string for form
     if data.get("in_reply_to"):
@@ -762,7 +773,7 @@ def add():
             "edit_entry.html", entry=None, popular_tags=tags, type="add"
         )
 
-    elif request.method == "POST":  # if we're adding a new post
+    elif request.method == "POST":
         if not session.get("logged_in"):
             abort(401)
 
@@ -819,9 +830,12 @@ def delete_entry(year, month, day, name):
 
         if isinstance(entry.photo, list):
             for photo in entry.photo:
-                os.remove(photo)
-        elif isinstance(entry.photo, str):
-            os.remove(entry.photo)
+                try:
+                    os.remove(photo)
+                except FileNotFoundError:
+                    app.logger.error(
+                        f"File not found at location {photo}; deletion did not occur."
+                    )
 
         for extension in [".md", ".json", ".jpg"]:
             if os.path.isfile(totalpath + extension):
@@ -1023,7 +1037,6 @@ def edit(year, month, day, name):
         if not session.get("logged_in"):
             abort(401)
         if "Submit" in request.form:
-            post = post_from_request(request)
             update_entry(request, year, month, day, name)
         return redirect("/")
     # Add a default return statement
