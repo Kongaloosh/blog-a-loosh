@@ -5,7 +5,6 @@ from slugify import slugify
 import json
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
-from pysrc.file_management.markdown_album_pre_process import new_prefix
 import logging
 from PIL import Image
 import markdown as markdown
@@ -29,6 +28,11 @@ PASSWORD = config.get("SiteAuthentication", "password")
 DOMAIN_NAME = config.get("Global", "DomainName")
 GEONAMES = config.get("GeoNamesUsername", "Username")
 FULLNAME = config.get("PersonalInfo", "FullName")
+ORIGINAL_PHOTOS_DIR = config.get("PhotoLocations", "BulkUploadLocation")
+BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
+BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
+DRAFTS_STORAGE = config.get("PhotoLocations", "DraftsStorage")
+PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermStorage")
 
 _MAX_SIZE = 3000
 
@@ -225,6 +229,9 @@ def create_post_from_data(data: BlogPost | dict[str, Any]) -> BlogPost:
     # 1. Clean up None values
     data = {k: v for k, v in data.items() if v not in (None, "", "None")}
 
+    # Ensure required fields have at least empty values
+    data["content"] = data.get("content") or ""  # Default to empty string if None
+
     # 2. Generate slug if missing
     if not data.get("slug"):
         if data.get("title"):
@@ -280,8 +287,8 @@ def create_json_entry(
     data = create_post_from_data(data)
 
     if draft:  # whether or not this is a draft changes the location saved
-        file_path = "drafts/"
-        data.url = "/drafts/" + data.slug
+        directory_of_post = DRAFTS_STORAGE
+        data.url = os.path.join(DRAFTS_STORAGE, data.slug)
 
     else:  # if it's not a draft we need to prep for saving
         date_location = "{year}/{month}/{day}/".format(
@@ -289,67 +296,58 @@ def create_json_entry(
             month=str(data.published.month),
             day=str(data.published.day),
         )  # turn date into file-path
-        file_path = "data/" + date_location  # where we'll save the new entry
+        directory_of_post = os.path.join(
+            BLOG_STORAGE, date_location
+        )  # where we'll save the new entry
         data.url = "/e/" + date_location + data.slug
 
-    if not os.path.exists(file_path):  # if the path doesn't exist, make it
-        os.makedirs(os.path.dirname(file_path))
+    if not os.path.exists(directory_of_post):  # if the path doesn't exist, make it
+        os.makedirs(os.path.dirname(directory_of_post))
 
-    total_path = file_path + "{slug}".format(slug=data.slug)  # path including filename
+    relative_post_path = os.path.join(directory_of_post, data.slug)
 
     # check to make sure that the .json and human-readable versions do not exist currently
     if (
-        not os.path.isfile(total_path + ".md")
-        and not os.path.isfile(total_path + ".json")
+        not os.path.isfile(relative_post_path + ".md")
+        and not os.path.isfile(relative_post_path + ".json")
         or update
     ):
-        # Find all the multimedia files which were added with the posts
+        # Find all the multimedia files which were added with the posts.
+        # we name the files based on the slug of the post and colocate them.
         if data.photo:
             extension = ".jpg"
-            i = 0
             file_list = []
             for file_i in data.photo:
-                if file_i:  # if there is no photo already
-                    # if the image is a location ref
-                    if isinstance(file_i, str) and file_i.startswith("/images/"):
-                        # print("is unnicode and is /img/", file_i)
-                        while os.path.isfile(total_path + "-" + str(i) + extension):
-                            i += 1
-                        # move the image and resize it
-                        move_and_resize(
-                            new_prefix
-                            + file_i[
-                                len("/images/") :
-                            ],  # we remove the head to get rid of preceeding "/images/"
-                            total_path + "-" + str(i) + extension,
-                            new_prefix + total_path + "-" + str(i) + extension,
-                        )
-                        file_list.append(
-                            new_prefix + total_path + "-" + str(i) + extension
-                        )
-                    elif isinstance(
-                        file_i, str
-                    ):  # if we have a buffer with the data already present, simply save and move it.
-                        # print("Is unicode, but not new", file_i)
-                        file_list.append(file_i)
-                    else:
-                        # print("Is not unicode, and is new", file_i)
-                        while os.path.isfile(total_path + "-" + str(i) + extension):
-                            i += 1
-                        save_to_two(
-                            file_i,
-                            total_path + "-" + str(i) + extension,
-                            new_prefix + total_path + "-" + str(i) + extension,
-                        )
-                        file_list.append(
-                            total_path + "-" + str(i) + extension
-                        )  # update the dict to a location refrence
-                i += 1
+                # if the image is a location ref
+                if isinstance(file_i, str) and file_i.startswith(BULK_UPLOAD_DIR):
+                    i = 0
+                    while os.path.isfile(relative_post_path + "-" + str(i) + extension):
+                        i += 1
+
+                    from_location = file_i
+                    new_name = data.slug + "-" + str(i) + extension
+                    high_res_location = os.path.join(
+                        PERMANENT_PHOTOS_DIR, date_location, new_name
+                    )
+                    web_size_location = os.path.join(
+                        BLOG_STORAGE, date_location, new_name
+                    )
+                    print(f"high_res_location: {high_res_location}")
+                    print(f"web_size_location: {web_size_location}")
+                    print(f"from_location: {from_location}")
+                    print("\n\n\n\n\n\n\n\n\n\n")
+                    move_and_resize(
+                        from_location,
+                        web_size_location,
+                        high_res_location,
+                    )
+
+                    file_list.append(web_size_location)
 
             data.photo = file_list
         try:
             if data.travel and data.travel.map_data:
-                map_file_path = save_map_file(data.travel.map_data, total_path)
+                map_file_path = save_map_file(data.travel.map_data, relative_post_path)
                 data.travel.map_path = map_file_path
                 data.travel.map_data = None
 
@@ -358,11 +356,8 @@ def create_json_entry(
 
         json_data = data.model_dump(mode="json")
 
-        with open(total_path + ".json", "w") as file_writer:
+        with open(relative_post_path + ".json", "w") as file_writer:
             json.dump(json_data, file_writer)
-
-        logger.info(f"Saved post to {total_path}.json")
-        logger.info(type(g))
 
         if not draft and not update and g:  # if this isn't a draft, put it in the dbms
             g.execute(
@@ -370,7 +365,7 @@ def create_json_entry(
                 insert into entries
                 (slug, published, location) values (?, ?, ?)
                 """,
-                [data.slug, data.published, total_path],
+                [data.slug, data.published, relative_post_path],
             )
             g.commit()
             if data.category:

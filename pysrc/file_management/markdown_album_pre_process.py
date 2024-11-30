@@ -35,7 +35,9 @@ def move(loc, date):
     # we remove '/images/' because it's in both the prefix from the config file and the filename from the wysiwyg edit
     # todo: check to see if you can re-name the prefix in the config file to make this easier
     # this creates the absolute filepath
-    target_file_path = new_prefix + loc[len("/images/") :]  # remove the '/images/'
+    target_file_path = (
+        new_prefix + loc[len(ORIGINAL_PHOTOS_DIR) :]
+    )  # remove the '/images/'
 
     # 1. SAVE THE ORIGINAL IMAGE AT ORIGINAL QUALITY
     if not os.path.exists(
