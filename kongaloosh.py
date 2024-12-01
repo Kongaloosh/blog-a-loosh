@@ -74,14 +74,23 @@ app.config.from_object(__name__)
 app.config["STATIC_FOLDER"] = os.getcwd()
 
 # Add a second static folder specifically for serving photos
-photos_path = os.path.join(os.getcwd(), BLOG_STORAGE)
 photos = Blueprint(
     "blog_data_storage",
     __name__,
     static_url_path=f"/{BLOG_STORAGE}",
-    static_folder=photos_path,
+    static_folder=os.path.join(os.getcwd(), BLOG_STORAGE),
 )
+
+temp_photos = Blueprint(
+    "temp_photos_data_storage",
+    __name__,
+    static_url_path=f"/{BULK_UPLOAD_DIR}",
+    static_folder=os.path.join(os.getcwd(), BULK_UPLOAD_DIR),
+)
+
 app.register_blueprint(photos)
+app.register_blueprint(temp_photos)
+
 cfg = None
 
 
@@ -890,6 +899,33 @@ def delete_entry(year, month, day, name):
     return redirect("/", 500)
 
 
+def rotate_image_by_exif(image: Image.Image) -> Image.Image:
+    """Rotate image according to EXIF orientation tag"""
+    try:
+        # Find orientation tag
+        orientation = next(
+            (tag for tag, name in ExifTags.TAGS.items() if name == "Orientation"), None
+        )
+
+        if not orientation:
+            return image
+
+        exif = image.getexif()
+        if not exif or orientation not in exif:
+            return image
+
+        # Rotate based on orientation value
+        rotation_map = {3: 180, 6: 270, 8: 90}
+
+        if rotation := rotation_map.get(exif[orientation]):
+            return image.rotate(rotation, expand=True)
+
+    except Exception as e:
+        app.logger.error(f"Error processing EXIF orientation: {e}")
+
+    return image
+
+
 @app.route("/bulk_upload", methods=["GET", "POST"])
 def bulk_upload():
     if request.method == "GET":
@@ -898,52 +934,27 @@ def bulk_upload():
         if not session.get("logged_in"):
             abort(401)
 
-        file_path = ORIGINAL_PHOTOS_DIR
+        temporary_file_name = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
 
-        app.logger.info("uploading at " + file_path)
-        app.logger.info(request.files)
         for uploaded_file in request.files.getlist("file"):
             i = 0
-            file_loc = (
-                file_path
-                + datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-                + "."
-                + uploaded_file.filename.split(".")[-1:][0]
+            assert uploaded_file.filename
+            file_extension = uploaded_file.filename.split(".")[-1:][0]
+
+            file_loc = os.path.join(
+                BULK_UPLOAD_DIR,
+                f"{temporary_file_name}.{file_extension}",
             )
             while os.path.exists(file_loc):
-                file_loc = (
-                    file_path
-                    + datetime.now().strftime("%Y-%m-%d--%H-%M-%S-")
-                    + str(i)
-                    + "."
-                    + uploaded_file.filename.split(".")[-1:][0]
+                file_loc = os.path.join(
+                    BULK_UPLOAD_DIR,
+                    f"{temporary_file_name}-{i}.{file_extension}",
                 )
                 i += 1
 
-            image = Image.open(uploaded_file)
-            try:
-                for orientation in ExifTags.TAGS.keys():
-                    if ExifTags.TAGS[orientation] == "Orientation":
-                        break
-                exif = dict(image._getexif().items())
-                try:
-                    if exif[orientation] == 3:
-                        image = image.rotate(180, expand=True)
-                    elif exif[orientation] == 6:
-                        image = image.rotate(270, expand=True)
-                    elif exif[orientation] == 8:
-                        image = image.rotate(90, expand=True)
-                except KeyError:
-                    app.logger.error(
-                        "exif orientation key error: key was {0}, not in keys {1}".format(
-                            orientation, exif.keys()
-                        )
-                    )
-            except AttributeError:
-                # could be a png or something without exif
-                pass
-            app.logger.info("saved at " + file_loc)
-            image.save(file_loc)
+            image = Image.open(uploaded_file.stream)
+            rotated_image = rotate_image_by_exif(image)
+            rotated_image.save(file_loc)
         return redirect("/")
     else:
         return redirect("/404")
@@ -1028,7 +1039,9 @@ def recent_uploads():
         directory = ORIGINAL_PHOTOS_DIR
         insert_pattern = "%s" if request.args.get("stream") else "[](%s)"
 
-        file_list = [PHOTOS_URL + file for file in os.listdir(directory)]
+        file_list = [
+            os.path.join(BULK_UPLOAD_DIR, file) for file in os.listdir(directory)
+        ]
 
         rows = []
         for i in range(0, len(file_list), 3):
