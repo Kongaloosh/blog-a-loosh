@@ -161,29 +161,22 @@ def file_parser_json(filename: str, md: bool = True) -> Union[BlogPost, DraftPos
         # Handle in_reply_to
         if data.get("in_reply_to"):
             in_reply_to = []
-            # TODO: This is a hack to make sure that the in_reply_to is a list.
-            #  We should fix it so that it's always a list. I can write a script.
-            # if not isinstance(data["in_reply_to"], list):
-            #     data["in_reply_to"] = [
-            #         reply.strip() for reply in data["in_reply_to"].split(",")
-            #     ]
             for i in data["in_reply_to"]:
-                # TODO: I don't think this is used anywhere. Write a script to check.
-                # if isinstance(i, dict):
-                # in_reply_to.append(i)
-                if i.startswith("http://127.0.0.1:5000") or i.startswith(
-                    "https://kongaloosh.com/"
-                ):
-                    # if this is a local reply to myself.
-                    reply_filename = (
-                        i.replace("http://127.0.0.1:5000/e/", "data/", 1).replace(
-                            "https://kongaloosh.com/e/", "data/", 1
+                if isinstance(i, dict):
+                    in_reply_to.append(i)
+                elif isinstance(i, str):
+                    if i.startswith("http://127.0.0.1:5000") or i.startswith(
+                        "https://kongaloosh.com/"
+                    ):
+                        reply_filename = (
+                            i.replace(
+                                "http://127.0.0.1:5000/e/", BLOG_STORAGE, 1
+                            ).replace("https://kongaloosh.com/e/", BLOG_STORAGE, 1)
+                            + ".json"
                         )
-                        + ".json"
-                    )
-                    in_reply_to.append(file_parser_json(reply_filename))
-                elif i.startswith("http"):
-                    in_reply_to.append({"url": i})
+                        in_reply_to.append(file_parser_json(reply_filename))
+                    elif i.startswith("http"):
+                        in_reply_to.append({"url": i})
             data["in_reply_to"] = in_reply_to
 
         # Choose model based on file location
