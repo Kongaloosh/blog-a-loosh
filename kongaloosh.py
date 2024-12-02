@@ -45,6 +45,7 @@ from dataclasses import dataclass
 import uuid
 from werkzeug.utils import secure_filename
 import yaml
+from pysrc.database.queries import EntryQueries, CategoryQueries
 
 jinja_env = Environment()
 
@@ -145,11 +146,7 @@ def get_entries_by_date() -> List[BlogPost]:
         List of entries, each represented as a dictionary.
     """
     entries = []
-    cur = g.db.execute(
-        """SELECT entries.location FROM entries
-        ORDER BY entries.published DESC
-        """
-    )
+    cur = g.db.execute(EntryQueries.SELECT_ALL)
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
             entries.append(file_parser_json(row + ".json"))
@@ -162,15 +159,7 @@ def get_most_popular_tags() -> List[str]:
     Returns:
         List of tags in descending order by usage.
     """
-    cur = g.db.execute(
-        """
-        SELECT category, COUNT(*) as count
-        FROM categories
-        WHERE category NOT IN ('None', 'image', 'album', 'bookmark', 'note')
-        GROUP BY category
-        ORDER BY count DESC
-        """
-    )
+    cur = g.db.execute(CategoryQueries.SELECT_POPULAR)
     return [row[0] for row in cur.fetchall()]
 
 

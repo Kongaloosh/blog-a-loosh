@@ -15,6 +15,7 @@ from pysrc.post import BlogPost, ReplyTo, Event, DraftPost
 from pydantic import ValidationError
 from typing import Any, Union
 from pysrc.markdown_albums.markdown_album_extension import album_regexp
+from pysrc.database.queries import EntryQueries, CategoryQueries
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
 
@@ -379,17 +380,14 @@ def create_json_entry(
 
         if not draft and not update and g:  # if this isn't a draft, put it in the dbms
             g.execute(
-                """
-                insert into entries
-                (slug, published, location) values (?, ?, ?)
-                """,
-                [data.slug, data.published, relative_post_path],
+                EntryQueries.INSERT, [data.slug, data.published, relative_post_path]
             )
             g.commit()
+
             if data.category:
                 for c in data.category:
                     g.execute(
-                        "insert or replace into categories (slug, published, category) values (?, ?, ?)",  # noqa
+                        CategoryQueries.INSERT_OR_REPLACE,
                         [data.slug, data.published, c],
                     )
                     g.commit()
