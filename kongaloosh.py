@@ -60,10 +60,10 @@ DOMAIN_NAME = config.get("Global", "DomainName")
 GEONAMES = config.get("GeoNamesUsername", "Username")
 FULLNAME = config.get("PersonalInfo", "FullName")
 GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
-ORIGINAL_PHOTOS_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 # the url to use for showing recent bulk uploads
 BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
 BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
+PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermanentPhotosLocation")
 
 # create our little application :)
 app = Flask(__name__)
@@ -179,7 +179,7 @@ def resolve_placename(location: str) -> PlaceInfo:
     Args:
         location (str): the geocoords of some location in the format 'geo:lat,long'
     Returns:
-        Optional[PlaceInfo]: the placename info of the resolved place, or None if not found
+        Optional[PlaceInfo]: the placename info of the resolved place, or None.
     """
     try:
         lat, long = location[4:].split(",")
