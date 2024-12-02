@@ -54,8 +54,10 @@ class KongalooshTestCase(TestCase):
         self.assertEqual(
             markdown_album_pre_process.ORIGINAL_PHOTOS_DIR, "/test/bulk/upload"
         )
-        self.assertEqual(markdown_album_pre_process.old_prefix, "/test/blog/storage")
-        self.assertEqual(markdown_album_pre_process.new_prefix, "/test/perm/storage")
+        self.assertEqual(markdown_album_pre_process.BLOG_STORAGE, "/test/blog/storage")
+        self.assertEqual(
+            markdown_album_pre_process.PERMANENT_PHOTOS_DIR, "/test/perm/storage"
+        )
         self.assertEqual(file_parser.DATABASE, "test_database.db")
 
     @patch("kongaloosh.g")

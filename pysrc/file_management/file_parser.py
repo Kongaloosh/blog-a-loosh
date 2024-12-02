@@ -400,14 +400,24 @@ def create_json_entry(
 
 
 def update_json_entry(
-    data: BlogPost, old_entry: BlogPost, g: sqlite3.Connection, draft: bool = False
-) -> None:
-    """Update old entry based on differences in new entry and saves file."""
+    data: Union[BlogPost, DraftPost],
+    old_entry: Union[BlogPost, DraftPost],
+    g=None,
+    draft=False,
+):
+    """Updates a json entry with new data."""
     try:
-        # 1. Preserve privileged old info
-        data.slug = old_entry.slug
-        data.url = old_entry.url
-        data.published = old_entry.published
+        # Only copy published date if both objects have it
+        if hasattr(old_entry, "published") and hasattr(data, "published"):
+            data.published = old_entry.published
+
+        # Preserve other metadata
+        if hasattr(old_entry, "slug"):
+            data.slug = old_entry.slug
+        if hasattr(old_entry, "url"):
+            data.url = old_entry.url
+        if hasattr(old_entry, "u_uid"):
+            data.u_uid = old_entry.u_uid
 
         # 2. Handle photos
         old_photos = data.photo or []
@@ -438,7 +448,6 @@ def update_json_entry(
         create_json_entry(data=data, g=g, draft=draft, update=True)
 
     except Exception as e:
-        app.logger.error(f"Error in update_json_entry: {e}")
         raise ValueError(f"Failed to update entry: {str(e)}")
 
 
