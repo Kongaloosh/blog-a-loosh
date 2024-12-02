@@ -266,7 +266,6 @@ def process_form_data(request: Request) -> PostFormData:
 def handle_uploaded_files(request: Request) -> List[str]:
     """Process only the file uploads from the request"""
     photo_paths = []
-    # Ensure uploads directory exists
     upload_dir = os.path.join(os.getcwd(), BULK_UPLOAD_DIR)
     os.makedirs(upload_dir, exist_ok=True)
 
@@ -275,7 +274,12 @@ def handle_uploaded_files(request: Request) -> List[str]:
             if file and file.filename:
                 filename = secure_filename(file.filename)
                 path = os.path.join(upload_dir, filename)
-                file.save(path)
+
+                # Open and rotate image if needed
+                image = Image.open(file.stream)
+                rotated_image = rotate_image_by_exif(image)
+                rotated_image.save(path)
+
                 photo_paths.append(os.path.join(BULK_UPLOAD_DIR, filename))
 
     return photo_paths
@@ -1036,7 +1040,6 @@ def md_to_html():
 
         # Convert markdown to HTML
         html = md.convert(request.data.decode("utf-8"))
-        print(f"HTML: {html}")
         return jsonify({"html": html})
     else:
         return redirect("/404"), 404
@@ -1333,7 +1336,6 @@ def print_mentions():
         "https://webmention.io/api/mentions?target=https://kongaloosh.com/",
         headers={"Accept": "application/json"},
     ).json()["links"]
-    print(r)
     return render_template("mentions.html", mentions=r)
 
 
@@ -1467,7 +1469,6 @@ def show_draft(name):
 
 @app.route("/ap_subscribe", methods=["POST"])
 def subscribe_request():
-    print(request, request.method)
     if request.method == "POST":
         #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
         social_name = request.form["handle"]
@@ -1478,11 +1479,9 @@ def subscribe_request():
             + "/.well-known/webfinger/?resource=acct:"
             + social_name
         )
-        print(response, response.json())
         links = response.json()["links"]
         for link in links:
             if link["rel"] == "http://ostatus.org/schema/1.0/subscribe":
-                print(link["template"].format(uri="@kongaloosh.com@kongaloosh.com"))
                 return redirect(
                     link["template"].format(uri="@kongaloosh.com@kongaloosh.com")
                 )
@@ -1491,7 +1490,6 @@ def subscribe_request():
 
 @app.route("/ap_follow", methods=["POST"])
 def follow_request():
-    print(request, request.method)
     if not session.get("logged_in"):  # check permissions before deleting
         abort(401)
     if request.method == "POST":
@@ -1522,15 +1520,12 @@ def notification():
 @app.route("/followers", methods=["GET"])
 def follower_list():
     followers = json.load(open("followers.json"))
-    print(followers)
-    # followers = []
     return render_template("followers.html", followers=followers["following"])
 
 
 @app.route("/following/<account>", methods=["GET"])
 def follower_individual(account):
     followers = json.load(open("followers.json"))
-    print(account, account in followers["following"])
     for actor in followers["following"]:
         if actor["actor"] == account:
             # account =  followers['following'][int(account)]
