@@ -16,19 +16,19 @@ class HashtagPreprocessor(Preprocessor):
     ALBUM_GROUP_RE = re.compile(r"""(?:(?<=\s)|^)#(\w*[A-Za-z_]+\w*)""")
 
     def run(self, lines):
-        """Match and store Fenced Code Blocks in the HtmlStash."""
-        HASHTAG_WRAP = """<a href="/t/{0}"> #{0}</a>"""
-        text = "\n".join(lines)
-        while True:
-            hashtag = ""
-            m = self.ALBUM_GROUP_RE.search(text)
-            if m:  # if there is a match
-                hashtag += HASHTAG_WRAP.format(m.group()[1:])
-                placeholder = self.md.htmlStash.store(hashtag)
-                text = "%s %s %s" % (text[: m.start()], placeholder, text[m.end() :])
-            else:
-                break
-        return text.split("\n")
+        """Process hashtags and convert them to links."""
+        new_lines = []
+        for line in lines:
+            while True:
+                m = self.ALBUM_GROUP_RE.search(line)
+                if m:
+                    tag = m.group(1)
+                    link = f'<a href="/t/{tag}">#{tag}</a>'
+                    line = line[: m.start()] + link + line[m.end() :]
+                else:
+                    break
+            new_lines.append(line)
+        return new_lines
 
 
 def makeExtension(*args, **kwargs):
