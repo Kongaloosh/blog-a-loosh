@@ -1013,7 +1013,7 @@ def md_to_html():
                 AlbumExtension(),
                 HashtagExtension(),
             ],
-            output_format="html5",  # Explicitly set output format
+            output_format="html",  # Changed from 'html5' to 'html'
         )
 
         # Convert markdown to HTML
@@ -1305,131 +1305,6 @@ def logout():
 # TODO: the POST functionality could 100% just be the same as our add function
 @app.route("/micropub", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
 def handle_micropub():
-    app.logger.info("handleMicroPub [%s]" % request.method)
-    if request.method == "POST":  # if post, authorise and create
-        access_token = request.headers.get(
-            "Authorization"
-        )  # get the token and report it
-        app.logger.info("token [%s]" % access_token)
-        if access_token:  # if the token is not none...
-            access_token = access_token.replace("Bearer ", "")
-            app.logger.info("acccess [%s]" % request)
-            # if the token is valid ...
-            if checkAccessToken(access_token, request.form.get("client_id.data")):
-                app.logger.info("authed")
-                app.logger.info(request.data)
-                app.logger.info(request.form.keys())
-                app.logger.info(request.files)
-                data = {
-                    "h": None,
-                    "title": None,
-                    "summary": None,
-                    "content": None,
-                    "published": None,
-                    "updated": None,
-                    "category": None,
-                    "slug": None,
-                    "location": None,
-                    "location_name": None,
-                    "location_id": None,
-                    "in_reply_to": None,
-                    "repost-of": None,
-                    "syndication": None,
-                    "photo": None,
-                }
-
-                for key in (
-                    "name",
-                    "summary",
-                    "content",
-                    "published",
-                    "updated",
-                    "category",
-                    "slug",
-                    "location",
-                    "place_name",
-                    "in_reply_to",
-                    "repost-of",
-                    "syndication",
-                    "syndicate-to[]",
-                ):
-                    try:
-                        data[key] = request.form.get(key)
-                    except KeyError:
-                        pass
-
-                cat = request.form.get("category[]")
-                if cat:
-                    data["category"] = cat
-
-                if type(data["category"]) is unicode:
-                    data["category"] = [
-                        i.strip() for i in data["category"].lower().split(",")
-                    ]
-                elif type(data["category"]) is list:
-                    data["category"] = data["category"]
-                elif data["category"] is None:
-                    data["category"] = []
-
-                if not data["published"]:  # if we don't have a timestamp, make one now
-                    data["published"] = datetime.today()
-                else:
-                    data["published"] = parse(data["published"])
-
-                for key, name in [
-                    ("photo", "image"),
-                    ("audio", "audio"),
-                    ("video", "video"),
-                ]:
-                    try:
-                        if request.files.get(key):
-                            img = request.files.get(key)
-                            data[key] = img
-                            # we've added an image, so append it
-                            data["category"].append(name)
-                    except KeyError:
-                        pass
-
-                if data["location"] is not None and data["location"].startswith("geo:"):
-                    if data["place_name"]:
-                        data["location_name"] = data["place_name"]
-                    elif data["location"].startswith("geo:"):
-                        (place_name, geo_id) = resolve_placename(data["location"])
-                        data["location_name"] = place_name
-                        data["location_id"] = geo_id
-
-                location = create_json_entry(data, g=g)
-
-                resp = Response(
-                    status="created",
-                    headers={"Location": "http://" + DOMAIN_NAME + location},
-                )
-                resp.status_code = 201
-                return resp
-            else:
-                resp = Response(status="unauthorized")
-                resp.status_code = 401
-                return resp
-        else:
-            resp = Response(status="unauthorized")
-            resp.status_code = 401
-
-    elif request.method == "GET":
-        qs = request.query_string
-        if request.args.get("q") == "syndicate-to":
-            syndicate_to = ["twitter.com/", "tumblr.com/", "facebook.com/"]
-
-            r = ""
-            while len(syndicate_to) > 1:
-                r += "syndicate-to[]=" + syndicate_to.pop() + "&"
-            r += "syndicate-to[]=" + syndicate_to.pop()
-            resp = Response(
-                content_type="application/x-www-form-urlencoded", response=r
-            )
-            return resp
-        resp = Response(status="not implemented")
-        resp.status_code = 501
-        return resp
     return "", 501
 
 
@@ -1540,29 +1415,27 @@ def show_drafts():
 
 @app.route("/drafts/<name>", methods=["GET", "POST"])
 def show_draft(name):
-    if request.method == "GET":
-        if not session.get("logged_in"):
-            abort(401)
-        draft_location = f"drafts/{name}"
-        entry = get_post_for_editing(draft_location)
-        return render_template("edit_entry.html", entry=entry, type="draft")
-
     if request.method == "POST":
         if not session.get("logged_in"):
             abort(401)
-        data = post_from_request(request)
+
+        # Load existing draft
+        draft_file = f"drafts/{name}.json"
+        if os.path.exists(draft_file):
+            existing_data = file_parser_json(draft_file)
+
+        # Get form data
+        form_data = post_from_request(request)
 
         if "Save" in request.form:  # if we're updating a draft
-            file_name = f"drafts/{name}"
-            entry = file_parser_json(file_name)
-            update_json_entry(data, entry, g=g, draft=True)
+            update_json_entry(form_data, existing_data, g=g, draft=True)
             return redirect("/drafts")
 
         if "Submit" in request.form:  # if we're publishing it now
-            location = add_entry(request, draft=False)
-            # this won't always be the slug generated
-            if os.path.isfile(f"drafts/{name}.json"):
-                os.remove(f"drafts/{name}.json")
+            # Merge draft data with form updates
+            merged_data = {**existing_data, **form_data.model_dump()}
+            location = add_entry(request, draft=False, data=merged_data)
+            os.remove(draft_file)
             return redirect(location)
     return "", 405  # Method Not Allowed
 
