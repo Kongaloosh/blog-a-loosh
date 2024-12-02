@@ -1,8 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<header class="intro-header"
-        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
     <div class="container">
@@ -30,25 +29,28 @@
         {% if error %}
         <p class=error><strong>Error:</strong> {{ error }}
             {% endif %}
-            <!--<form action="{{ url_for('login') }}" method=post>-->
 
         <form class="form-horizontal" role="form" method="post" action="/login">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="username" class="col-sm-2 control-label">Username</label>
                 <div class="col-sm-10">
-                    <input type="text" class="form-control" id="username" name="username" placeholder="username" value="">
+                    <input type="text" class="form-control" id="username" name="username" placeholder="username"
+                        value="">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="password" class="col-sm-2 control-label">Password</label>
                 <div class="col-sm-10">
-                    <input type="password" class="form-control" id="password" name="password" placeholder="password" value="">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="password"
+                        value="">
                 </div>
             </div>
 
             <div class="form-group">
                 <div class="col-sm-10 col-sm-offset-2">
+
                     <button type="submit" value="submit">Login</button>
                 </div>
             </div>
