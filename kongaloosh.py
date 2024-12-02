@@ -35,14 +35,12 @@ from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost
 from pysrc.python_webmention.mentioner import get_mentions
 from slugify import slugify
-from pysrc.authentication.indieauth import checkAccessToken
 from pysrc.file_management.file_parser import (
     create_json_entry,
     create_post_from_data,
     update_json_entry,
     file_parser_json,
 )
-from pysrc.file_management.markdown_album_pre_process import PERMANENT_PHOTOS_DIR
 from dataclasses import dataclass
 import uuid
 from werkzeug.utils import secure_filename
