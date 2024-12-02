@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.11"
+
+[packages]
+flask = "*"
+jinja2 = "*"
+requests = "*"
+oauth2 = "*"
+python-dateutil = "*"
+pillow = "*"
+configparser = "*"
+markdown = "*"
+python-markdown-math = "*"
+pydantic = "*"
+flask-testing = "*"
+beautifulsoup4 = "*"
+html2text = "*"
+unicode = "*"
+python-slugify = "*"
+pytest = "*"
+pyyaml = "*"
+flask-wtf = "*"
