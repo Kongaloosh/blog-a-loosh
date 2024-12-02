@@ -1,14 +1,10 @@
 config.ini
-static/img/*
-data/*
-drafts/*
+static/img/
 
-*.db
-*.json
-*.jpg
-*.jpeg
-*.png
-*.webp
+# pipenv
+PipFile
+PipFile.lock
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

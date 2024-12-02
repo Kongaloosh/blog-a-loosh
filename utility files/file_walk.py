@@ -13,40 +13,23 @@ conn = sqlite3.connect('kongaloosh.db')
 g = conn.cursor()
 
 
-def get_bare_file(filename: str) -> dict:
+def get_bare_file(filename):
     """ for a given entry, finds all of the info we want to display """
     f = open(filename, 'r')
     str = f.read()
-    # str = str.decode('utf-8')  # This line is commented out, so we'll leave it as is
+    # str = str.decode('utf-8')
     e = {}
+    try: e['title'] = re.search('(?<=title:)(.)*', str).group()
+    except: pass
+    try: e['slug'] = re.search('(?<=slug:)(.)*', str).group()
+    except: pass
     try:
-        e['title'] = re.search(r'(?<=title:).*', str).group()
-    except AttributeError:
-        e['title'] = None
-    try:
-        e['slug'] = re.search(r'(?<=slug:).*', str).group()
-    except AttributeError:
-        e['slug'] = None
-    try:
-        e['published'] = re.search('(?<=published:)(.)*', str)
-        if e['published']:
-            e['published'] = e['published'].group()
-    except AttributeError:
-        pass
-
-    try:
-        e['category'] = re.search('(?<=category:)(.)*', str)
-        if e['category']:
-            e['category'] = e['category'].group()
-    except AttributeError:
-        pass
-
-    try:
-        e['url'] = re.search('(?<=url:)(.)*', str)
-        if e['url']:
-            e['url'] = e['url'].group()
-    except AttributeError:
-        pass
+        e['published'] = re.search('(?<=published:)(.)*', str).group()
+    except: pass
+    try: e['category'] = re.search('(?<=category:)(.)*', str).group()
+    except: pass
+    try: e['url'] = re.search('(?<=url:)(.)*', str).group()
+    except: pass
     return e
 
 
