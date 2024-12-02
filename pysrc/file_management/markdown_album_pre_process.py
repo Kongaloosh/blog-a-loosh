@@ -4,19 +4,23 @@ from datetime import datetime
 import os
 import configparser
 from pysrc.markdown_albums.markdown_album_extension import album_regexp
+from pysrc.file_management.file_parser import move_and_resize
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
 
-__author__ = "kongaloosh"
+# Add these regex patterns
+images_regexp = "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})"
+image_ref_regexp = "(?<=\({1})(.)*(?=\){1})"
+alt_text_regexp = "(?<=\[{1})(.)*(?=\]{1})"
 
+__author__ = "kongaloosh"
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 
 ORIGINAL_PHOTOS_DIR = config.get("PhotoLocations", "BulkUploadLocation")
-
-old_prefix = config.get("PhotoLocations", "BlogStorage")
-new_prefix = config.get("PhotoLocations", "PermStorage")
+BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
+PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermStorage")
 
 
 def move(loc, date):
@@ -31,21 +35,23 @@ def move(loc, date):
     date_suffix = "data/{0}/{1}/{2}/".format(date.year, date.month, date.day)
     # loc is where the temp image is that we're trying to resize and move
     # we get the filename--without the relative folder structure---to use in the new savenames
-    file_name = loc[len("/images/temp/") :]  # remove the '/images/temp/'
+    file_name = loc[len(ORIGINAL_PHOTOS_DIR) :]  # remove the '/images/temp/'
     # we remove '/images/' because it's in both the prefix from the config file and the filename from the wysiwyg edit
     # todo: check to see if you can re-name the prefix in the config file to make this easier
     # this creates the absolute filepath
     target_file_path = (
-        new_prefix + loc[len(ORIGINAL_PHOTOS_DIR) :]
+        PERMANENT_PHOTOS_DIR + loc[len(ORIGINAL_PHOTOS_DIR) :]
     )  # remove the '/images/'
 
     # 1. SAVE THE ORIGINAL IMAGE AT ORIGINAL QUALITY
     if not os.path.exists(
-        new_prefix + date_suffix
+        PERMANENT_PHOTOS_DIR + date_suffix
     ):  # if the target directory doesn't exist ...
-        os.makedirs(os.path.dirname(new_prefix + date_suffix))  # ... make it.
+        os.makedirs(os.path.dirname(PERMANENT_PHOTOS_DIR + date_suffix))  # ... make it.
     img = Image.open(target_file_path)  # open the image from the temp
-    img.save(new_prefix + date_suffix + file_name.lower())  # open the new location
+    img.save(
+        PERMANENT_PHOTOS_DIR + date_suffix + file_name.lower()
+    )  # open the new location
 
     # 2. RESIZE IMAGE AND SAVE FOR BLOG SERVING
     max_height = 1000  # maximum height
@@ -59,10 +65,12 @@ def move(loc, date):
     img = img.resize((w_size, max_height), Image.ANTIALIAS)  # translate the image
     try:
         if not os.path.exists(
-            old_prefix + date_suffix
+            BLOG_STORAGE + date_suffix
         ):  # if the blog's directory doesn't exist
-            os.makedirs(os.path.dirname(old_prefix + date_suffix))  # make it
-        img.save(old_prefix + date_suffix + file_name.lower())  # image save old_prefix
+            os.makedirs(os.path.dirname(BLOG_STORAGE + date_suffix))  # make it
+        img.save(
+            BLOG_STORAGE + date_suffix + file_name.lower()
+        )  # image save old_prefix
     except OSError:
         pass
     # Result:
@@ -74,25 +82,17 @@ def move(loc, date):
     )  # of form data/yyyy/mm/dd/name.extension
 
 
-def run(lines: str, date=None):
+def run(lines: str, target_dir: str):
     """
     Finds all references to images, removes them from their temporary directory, moves
     them to their new location, and replaces references to them in the original post.
-    :param lines: the text of an entry which may, or may or may not have photos.
-    :param date: the date this post was made.
     """
-
-    # 1. find all the references to images
     text = lines
     last_index = -1
     finished = False
     while not finished:
-        # given the substitution, the new entries will likely be longer
-        # ie. images/temp/name.jpg is shorter than data/yyyy/mm/dd/name
-        # substituting immediately in will cause overlap
-        # we need this loop to go over iteratively; we keep track of where we were last with
         collections = ALBUM_GROUP_RE.finditer(text)
-        if collections:  # if there's an image match
+        if collections:
             current_index = 0
             while True:
                 try:
@@ -103,45 +103,36 @@ def run(lines: str, date=None):
                     break
                 current_index += 1
                 if current_index > last_index:
-                    # split a daisy chain of images in an album
-                    images = re.split(  # split the collection into images
-                        "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})",
-                        collection.group("album"),
-                    )
-                    album = ""  # where we place reformatted images
-                    for index in range(
-                        len(images)
-                    ):  # for image in the whole collection
-                        last_index = current_index  # update
-                        image_ref_search = re.search(
-                            "(?<=\({1})(.)*(?=\){1})", images[index]
-                        )
-                        assert image_ref_search is not None
-                        image_ref = image_ref_search.group()
+                    images = re.split(images_regexp, collection.group("album"))
+                    album = ""
+                    for index in range(len(images)):
+                        last_index = current_index
+                        image_ref = re.search(image_ref_regexp, images[index]).group()
+                        alt = re.search(alt_text_regexp, images[index]).group()
 
-                        alt_search = re.search("(?<=\[{1})(.)*(?=\]{1})", images[index])
-                        assert alt_search is not None
-                        alt = alt_search.group()
+                        if image_ref.startswith(ORIGINAL_PHOTOS_DIR):
+                            filename = os.path.basename(image_ref)
+                            high_res_location = os.path.join(
+                                PERMANENT_PHOTOS_DIR, target_dir, filename
+                            )
+                            web_size_location = os.path.join(
+                                BLOG_STORAGE, target_dir, filename
+                            )
+                            move_and_resize(
+                                image_ref,
+                                web_size_location,
+                                high_res_location,
+                            )
 
-                        if image_ref.startswith(
-                            "/images/temp/"
-                        ):  # if the location is in our temp folder...
-                            image_ref = move(
-                                image_ref, date
-                            )  # ... move and resize photos
-                        album += "[%s](%s)" % (alt, image_ref)  # album
-                        if (
-                            index != len(images) - 1
-                        ):  # if this isn't the last image in the set...
-                            album += "-\n"  # ... then make room for another image
+                        album += "[%s](%s)" % (alt, web_size_location)
+                        if index != len(images) - 1:
+                            album += "-\n"
 
                     current_index = last_index
 
-                    if album != "":  # if the album isn't empty
+                    if album != "":
                         text = "%s@@@%s@@@%s" % (
-                            text[
-                                : collection.start()
-                            ],  # sub it into where the old images were
+                            text[: collection.start()],
                             album,
                             text[collection.end() :],
                         )

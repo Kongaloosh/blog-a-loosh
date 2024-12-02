@@ -1,6 +1,9 @@
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
 import re
+import configparser
+import os
+import posixpath
 
 __author__ = "kongaloosh"
 
@@ -21,57 +24,74 @@ images_regexp = "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})"
 image_ref_regexp = "(?<=\({1})(.)*(?=\){1})"
 alt_text_regexp = "(?<=\[{1})(.)*(?=\]{1})"
 
+# Load config
+config = configparser.ConfigParser()
+config.read("config.ini")
+BULK_UPLOAD_DIR = config["PhotoLocations"]["BulkUploadLocation"]
+PERMANENT_PHOTOS_DIR = config["PhotoLocations"]["PermStorage"]
+BLOG_STORAGE = config["PhotoLocations"]["BlogStorage"]
+
 
 class AlbumExtension(Extension):
 
     def extendMarkdown(self, md):
         """Add FencedBlockPreprocessor to the Markdown instance."""
-        md.preprocessors.register(AlbumPreprocessor(md), "album", 175)
+        album_preprocessor = AlbumPreprocessor(md)
+        md.preprocessors.register(album_preprocessor, "album", 175)
 
 
 class AlbumPreprocessor(Preprocessor):
     ALBUM_GROUP_RE = re.compile(album_regexp)
 
     def __init__(self, md):
-        super(AlbumPreprocessor, self).__init__(md)
+        super().__init__(md)
+        self.markdown = md
 
     def run(self, lines):
         """Match and store Fenced Code Blocks in the HtmlStash."""
-        text = "\n".join(
-            lines
-        )  # todo: this should totally just be done by going over the lines; not sure what you were thinking
-        while True:  # until we are finished parsing the data
-            m = self.ALBUM_GROUP_RE.search(text)  # search for an album
-            if m:  # if there is a match
-                images = re.split(
-                    images_regexp, m.group("album")
-                )  # pull out the images
-                # todo: could probably just do it once for both and zip into tuple
-                generated_html = ""  # where the html is stashed
-                for image in images:  # for each image in the album
-                    alt = re.search(alt_text_regexp, image).group()  # get the alt text
-                    image_location = re.search(
-                        image_ref_regexp, image
-                    ).group()  # get the image reference
-                    generated_html += IMG_WRAP % (
-                        # todo: images needs to be factored out based on whatever the server is using as the destination
-                        "/images"
-                        + image_location,  # the location where the images are stored in full-resolution
-                        image_location,  # the location where the image is stored for being served
-                    )
-                # finally put html album into div
-                generated_html = (
-                    GROUP_WRAP % generated_html
-                )  # todo: should add the alt text in
-                placeholder = self.markdown.htmlStash.store(generated_html, safe=True)
+        text = "\n".join(lines)
+        while True:
+            m = self.ALBUM_GROUP_RE.search(text)
+            if m:
+                images = re.split(images_regexp, m.group("album"))
+                generated_html = ""
+                for image in images:
+                    try:
+                        alt = re.search(alt_text_regexp, image).group()
+                        image_location = re.search(image_ref_regexp, image).group()
+
+                        # Strip any leading slash for consistent joining
+                        image_location = image_location.lstrip("/")
+
+                        if image_location.startswith(BULK_UPLOAD_DIR):
+                            path = posixpath.join("/", image_location)
+                            href_path = path
+                            src_path = path
+                        else:
+                            print(f"Image location: {image_location}")
+                            base_path = image_location.removeprefix(BLOG_STORAGE)
+                            base_path = base_path.lstrip("/")
+                            print(f"Base path: {base_path}")
+                            print(f"PERMANENT_PHOTOS_DIR: {PERMANENT_PHOTOS_DIR}")
+                            src_path = posixpath.join("/", image_location)
+                            href_path = posixpath.join(
+                                "/", PERMANENT_PHOTOS_DIR, base_path
+                            )
+                            print(f"Href path: {href_path}")
+                            print(f"Src path: {src_path}")
+
+                        generated_html += IMG_WRAP % (href_path, src_path)
+                    except Exception as e:
+                        print(f"Error processing image {image}: {e}")
+                generated_html = GROUP_WRAP % generated_html
                 text = "%s\n%s\n%s" % (
-                    text[: m.start()],  # put everything in the match before the album
-                    placeholder,  # put the new html album
+                    text[: m.start()],
+                    generated_html,
                     text[m.end() :],
-                )  # put everything after the album
-            else:  # if there are no remaining matches
-                break  # stop processing
-        return text.split("\n")  # break into lines to return
+                )
+            else:
+                break
+        return text.split("\n")
 
 
 def make_extension(*args, **kwargs):

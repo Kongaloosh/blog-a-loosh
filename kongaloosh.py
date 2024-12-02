@@ -5,6 +5,7 @@ import json
 from typing import List, Optional, Union
 import markdown
 import os
+from pysrc.file_management.file_parser import run
 from pydantic import ValidationError
 import requests
 import sqlite3
@@ -42,8 +43,7 @@ from pysrc.file_management.file_parser import (
     update_json_entry,
     file_parser_json,
 )
-from pysrc.file_management.markdown_album_pre_process import run
-from pysrc.file_management.markdown_album_pre_process import new_prefix
+from pysrc.file_management.markdown_album_pre_process import PERMANENT_PHOTOS_DIR
 from dataclasses import dataclass
 import uuid
 from werkzeug.utils import secure_filename
@@ -88,8 +88,15 @@ temp_photos = Blueprint(
     static_folder=os.path.join(os.getcwd(), BULK_UPLOAD_DIR),
 )
 
+permanent_photos = Blueprint(
+    "perm_photos_data_storage",
+    __name__,
+    static_url_path=f"/{PERMANENT_PHOTOS_DIR}",
+    static_folder=os.path.join(os.getcwd(), PERMANENT_PHOTOS_DIR),
+)
 app.register_blueprint(photos)
 app.register_blueprint(temp_photos)
+app.register_blueprint(permanent_photos)
 
 cfg = None
 
@@ -490,7 +497,7 @@ def update_entry(
             updated_post.location_id = location_info.geoname_id
 
         # Process markdown content
-        updated_post.content = run(updated_post.content, date=updated_post.published)
+        updated_post.content = run(updated_post.content, f"{year}/{month}/{day}/")
 
         # Update the entry
         update_json_entry(updated_post, existing_entry, g=g.db, draft=draft)
@@ -996,24 +1003,23 @@ def mobile_upload():
 
 @app.route("/md_to_html", methods=["POST"])
 def md_to_html():
-    """
-    :returns mar
-    """
+    """Convert markdown to HTML with extensions"""
     if request.method == "POST":
-        return jsonify(
-            {
-                "html": markdown.markdown(
-                    request.data.decode("utf-8"),
-                    extensions=[
-                        "fenced_code",
-                        "mdx_math",
-                        AlbumExtension(),
-                        HashtagExtension(),
-                    ],
-                )
-            }
+        # Create markdown instance with output format and extensions
+        md = markdown.Markdown(
+            extensions=[
+                "fenced_code",
+                "mdx_math",
+                AlbumExtension(),
+                HashtagExtension(),
+            ],
+            output_format="html5",  # Explicitly set output format
         )
 
+        # Convert markdown to HTML
+        html = md.convert(request.data.decode("utf-8"))
+        print(f"HTML: {html}")
+        return jsonify({"html": html})
     else:
         return redirect("/404"), 404
 
@@ -1065,7 +1071,7 @@ def recent_uploads():
             abort(401)
         try:
             to_delete = json.loads(request.get_data())["to_delete"]
-            file_path = new_prefix + to_delete[len("/images/") :]
+            file_path = PERMANENT_PHOTOS_DIR + to_delete[len("/images/") :]
             if os.path.isfile(file_path):
                 os.remove(file_path)
                 return "deleted"
@@ -1553,7 +1559,7 @@ def show_draft(name):
             return redirect("/drafts")
 
         if "Submit" in request.form:  # if we're publishing it now
-            location = add_entry(request, draft=True)
+            location = add_entry(request, draft=False)
             # this won't always be the slug generated
             if os.path.isfile(f"drafts/{name}.json"):
                 os.remove(f"drafts/{name}.json")

@@ -2,6 +2,7 @@ import configparser
 import os
 import sqlite3
 from slugify import slugify
+import re
 import json
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
@@ -13,6 +14,15 @@ from flask import current_app as app
 from pysrc.post import BlogPost, ReplyTo, Event, DraftPost
 from pydantic import ValidationError
 from typing import Any, Union
+from pysrc.markdown_albums.markdown_album_extension import album_regexp
+
+ALBUM_GROUP_RE = re.compile(album_regexp)
+
+
+# Add these regex patterns
+images_regexp = "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})"
+image_ref_regexp = "(?<=\({1})(.)*(?=\){1})"
+alt_text_regexp = "(?<=\[{1})(.)*(?=\]{1})"
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -304,6 +314,10 @@ def create_json_entry(
             BLOG_STORAGE, date_location
         )  # where we'll save the new entry
         data.url = "/e/" + date_location + data.slug
+        data.content = run(
+            data.content,
+            target_dir=f"{data.published.year}/{data.published.month}/{data.published.day}/",
+        )
 
     if not os.path.exists(directory_of_post):  # if the path doesn't exist, make it
         os.makedirs(os.path.dirname(directory_of_post))
@@ -426,3 +440,64 @@ def update_json_entry(
     except Exception as e:
         app.logger.error(f"Error in update_json_entry: {e}")
         raise ValueError(f"Failed to update entry: {str(e)}")
+
+
+def run(lines: str, target_dir: str):
+    """
+    Finds all references to images, removes them from their temporary directory, moves
+    them to their new location, and replaces references to them in the original post.
+    """
+    text = lines
+    last_index = -1
+    finished = False
+    while not finished:
+        collections = ALBUM_GROUP_RE.finditer(text)
+        if collections:
+            current_index = 0
+            while True:
+                try:
+                    collection = next(collections)
+                except StopIteration:
+                    if current_index == last_index or last_index == -1:
+                        finished = True
+                    break
+                current_index += 1
+                if current_index > last_index:
+                    images = re.split(images_regexp, collection.group("album"))
+                    album = ""
+                    for index in range(len(images)):
+                        last_index = current_index
+                        image_ref = re.search(image_ref_regexp, images[index]).group()
+                        alt = re.search(alt_text_regexp, images[index]).group()
+
+                        if image_ref.startswith(ORIGINAL_PHOTOS_DIR):
+                            filename = os.path.basename(image_ref)
+                            high_res_location = os.path.join(
+                                PERMANENT_PHOTOS_DIR, target_dir, filename
+                            )
+                            web_size_location = os.path.join(
+                                BLOG_STORAGE, target_dir, filename
+                            )
+                            move_and_resize(
+                                image_ref,
+                                web_size_location,
+                                high_res_location,
+                            )
+
+                        album += "[%s](%s)" % (alt, web_size_location)
+                        if index != len(images) - 1:
+                            album += "-\n"
+
+                    current_index = last_index
+
+                    if album != "":
+                        text = "%s@@@%s@@@%s" % (
+                            text[: collection.start()],
+                            album,
+                            text[collection.end() :],
+                        )
+                    last_index = current_index
+        else:
+            finished = True
+            break
+    return text

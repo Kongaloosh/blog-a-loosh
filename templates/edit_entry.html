@@ -38,7 +38,8 @@
         </div>
         <div class="row">
             <div class="col-lg-6 col-md-6 col-sm-12">
-                <form enctype="multipart/form-data" action="{{ '/add' if type == 'add' else '/edit' + entry.url }}"
+                <form enctype="multipart/form-data"
+                    action="{{ '/add' if type == 'add' else ('/drafts/' + entry.slug if type == 'draft' else '/edit' + entry.url) }}"
                     method="post" class="input-large" id="input" onsubmit="return validateTravelForm()" novalidate>
                     <p>
                         <input type="text" style="width: 100%" name="title" id="title_form"

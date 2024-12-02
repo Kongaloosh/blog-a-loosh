@@ -16,7 +16,7 @@ var img = "";
 var title = "";
 var summary = "";
 
-function setIMG(loc){
+function setIMG(loc) {
     if (!loc.startsWith("/")) {
         loc = "/" + loc
     }
@@ -26,47 +26,50 @@ function setIMG(loc){
 
 function getHTMLFromMD(val) {
     fetch('/md_to_html', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
-                'Content-Type': 'text/plain;charset=UTF-8'
-            },
-            body: val
-        }).then(function (response) {
-                return response.json();
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'text/plain;charset=UTF-8'
+        },
+        body: val
+    })
+        .then(response => response.json())
+        .then(result => {
+            const wysiwyg = document.getElementById("wysiwyg");
+            wysiwyg.innerHTML = result.html;
+            // Force a DOM refresh
+            wysiwyg.style.display = 'none';
+            wysiwyg.offsetHeight; // Force a reflow
+            wysiwyg.style.display = 'block';
 
-            })
-            .then(function (result) {
-                document.getElementById("wysiwyg").innerHTML = result['html'];
-                MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
-                $("img").addClass( "img-responsive img-fluid" );
-            })
-        .catch(function(error) {
-    // If there is any error you will catch them here
-    });
-    //$("img").addClass( "img-responsive img-fluid" );
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+            $("img").addClass("img-responsive img-fluid");
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
-setInterval(function(){
-	var x = document.getElementById("text_input").value;
-   	if (x !== text) {
+setInterval(function () {
+    var x = document.getElementById("text_input").value;
+    if (x !== text) {
         getHTMLFromMD(x)
-        $("img").addClass( "img-responsive img-fluid" );
+        $("img").addClass("img-responsive img-fluid");
     }
     text = x
 }, 1000);
 
-setInterval(function(){
-	var x = document.getElementById("img_loc").value;
-   	if (x !== img && x !== 'None') {
+setInterval(function () {
+    var x = document.getElementById("img_loc").value;
+    if (x !== img && x !== 'None') {
         setIMG(x)
     }
     img = x
 }, 1000);
 
 
-setInterval(function(){
-	var x = document.getElementById("title_form").value;
+setInterval(function () {
+    var x = document.getElementById("title_form").value;
     if (x !== title && x !== 'None') {
         document.getElementById("title_format").innerHTML = x;
     }
@@ -74,11 +77,11 @@ setInterval(function(){
 }, 1000);
 
 
-setInterval(function(){
-	var x = document.getElementById("summary_form").value;
-   	if (x !== summary && x !== 'None') {
+setInterval(function () {
+    var x = document.getElementById("summary_form").value;
+    if (x !== summary && x !== 'None') {
         document.getElementById("summary_format").innerHTML = x;
     }
     img = summary
 }, 1000);
-MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
