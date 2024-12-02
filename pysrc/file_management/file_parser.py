@@ -408,7 +408,7 @@ def update_json_entry(
     """Updates a json entry with new data."""
     try:
         # Only copy published date if both objects have it
-        if hasattr(old_entry, "published") and hasattr(data, "published"):
+        if isinstance(data, BlogPost) and isinstance(old_entry, BlogPost):
             data.published = old_entry.published
 
         # Preserve other metadata
