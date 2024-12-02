@@ -44,6 +44,7 @@ from pysrc.file_management.file_parser import (
 from dataclasses import dataclass
 import uuid
 from werkzeug.utils import secure_filename
+import yaml
 
 jinja_env = Environment()
 
@@ -63,7 +64,7 @@ GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
 # the url to use for showing recent bulk uploads
 BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
 BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
-PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermanentPhotosLocation")
+PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermStorage")
 
 # create our little application :)
 app = Flask(__name__)
@@ -273,8 +274,8 @@ def handle_uploaded_files(request: Request) -> List[str]:
 
 
 def post_from_request(
-    request: Request, existing_post: Optional[BlogPost] = None
-) -> Union[DraftPost, BlogPost]:
+    request: Request, existing_post: Optional[Union[BlogPost, DraftPost]] = None
+) -> Union[BlogPost, DraftPost]:
     """Process form data into a Post model based on the form action"""
     try:
         # Get form data
@@ -308,11 +309,18 @@ def post_from_request(
                 {
                     "slug": existing_post.slug,
                     "url": existing_post.url,
-                    "published": existing_post.published,
-                    "u_uid": existing_post.u_uid,
                 }
             )
-        elif "Save" in request.form:  # If saving as draft
+            if isinstance(existing_post, BlogPost):
+                post_data.update(
+                    {
+                        "published": existing_post.published,
+                        "u_uid": existing_post.u_uid,
+                    }
+                )
+
+            return type(existing_post)(**post_data)
+        elif "Save" in request.form:
             # Generate temporary values for required fields
             now = datetime.now()
             post_data.update(
@@ -327,7 +335,7 @@ def post_from_request(
                     "u_uid": str(uuid.uuid4()),
                 }
             )
-            return DraftPost(**post_data)  # Use DraftPost model for drafts
+            return DraftPost(**post_data)
         else:
             # Normal submission - these will be set by add_entry
             post_data.update(
@@ -338,8 +346,7 @@ def post_from_request(
                     "u_uid": str(uuid.uuid4()),
                 }
             )
-
-        return BlogPost(**post_data)
+            return BlogPost(**post_data)
 
     except TravelValidationError:
         raise
@@ -375,8 +382,8 @@ def handle_travel_data(request: Request) -> Travel:
 
     # Validate that we have dates for all locations
     missing_dates = []
-    for i, (g, l, d) in enumerate(zip(geo, location, date), 1):
-        if g and l and not d:  # If we have location but no date
+    for i, (geo_i, location_i, date_i) in enumerate(zip(geo, location, date), 1):
+        if geo_i and location_i and not date_i:  # If we have location but no date
             missing_dates.append(i)
 
     if missing_dates:
@@ -386,14 +393,13 @@ def handle_travel_data(request: Request) -> Travel:
 
     if len(geo) == len(location) == len(date):
         trips: list[Trip] = [
-            Trip(location=g, location_name=l, date=parse(d))
-            for g, l, d in zip(geo, location, date)
-            if g and l and d  # Only create trips with complete data
+            Trip(location=geo_i, location_name=location_i, date=parse(date_i))
+            for geo_i, location_i, date_i in zip(geo, location, date)
         ]
 
         if trips:
             markers = "|".join([trip.location[len("geo:") :] for trip in trips])
-            map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"
+            map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"  # noqa: E501
 
             return Travel(
                 trips=trips, map_data=requests.get(map_url).content, map_url=map_url
@@ -484,7 +490,6 @@ def update_entry(
         # Get the updated post data
         file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
         existing_entry = get_post_for_editing(file_name)
-
         updated_post = post_from_request(update_request, existing_entry)
 
         # Handle location data if present
@@ -500,7 +505,8 @@ def update_entry(
         update_json_entry(updated_post, existing_entry, g=g.db, draft=draft)
 
         # Handle webmentions
-        syndicate_from_form(update_request, updated_post)
+        if isinstance(updated_post, BlogPost):
+            syndicate_from_form(update_request, updated_post)
 
         return file_name
 
@@ -576,26 +582,34 @@ def search_by_tag(category):
     return entries
 
 
+def load_activitypub_config():
+    with open("config/activitypub.yml", "r") as f:
+        config = yaml.safe_load(f)["activitypub"]
+
+    return {
+        "@context": config["context"],
+        "type": "Person",
+        "id": f"{config['bridgy_base']}/{config['domain']}",
+        "name": config["profile"]["name"],
+        "preferredUsername": config["profile"]["preferred_username"],
+        "summary": config["profile"]["summary"],
+        "inbox": f"{config['bridgy_base']}/{config['domain']}/inbox",
+        "outbox": f"{config['bridgy_base']}/{config['domain']}/outbox",
+        "followers": f"{config['bridgy_base']}/{config['domain']}/followers",
+        "following": f"{config['bridgy_base']}/{config['domain']}/following",
+    }
+
+
+# Initialize once at startup
+activitypub_profile = load_activitypub_config()
+
+
 @app.route("/")
 def show_entries():
-    """The main view: presents author info and entries."""
     if request.headers.get("Accept") == "application/atom+xml":
         return show_atom()
     elif request.headers.get("Accept") == "application/as+json":
-        # TODO: this shouldn't be hard-coded. Pull this from the config.
-        moi = {
-            "@context": "https://www.w3.org/ns/activitystreams",
-            "type": "Person",
-            "id": "https://fed.brid.gy/kongaloosh.com",
-            "name": "Alex Kearney",
-            "preferredUsername": "Kongaloosh",
-            "summary": "Hi, I'm a PhD candidate focused on Artificial Intelligence and Reinforcement Learning. I'm supervised by Rich Sutton and Patrick Pilarski at the University of Alberta in the Reinforcement Learning & Artificial Intelligence Lab.\n My research addresses how artificial intelligence systems can construct knowledge by deciding both what to learn and how to learn, independent of designer instruction. I predominantly use Reinforcement Learning methods.",
-            "inbox": "https://fed.brid.gy/kongaloosh.com/inbox",
-            "outbox": "https://fed.brid.gy/kongaloosh.com/outbox",
-            "followers": "https://fed.brid.gy/kongaloosh.com/followers",
-            "following": "https://fed.brid.gy/kongaloosh.com/following",
-        }
-        return jsonify(moi)
+        return jsonify(activitypub_profile)
 
     # getting the entries we want to display.
     entries = []  # store the entries which will be presented
@@ -1412,29 +1426,33 @@ def show_drafts():
 
 @app.route("/drafts/<name>", methods=["GET", "POST"])
 def show_draft(name):
-    if request.method == "POST":
-        if not session.get("logged_in"):
-            abort(401)
+    if not session.get("logged_in"):
+        abort(401)
+    if request.method == "GET":
+        draft_location = f"drafts/{name}"
+        entry = get_post_for_editing(draft_location)
+        return render_template("edit_entry.html", entry=entry, type="draft")
 
-        # Load existing draft
+    if request.method == "POST":
         draft_file = f"drafts/{name}.json"
         if os.path.exists(draft_file):
             existing_data = file_parser_json(draft_file)
 
-        # Get form data
         form_data = post_from_request(request)
 
-        if "Save" in request.form:  # if we're updating a draft
+        if "Save" in request.form:
             update_json_entry(form_data, existing_data, g=g, draft=True)
             return redirect("/drafts")
 
-        if "Submit" in request.form:  # if we're publishing it now
-            # Merge draft data with form updates
-            merged_data = {**existing_data, **form_data.model_dump()}
-            location = add_entry(request, draft=False, data=merged_data)
+        if "Submit" in request.form:
+            # Convert both to dicts before merging
+            merged_data = {**form_data.model_dump(), **existing_data.model_dump()}
+            post = BlogPost(**merged_data)
+            location = create_json_entry(post, g=g.db, draft=False)
             os.remove(draft_file)
             return redirect(location)
-    return "", 405  # Method Not Allowed
+
+    return "", 405
 
 
 @app.route("/ap_subscribe", methods=["POST"])

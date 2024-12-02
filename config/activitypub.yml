@@ -1,0 +1,15 @@
+activitypub:
+  context: "https://www.w3.org/ns/activitystreams"
+  bridgy_base: "https://fed.brid.gy"
+  domain: "kongaloosh.com"
+  profile:
+    name: "Alex Kearney"
+    preferred_username: "Kongaloosh"
+    summary: |
+      Hi, I'm a PhD candidate focused on Artificial Intelligence and Reinforcement Learning. 
+      I'm supervised by Rich Sutton and Patrick Pilarski at the University of Alberta in the 
+      Reinforcement Learning & Artificial Intelligence Lab.
+      
+      My research addresses how artificial intelligence systems can construct knowledge by 
+      deciding both what to learn and how to learn, independent of designer instruction. 
+      I predominantly use Reinforcement Learning methods. 
