@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import configparser
+from functools import wraps
 import json
 from typing import List, Optional, Union
 import markdown
@@ -27,6 +28,7 @@ from flask import (
     make_response,
     jsonify,
     Blueprint,
+    Response,
 )
 from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
@@ -46,6 +48,8 @@ import uuid
 from werkzeug.utils import secure_filename
 import yaml
 from pysrc.database.queries import EntryQueries, CategoryQueries
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask import Flask
 
 jinja_env = Environment()
 
@@ -111,6 +115,10 @@ def connect_db() -> sqlite3.Connection:
     return sqlite3.connect(app.config["DATABASE"])
 
 
+csrf = CSRFProtect(app)
+app.config["WTF_CSRF_TIME_LIMIT"] = None  # Optional: removes token expiration
+
+
 @app.errorhandler(500)
 def it_broke(error):
     return render_template("it_broke.html")
@@ -129,6 +137,17 @@ def before_request():
     connection, storing it in Flask's 'g' object for use during
     the request lifecycle."""
     g.db = connect_db()
+
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            flash("Please log in first")  # Optional: add a message
+            return redirect(url_for("show_entries")), 401  # Redirect to main index
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 @app.teardown_request
@@ -675,9 +694,8 @@ def show_rss():
 @app.route("/atom.xml")
 def show_atom():
     """The atom view: presents entries in atom form."""
-
-    entries = []  # store the entries which will be presented
-    cur = g.db.execute(  # grab in order of newest
+    entries = []
+    cur = g.db.execute(
         """
         SELECT location
         FROM entries
@@ -685,21 +703,24 @@ def show_atom():
         """
     )
     updated = None
-    for (row,) in cur.fetchall():  # iterate over the results
-        # if the file fetched exists, append the parsed details
+    for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
-            entries.append(file_parser_json(row + ".json"))
+            entry = file_parser_json(row + ".json")
+            entries.append(entry)
 
     try:
-        entries = entries[:10]  # get the 10 newest
-        updated = entries[0]["published"]
-    except IndexError:
-        entries = None  # there are no entries
-
-    template = render_template("atom.xml", entries=entries, updated=updated)
-    response = make_response(template)
-    response.headers["Content-Type"] = "application/atom+xml"
-    return response
+        entries = entries[:10]
+        # Access the published attribute directly from BlogPost object
+        updated = entries[0].published if entries else None
+        return Response(
+            render_template("atom.xml", entries=entries, updated=updated),
+            mimetype="application/atom+xml",
+        )
+    except (IndexError, AttributeError):
+        return Response(
+            render_template("atom.xml", entries=[], updated=None),
+            mimetype="application/atom+xml",
+        )
 
 
 @app.route("/json.feed")
@@ -812,6 +833,7 @@ def five_oh_oh(e):
 
 
 @app.route("/add", methods=["GET", "POST"])
+@require_auth
 def add():
     """The form for user-submission"""
     if request.method == "GET":
@@ -821,18 +843,13 @@ def add():
         )
 
     elif request.method == "POST":
-        print(f"Received POST request: {request.form}")
-        if not session.get("logged_in"):
-            abort(401)
-
         try:
             data = post_from_request(request)
-            if "Save" in request.form:  # if we're saving as a draft
-                # Convert to dict and create draft post
+            if "Save" in request.form:
                 data = create_post_from_data(data)
                 location = create_json_entry(data, g=g.db, draft=True)
                 return redirect(location)
-            else:  # normal submission
+            else:
                 return redirect(add_entry(request))
         except TravelValidationError:
             return redirect(url_for("add"))
@@ -934,6 +951,7 @@ def rotate_image_by_exif(image: Image.Image) -> Image.Image:
 
 
 @app.route("/bulk_upload", methods=["GET", "POST"])
+@require_auth
 def bulk_upload():
     if request.method == "GET":
         return render_template("bulk_photo_uploader.html")
@@ -975,7 +993,7 @@ def mobile_upload():
         if not session.get("logged_in"):
             abort(401)
 
-        file_path = ORIGINAL_PHOTOS_DIR
+        file_path = BULK_UPLOAD_DIR
         for uploaded_file in request.files.getlist("files[]"):
             assert uploaded_file.filename
             app.logger.info("file " + uploaded_file.filename)
@@ -1042,7 +1060,7 @@ def geonames_wrapper(query):
 def recent_uploads():
     """Return a formatted list of all images in the current day's directory."""
     if request.method == "GET":
-        directory = ORIGINAL_PHOTOS_DIR
+        directory = BULK_UPLOAD_DIR
         insert_pattern = "%s" if request.args.get("stream") else "[](%s)"
 
         file_list = [
@@ -1058,7 +1076,7 @@ def recent_uploads():
                 <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
                     <img src="{image}" id="img_{j}" class="img-fluid" style="max-height:auto; width:25%;">
                 </a>
-                """
+                """  # noqa: E501
                     for j, image in enumerate(row_images, start=i)
                 ]
             )
@@ -1083,6 +1101,7 @@ def recent_uploads():
 
 
 @app.route("/edit/e/<year>/<month>/<day>/<name>", methods=["GET", "POST"])
+@require_auth
 def edit(year, month, day, name):
     """The form for user-submission"""
     if request.method == "GET":
@@ -1143,7 +1162,7 @@ def tag_search(category):
             query += (
                 "\nand CAST(strftime('%{0}', entries.published)AS INT) = {1}".format(
                     strf, args.get(key)
-                )
+                )  # noqa: E501
             )
         query += "\nORDER BY entries.published DESC"
         cur = g.db.execute(query)
@@ -1401,6 +1420,7 @@ def show_inbox_item(name):
 
 
 @app.route("/drafts", methods=["GET"])
+@require_auth
 def show_drafts():
     if not session.get("logged_in"):
         abort(401)
@@ -1414,6 +1434,7 @@ def show_drafts():
 
 
 @app.route("/drafts/<name>", methods=["GET", "POST"])
+@require_auth
 def show_draft(name):
     if not session.get("logged_in"):
         abort(401)
@@ -1534,6 +1555,32 @@ def verify_url():
         return jsonify({"valid": response.status_code < 400})
     except requests.RequestException as e:
         return jsonify({"valid": False, "error": str(e)})
+
+
+@app.after_request
+def add_security_headers(response):
+    csp = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' "
+        "https://code.jquery.com "
+        "https://cdnjs.cloudflare.com "
+        "https://maxcdn.bootstrapcdn.com "
+        "https://cdn.jsdelivr.net "
+        "https://webmention.io; "
+        "style-src 'self' 'unsafe-inline' "
+        "https://maxcdn.bootstrapcdn.com "
+        "https://fonts.googleapis.com "
+        "https://cdn.jsdelivr.net "
+        "https://maxcdn.bootstrapcdn.com;"
+        "font-src 'self' https://fonts.gstatic.com"
+        "https://maxcdn.bootstrapcdn.com;"
+        "connect-src 'self' https://webmention.io"
+    )
+    response.headers["Content-Security-Policy-Report-Only"] = csp
+    return response
+    # Start in report-only mode
+    response.headers["Content-Security-Policy-Report-Only"] = csp
+    return response
 
 
 if __name__ == "__main__":

@@ -19,7 +19,6 @@ from pysrc.database.queries import EntryQueries, CategoryQueries
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
 
-
 # Add these regex patterns
 images_regexp = "(?<=\){1})[ ,\n,\r]*-*[ ,\n,\r]*(?=\[{1})"
 image_ref_regexp = "(?<=\({1})(.)*(?=\){1})"

@@ -1,4 +1,5 @@
 <html>
+
 <head>
     <!--
     Wow. Such engineer. Very science.
@@ -35,7 +36,7 @@
 
 
     <link rel="alternate" type="application/atom+xml"
-      href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=https://bridgy-fed.superfeedr.com/" />
+        href="https://granary.io/url?url=https://kongaloosh.com/&input=html&output=atom&hub=https://bridgy-fed.superfeedr.com/" />
 
     <link rel="self" href="https://kongaloosh.com/">
     <link rel="hub" href="http://hub.kongaloosh.com/">
@@ -55,16 +56,21 @@
     <title>kongaloosh</title>
 
     <!-- Bootstrap Core CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!--<link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">-->
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+        type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -83,7 +89,7 @@
     <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
     <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -92,222 +98,241 @@
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
 </head>
 {% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
+{% if messages %}
+<ul class=flashes>
     {% for message in messages %}
-      <li>{{ message }}</li>
+    <li>{{ message }}</li>
     {% endfor %}
-    </ul>
-  {% endif %}
+</ul>
+{% endif %}
 {% endwith %}
+
 <body>
 
-<!-- Navigation -->
-<nav class="navbar navbar-light navbar-expand-lg navbar-expand-md sticky-top navbar-custom">
-    <a class="navbar-brand" href="/">kongaloosh</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+    <!-- Navigation -->
+    <nav class="navbar navbar-light navbar-expand-lg navbar-expand-md sticky-top navbar-custom">
+        <a class="navbar-brand" href="/">kongaloosh</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="/">Home</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="http://alexkearney.com">About</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/a/">Articles</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/t/image">Photos</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/t/bookmark">Bookmarks</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/inbox">Inbox</a>
-            </li >
-            {% if session.logged_in %}
-            <li class="nav-item">
-                <a class="nav-link" href="/logout">logout</a>
-            </li>
-            {% endif %}
-        </ul>
-    </div>
-    <!-- /.navbar-collapse -->
-</nav>
-
-{% block content %}
-{% endblock %}
-
-<!-- Footer -->
-<footer>
-    <div class = "d-flex flex-row container justify-content-center">
-        <div class="d-flex flex-column justify-content-center h-card">
-            <data class="p-name" value="Alex Kearney"></data>
-            <data class="u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
-            <div class="p-2">
-                <img src="{{ url_for('static', filename='img/profile.jpg') }}"
-                     class="u-photo u-url u-uid img-responsive center-block img-thumbnail  mx-auto d-block img-circle"
-                     alt="Alex Kearney"
-                     style="max-height: 100px"
-                     rel="author">
-            </div >
-            <div class="p-2 row justify-content-center">
-                <div class="p-2">
-                    <a class="u-url url" href="https://twitter.com/kongaloosh" rel="me">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-                <div class="p-2">
-                    <a class="u-url url" href="https://www.facebook.com/alex.k.kearney" rel="me">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-                <div class="p-2">
-                    <a class="u-url url" href="https://github.com/Kongaloosh" title="Github" rel="me">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-                <div class="p-2">
-                    <a class="u-url url" href="https://instagram.com/kongaloosh" rel="me">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-instagram fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-                <div class="p-2">
-                    <a class="u-url url" href="https://ca.linkedin.com/in/alexandrakearney" rel="me">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-                <div class="p-2">
-                    <a href="mailto:hi@kongaloosh.com" rel="me" class="u-email">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-                <div class="p-2">
-                    <a href="files/alex-kearney-public-pgp.asc" rel="me" class="u-key">
-                                <span class="fa fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-key fa-stack-1x fa-inverse"></i>
-                                </span>
-                    </a>
-                </div>
-
-            </div>
-
-            <div class="row justify-content-center">
-                <p><i class="fas fa-fingerprint"></i> 2944 0D1A 9484 963F 6E1E  8ECC 6452 2A83 434F 2D65</p>
-            </div>
-
-            <div><p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p></div>
-
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="http://alexkearney.com">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/a/">Articles</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/t/image">Photos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/t/bookmark">Bookmarks</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/inbox">Inbox</a>
+                </li>
+                {% if session.logged_in %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">logout</a>
+                </li>
+                {% endif %}
+            </ul>
         </div>
-    </div>
-</footer>
+        <!-- /.navbar-collapse -->
+    </nav>
 
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    {% block content %}
+    {% endblock %}
 
-<!--&lt;!&ndash; jQuery &ndash;&gt;-->
-<!--<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>-->
+    <!-- Footer -->
+    <footer>
+        <div class="d-flex flex-row container justify-content-center">
+            <div class="d-flex flex-column justify-content-center h-card">
+                <data class="p-name" value="Alex Kearney"></data>
+                <data class="u-url u-uid" value="https://kongaloosh.com/" rel="me"></data>
+                <div class="p-2">
+                    <img src="{{ url_for('static', filename='img/profile.jpg') }}"
+                        class="u-photo u-url u-uid img-responsive center-block img-thumbnail  mx-auto d-block img-circle"
+                        alt="Alex Kearney" style="max-height: 100px" rel="author">
+                </div>
+                <div class="p-2 row justify-content-center">
+                    <div class="p-2">
+                        <a class="u-url url" href="https://twitter.com/kongaloosh" rel="me">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="p-2">
+                        <a class="u-url url" href="https://www.facebook.com/alex.k.kearney" rel="me">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="p-2">
+                        <a class="u-url url" href="https://github.com/Kongaloosh" title="Github" rel="me">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="p-2">
+                        <a class="u-url url" href="https://instagram.com/kongaloosh" rel="me">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-instagram fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="p-2">
+                        <a class="u-url url" href="https://ca.linkedin.com/in/alexandrakearney" rel="me">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="p-2">
+                        <a href="mailto:hi@kongaloosh.com" rel="me" class="u-email">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="p-2">
+                        <a href="files/alex-kearney-public-pgp.asc" rel="me" class="u-key">
+                            <span class="fa fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-key fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </div>
 
-<!--&lt;!&ndash; Bootstrap Core JavaScript &ndash;&gt;-->
-<!--<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>-->
+                </div>
 
-<!--&lt;!&ndash; Custom Theme JavaScript &ndash;&gt;-->
-<!--<script src="{{ url_for('static', filename='js/clean-blog.js') }}"></script>-->
+                <div class="row justify-content-center">
+                    <p><i class="fas fa-fingerprint"></i> 2944 0D1A 9484 963F 6E1E 8ECC 6452 2A83 434F 2D65</p>
+                </div>
 
-<!--http://webmention.io/js/mentions.js-->
+                <div>
+                    <p class="copyright text-muted">Copyright &copy; Alex Kearney 2015</p>
+                </div>
 
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            </div>
+        </div>
+    </footer>
 
-  ga('create', 'UA-65133906-1', 'auto');
-  ga('send', 'pageview');
-</script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
 
-<script type="text/javascript" >
-  jQuery(function($){
-      var urls = [];
-      var base;
-      $("*[data-webmention-count]").each(function(i,e){
-        var parser = document.createElement('a');
-        parser.href = $(e).data('url');
-        base = parser.protocol + "//" + parser.hostname;
-        urls.push(parser.pathname+parser.search);
-      });
+    <!--&lt;!&ndash; jQuery &ndash;&gt;-->
+    <!--<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>-->
 
-      $.getJSON("https://webmention.io/api/count?jsonp=?", {
-        base: base,
-        targets: urls.join(",")
-      }, function(data){
-            $("*[data-webmention-count]").each(function(i,e){
-            $(e).text(data.count[$(e).data('url')]);
-            if ('' == $(e).text()){
-            	$(e).text('0');
-	    }
-      });
-    });
-  });
-</script>
+    <!--&lt;!&ndash; Bootstrap Core JavaScript &ndash;&gt;-->
+    <!--<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>-->
 
-<script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+    <!--&lt;!&ndash; Custom Theme JavaScript &ndash;&gt;-->
+    <!--<script src="{{ url_for('static', filename='js/clean-blog.js') }}"></script>-->
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
-<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+    <!--http://webmention.io/js/mentions.js-->
+
+    <!-- <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-65133906-1', 'auto');
+        ga('send', 'pageview');
+    </script> -->
+
+    <script type="text/javascript">
+        jQuery(function ($) {
+            var urls = [];
+            var base;
+            $("*[data-webmention-count]").each(function (i, e) {
+                var parser = document.createElement('a');
+                parser.href = $(e).data('url');
+                base = parser.protocol + "//" + parser.hostname;
+                urls.push(parser.pathname + parser.search);
+            });
+
+            $.getJSON("https://webmention.io/api/count?jsonp=?", {
+                base: base,
+                targets: urls.join(",")
+            }, function (data) {
+                $("*[data-webmention-count]").each(function (i, e) {
+                    var count = parseInt(data.count[$(e).data('url')]) || 0;
+                    $(e).text(count.toString());
+                });
+            });
+        });
+    </script>
+
+    <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
 
 
 
-<!-- Add mousewheel plugin (this is optional) -->
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/lib/jquery.mousewheel-3.0.6.pack.js') }}"></script>
+    <!-- Add mousewheel plugin (this is optional) -->
+    <script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/lib/jquery.mousewheel-3.0.6.pack.js') }}"></script>
 
-<!-- Add fancyBox -->
-<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/jquery.fancybox.css') }}" type="text/css" media="screen" />
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/jquery.fancybox.pack.js') }}"></script>
+    <!-- Add fancyBox -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/jquery.fancybox.css') }}"
+        type="text/css" media="screen" />
+    <script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/jquery.fancybox.pack.js') }}"></script>
 
-<!-- Optionally add helpers - button, thumbnail and/or media -->
-<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.css') }}" type="text/css" media="screen" />
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-media.js') }}"></script>
+    <!-- Optionally add helpers - button, thumbnail and/or media -->
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.css') }}" type="text/css"
+        media="screen" />
+    <script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-media.js') }}"></script>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.css') }}" type="text/css" media="screen" />
-<script type="text/javascript" src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.css') }}"
+        type="text/css" media="screen" />
+    <script type="text/javascript"
+        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.js') }}"></script>
 
-<script type="text/javascript">
-	$(document).ready(function() {
-		$(".fancybox").fancybox();
-	});
-</script>
-<script>
-$("img").addClass( "mx-auto d-block img-responsive img-fluid" );
-</script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".fancybox").fancybox();
+        });
+    </script>
+    <script>
+        $("img").addClass("mx-auto d-block img-responsive img-fluid");
+    </script>
 </body>
+
 </html>

@@ -16,6 +16,9 @@ var img = "";
 var title = "";
 var summary = "";
 
+
+var csrfToken = $('meta[name=csrf-token]').attr('content');
+
 function setIMG(loc) {
     if (!loc.startsWith("/")) {
         loc = "/" + loc
@@ -29,7 +32,8 @@ function getHTMLFromMD(val) {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
-            'Content-Type': 'text/plain;charset=UTF-8'
+            'Content-Type': 'text/plain;charset=UTF-8',
+            'X-CSRFToken': csrfToken
         },
         body: val
     })
@@ -85,3 +89,11 @@ setInterval(function () {
     img = summary
 }, 1000);
 MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+
+$.ajaxSetup({
+    beforeSend: function (xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token() }}");
+        }
+    }
+});

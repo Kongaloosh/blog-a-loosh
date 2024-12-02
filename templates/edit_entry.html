@@ -41,6 +41,7 @@
                 <form enctype="multipart/form-data"
                     action="{{ '/add' if type == 'add' else ('/drafts/' + entry.slug if type == 'draft' else '/edit' + entry.url) }}"
                     method="post" class="input-large" id="input" onsubmit="return validateTravelForm()" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <p>
                         <input type="text" style="width: 100%" name="title" id="title_form"
                             value="{% if entry.title%}{{entry.title}}{% endif %}" placeholder="title">

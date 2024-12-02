@@ -107,20 +107,20 @@
             {{entry.content | safe}}
             {% endif %}
 
-            {% if entry.travel and entry.travel.trips %}
-            {% if entry.travel.map_path %}
-            <img src="/{{ entry.travel.map_path }}" class="img-fluid">
-            {% endif %}
-
-            <div class="travel-details">
-                {% for trip in entry.travel.trips %}
-                <div class="trip">
-                    <p>{{ trip.location_name }}</p>
+            {% if entry.travel %}
+            <div class="flex-row p-2 text-center">
+                <p>{%for destination in entry.travel.trips%}
+                    {{destination.location_name}}
+                    {% if not loop.last %} &rarr;{% endif %}
+                    {% endfor %}</p>
+                {% if entry.travel.map %}
+                <div class="clearfix">
+                    <img class="u-photo img-fluid center-block img-thumbnail img-rounded mx-auto d-block"
+                        src="/{{entry.travel.map}}">
                 </div>
-                {% endfor %}
+                {% endif %}
             </div>
             {% endif %}
-
 
 
             {%if entry.event%}

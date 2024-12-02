@@ -2,155 +2,189 @@
 
 {% extends "layout.html" %}
 {% block content %}
-<header class="intro-header"
-        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="site-heading">
-                    <h1>Bulk Photo Uploader</h1>
-                    <hr class="small">
-                    <span class="subheading">Say Cheese.</span>
-                </div>
-            </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="site-heading">
+          <h1>Bulk Photo Uploader</h1>
+          <hr class="small">
+          <span class="subheading">Say Cheese.</span>
         </div>
+      </div>
     </div>
-    </div>
+  </div>
+  </div>
 </header>
 {% if session.logged_in %}
+
 <body>
-<section id="wrapper">
-<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
-    <header>
-      <h1>Drag and drop, automatic upload</h1>
-    </header>
+  <section id="wrapper">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+      <header>
+        <h1>Drag and drop, automatic upload</h1>
+      </header>
 
-    <style>
-    #holder { border: 10px dashed #ccc; width: 300px; min-height: 300px; margin: 20px auto;}
-    #holder.hover { border: 10px dashed #0c0; }
-    #holder img { display: block; margin: 10px auto; }
-    #holder p { margin: 10px; font-size: 14px; }
-    progress { width: 100%; }
-    progress:after { content: '%'; }
-    .fail { background: #c00; padding: 2px; color: #fff; }
-    .hidden { display: none !important;}
-    </style>
-    <article>
-      <div id="holder">
-      </div>
-      <p id="upload">
-           <input type="file" name="files[]" multiple>
-      </p><button onclick="readfiles()">Click me</button>
-      <p id="filereader">File API & FileReader API not supported</p>
-      <p id="formdata">XHR2's FormData is not supported</p>
-      <p id="progress">XHR2's upload progress isn't supported</p>
-      <p>Upload progress: <progress id="uploadprogress" min="0" max="100" value="0">0</progress></p>
-    </article>
-    <button onclick="location.href = '/'">Home</button> <button onclick="location.href = '/add'">New Post</button>
-</div>
-<script>
-var holder = document.getElementById('holder'),
-    tests = {
-      filereader: typeof FileReader != 'undefined',
-      dnd: 'draggable' in document.createElement('span'),
-      formdata: !!window.FormData,
-      progress: "upload" in new XMLHttpRequest
-    },
+      <style>
+        #holder {
+          border: 10px dashed #ccc;
+          width: 300px;
+          min-height: 300px;
+          margin: 20px auto;
+        }
 
-    support = {
-      filereader: document.getElementById('filereader'),
-      formdata: document.getElementById('formdata'),
-      progress: document.getElementById('progress')
-    },
+        #holder.hover {
+          border: 10px dashed #0c0;
+        }
 
-    acceptedTypes = {
-      'image/png': true,
-      'image/jpeg': true,
-      'image/gif': true
-    },
+        #holder img {
+          display: block;
+          margin: 10px auto;
+        }
 
-    progress = document.getElementById('uploadprogress'),
-    fileupload = document.getElementById('upload');
-    "filereader formdata progress".split(' ').forEach(function (api) {
-    if (tests[api] === false) {
-        support[api].className = 'fail';
-    } else {
-        support[api].className = 'hidden';
-    }
-    });
+        #holder p {
+          margin: 10px;
+          font-size: 14px;
+        }
 
-    function previewfile(file) {
+        progress {
+          width: 100%;
+        }
+
+        progress:after {
+          content: '%';
+        }
+
+        .fail {
+          background: #c00;
+          padding: 2px;
+          color: #fff;
+        }
+
+        .hidden {
+          display: none !important;
+        }
+      </style>
+      <article>
+        <div id="holder">
+        </div>
+        <p id="upload">
+          <input type="file" name="files[]" multiple>
+        </p><button onclick="readfiles()">Click me</button>
+        <p id="filereader">File API & FileReader API not supported</p>
+        <p id="formdata">XHR2's FormData is not supported</p>
+        <p id="progress">XHR2's upload progress isn't supported</p>
+        <p>Upload progress: <progress id="uploadprogress" min="0" max="100" value="0">0</progress></p>
+      </article>
+      <button onclick="location.href = '/'">Home</button> <button onclick="location.href = '/add'">New Post</button>
+    </div>
+    <script>
+      var holder = document.getElementById('holder'),
+        tests = {
+          filereader: typeof FileReader != 'undefined',
+          dnd: 'draggable' in document.createElement('span'),
+          formdata: !!window.FormData,
+          progress: "upload" in new XMLHttpRequest
+        },
+
+        support = {
+          filereader: document.getElementById('filereader'),
+          formdata: document.getElementById('formdata'),
+          progress: document.getElementById('progress')
+        },
+
+        acceptedTypes = {
+          'image/png': true,
+          'image/jpeg': true,
+          'image/gif': true
+        },
+
+        progress = document.getElementById('uploadprogress'),
+        fileupload = document.getElementById('upload');
+      "filereader formdata progress".split(' ').forEach(function (api) {
+        if (tests[api] === false) {
+          support[api].className = 'fail';
+        } else {
+          support[api].className = 'hidden';
+        }
+      });
+
+      function previewfile(file) {
         if (tests.filereader === true && acceptedTypes[file.type] === true) {
-        var reader = new FileReader();
-        reader.onload = function (event) {
-          var image = new Image();
-          image.src = event.target.result;
-          image.width = 250; // a fake resize
-          holder.appendChild(image);
-        };
+          var reader = new FileReader();
+          reader.onload = function (event) {
+            var image = new Image();
+            image.src = event.target.result;
+            image.width = 250; // a fake resize
+            holder.appendChild(image);
+          };
 
-        reader.readAsDataURL(file);
-      }  else {
-        holder.innerHTML += '<p>Uploaded ' + file.name + ' ' + (file.size ? (file.size/1024|0) + 'K' : '');
-        console.log(file);
+          reader.readAsDataURL(file);
+        } else {
+          holder.innerHTML += '<p>Uploaded ' + file.name + ' ' + (file.size ? (file.size / 1024 | 0) + 'K' : '');
+          console.log(file);
+        }
       }
-    }
 
-    function readfiles(files) {
+      function readfiles(files) {
         var formData = tests.formdata ? new FormData() : null;
         for (var i = 0; i < files.length; i++) {
           if (tests.formdata) formData.append('file', files[i]);
           previewfile(files[i]);
-    }
+        }
 
-    // now post a new XHR request
-    if (tests.formdata) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/bulk_upload');
-      xhr.onload = function() {
-        progress.value = progress.innerHTML = 100;
-      };
+        // now post a new XHR request
+        if (tests.formdata) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', '/bulk_upload');
 
-      if (tests.progress) {
-        xhr.upload.onprogress = function (event) {
-          if (event.lengthComputable) {
-            var complete = (event.loaded / event.total * 100 | 0);
-            progress.value = progress.innerHTML = complete;
+          // Add CSRF token to headers
+          xhr.setRequestHeader('X-CSRFToken', document.querySelector('meta[name="csrf-token"]').content);
+
+          xhr.onload = function () {
+            progress.value = progress.innerHTML = 100;
+          };
+
+          if (tests.progress) {
+            xhr.upload.onprogress = function (event) {
+              if (event.lengthComputable) {
+                var complete = (event.loaded / event.total * 100 | 0);
+                progress.value = progress.innerHTML = complete;
+              }
+            }
           }
+
+          xhr.send(formData);
         }
       }
 
-      xhr.send(formData);
-    }
-}
+      if (tests.dnd) {
+        holder.ondragover = function () { this.className = 'hover'; return false; };
+        holder.ondragend = function () { this.className = ''; return false; };
+        holder.ondrop = function (e) {
+          this.className = '';
+          e.preventDefault();
+          readfiles(e.dataTransfer.files);
+        }
+      } else {
+        fileupload.className = 'hidden';
+        fileupload.querySelector('input').onchange = function () {
+          readfiles(this.files);
+        };
+      }
+      fileupload.querySelector('input').onchange = function () {
+        readfiles(this.files);
+      };
+    </script>
+  </section>
 
-if (tests.dnd) {
-  holder.ondragover = function () { this.className = 'hover'; return false; };
-  holder.ondragend = function () { this.className = ''; return false; };
-  holder.ondrop = function (e) {
-    this.className = '';
-    e.preventDefault();
-    readfiles(e.dataTransfer.files);
-  }
-} else {
-  fileupload.className = 'hidden';
-  fileupload.querySelector('input').onchange = function () {
-    readfiles(this.files);
-  };
-}
-fileupload.querySelector('input').onchange = function () {
-    readfiles(this.files);
-};
-</script>
-</section>
-
-{% else %}
-<div class="row">
+  {% else %}
+  <div class="row">
     <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <p>You need to be logged in, buck-eye.</p>
+      <p>You need to be logged in, buck-eye.</p>
     </div>
-</div>
-{% endif %}
-{% endblock %}
+  </div>
+  {% endif %}
+  {% endblock %}
