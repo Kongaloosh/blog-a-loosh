@@ -343,10 +343,6 @@ def create_json_entry(
                     web_size_location = os.path.join(
                         BLOG_STORAGE, date_location, new_name
                     )
-                    print(f"high_res_location: {high_res_location}")
-                    print(f"web_size_location: {web_size_location}")
-                    print(f"from_location: {from_location}")
-                    print("\n\n\n\n\n\n\n\n\n\n")
                     move_and_resize(
                         from_location,
                         web_size_location,
@@ -500,3 +496,36 @@ def run(lines: str, target_dir: str):
             finished = True
             break
     return text
+
+
+def rotate_image_by_exif(image: Image.Image) -> Image.Image:
+    """Rotate image according to EXIF orientation tag"""
+    try:
+        # Get EXIF data
+        exif = image.getexif()
+        if not exif:
+            return image
+
+        # Find orientation tag
+        orientation = next(
+            (tag for tag, name in Image.ExifTags.TAGS.items() if name == "Orientation"),
+            None,
+        )
+
+        if not orientation or orientation not in exif:
+            return image
+
+        # Rotation mapping based on EXIF orientation value
+        rotation_map = {
+            3: 180,  # Upside down
+            6: 270,  # 90 degrees right
+            8: 90,  # 90 degrees left
+        }
+
+        if rotation := rotation_map.get(exif[orientation]):
+            return image.rotate(rotation, expand=True)
+
+    except Exception as e:
+        app.logger.error(f"Error processing EXIF orientation: {e}")
+
+    return image

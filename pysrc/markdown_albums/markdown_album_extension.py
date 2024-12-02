@@ -68,18 +68,12 @@ class AlbumPreprocessor(Preprocessor):
                             href_path = path
                             src_path = path
                         else:
-                            print(f"Image location: {image_location}")
                             base_path = image_location.removeprefix(BLOG_STORAGE)
                             base_path = base_path.lstrip("/")
-                            print(f"Base path: {base_path}")
-                            print(f"PERMANENT_PHOTOS_DIR: {PERMANENT_PHOTOS_DIR}")
                             src_path = posixpath.join("/", image_location)
                             href_path = posixpath.join(
                                 "/", PERMANENT_PHOTOS_DIR, base_path
                             )
-                            print(f"Href path: {href_path}")
-                            print(f"Src path: {src_path}")
-
                         generated_html += IMG_WRAP % (href_path, src_path)
                     except Exception as e:
                         print(f"Error processing image {image}: {e}")

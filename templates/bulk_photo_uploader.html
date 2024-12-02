@@ -2,189 +2,249 @@
 
 {% extends "layout.html" %}
 {% block content %}
-<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
-        background-size:cover;
-">
+
+{# Header Section #}
+<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), 
+               url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+               background-size: cover;">
   <div class="container">
     <div class="row">
-      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <div class="site-heading">
+      <div class="col-lg-8 offset-lg-2 col-md-10 offset-md-1">
+        <div class="site-heading text-center">
           <h1>Bulk Photo Uploader</h1>
           <hr class="small">
-          <span class="subheading">Say Cheese.</span>
+          <span class="subheading">Say Cheese</span>
         </div>
       </div>
     </div>
   </div>
-  </div>
 </header>
+
 {% if session.logged_in %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      {# Upload Section #}
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h2 class="card-title mb-4">Drag and Drop Photos</h2>
 
-<body>
-  <section id="wrapper">
-    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
-      <header>
-        <h1>Drag and drop, automatic upload</h1>
-      </header>
+          {# Drop Zone #}
+          <div id="holder" class="drop-zone mb-4">
+            <div class="drop-zone-prompt">
+              <i class="fa fa-cloud-upload fa-3x mb-3"></i>
+              <p>Drag your photos here or click to select</p>
+            </div>
+          </div>
 
-      <style>
-        #holder {
-          border: 10px dashed #ccc;
-          width: 300px;
-          min-height: 300px;
-          margin: 20px auto;
-        }
+          {# Upload Controls #}
+          <div class="upload-controls">
+            <div class="custom-file mb-3">
+              <input type="file" class="custom-file-input" name="files[]" multiple id="upload">
+              <label class="custom-file-label" for="upload">Choose files...</label>
+            </div>
 
-        #holder.hover {
-          border: 10px dashed #0c0;
-        }
+            <button class="btn btn-primary" onclick="readfiles()">
+              <i class="fa fa-upload me-2"></i>Upload Files
+            </button>
+          </div>
 
-        #holder img {
-          display: block;
-          margin: 10px auto;
-        }
+          {# Progress Section #}
+          <div class="progress-section mt-4">
+            <p id="filereader" class="alert alert-warning d-none">
+              File API & FileReader API not supported
+            </p>
+            <p id="formdata" class="alert alert-warning d-none">
+              XHR2's FormData is not supported
+            </p>
+            <p id="progress" class="alert alert-warning d-none">
+              XHR2's upload progress isn't supported
+            </p>
 
-        #holder p {
-          margin: 10px;
-          font-size: 14px;
-        }
-
-        progress {
-          width: 100%;
-        }
-
-        progress:after {
-          content: '%';
-        }
-
-        .fail {
-          background: #c00;
-          padding: 2px;
-          color: #fff;
-        }
-
-        .hidden {
-          display: none !important;
-        }
-      </style>
-      <article>
-        <div id="holder">
+            <div class="progress mt-3">
+              <div id="uploadprogress" class="progress-bar progress-bar-striped progress-bar-animated"
+                role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
+          </div>
         </div>
-        <p id="upload">
-          <input type="file" name="files[]" multiple>
-        </p><button onclick="readfiles()">Click me</button>
-        <p id="filereader">File API & FileReader API not supported</p>
-        <p id="formdata">XHR2's FormData is not supported</p>
-        <p id="progress">XHR2's upload progress isn't supported</p>
-        <p>Upload progress: <progress id="uploadprogress" min="0" max="100" value="0">0</progress></p>
-      </article>
-      <button onclick="location.href = '/'">Home</button> <button onclick="location.href = '/add'">New Post</button>
-    </div>
-    <script>
-      var holder = document.getElementById('holder'),
-        tests = {
-          filereader: typeof FileReader != 'undefined',
-          dnd: 'draggable' in document.createElement('span'),
-          formdata: !!window.FormData,
-          progress: "upload" in new XMLHttpRequest
-        },
+      </div>
 
-        support = {
-          filereader: document.getElementById('filereader'),
-          formdata: document.getElementById('formdata'),
-          progress: document.getElementById('progress')
-        },
-
-        acceptedTypes = {
-          'image/png': true,
-          'image/jpeg': true,
-          'image/gif': true
-        },
-
-        progress = document.getElementById('uploadprogress'),
-        fileupload = document.getElementById('upload');
-      "filereader formdata progress".split(' ').forEach(function (api) {
-        if (tests[api] === false) {
-          support[api].className = 'fail';
-        } else {
-          support[api].className = 'hidden';
-        }
-      });
-
-      function previewfile(file) {
-        if (tests.filereader === true && acceptedTypes[file.type] === true) {
-          var reader = new FileReader();
-          reader.onload = function (event) {
-            var image = new Image();
-            image.src = event.target.result;
-            image.width = 250; // a fake resize
-            holder.appendChild(image);
-          };
-
-          reader.readAsDataURL(file);
-        } else {
-          holder.innerHTML += '<p>Uploaded ' + file.name + ' ' + (file.size ? (file.size / 1024 | 0) + 'K' : '');
-          console.log(file);
-        }
-      }
-
-      function readfiles(files) {
-        var formData = tests.formdata ? new FormData() : null;
-        for (var i = 0; i < files.length; i++) {
-          if (tests.formdata) formData.append('file', files[i]);
-          previewfile(files[i]);
-        }
-
-        // now post a new XHR request
-        if (tests.formdata) {
-          var xhr = new XMLHttpRequest();
-          xhr.open('POST', '/bulk_upload');
-
-          // Add CSRF token to headers
-          xhr.setRequestHeader('X-CSRFToken', document.querySelector('meta[name="csrf-token"]').content);
-
-          xhr.onload = function () {
-            progress.value = progress.innerHTML = 100;
-          };
-
-          if (tests.progress) {
-            xhr.upload.onprogress = function (event) {
-              if (event.lengthComputable) {
-                var complete = (event.loaded / event.total * 100 | 0);
-                progress.value = progress.innerHTML = complete;
-              }
-            }
-          }
-
-          xhr.send(formData);
-        }
-      }
-
-      if (tests.dnd) {
-        holder.ondragover = function () { this.className = 'hover'; return false; };
-        holder.ondragend = function () { this.className = ''; return false; };
-        holder.ondrop = function (e) {
-          this.className = '';
-          e.preventDefault();
-          readfiles(e.dataTransfer.files);
-        }
-      } else {
-        fileupload.className = 'hidden';
-        fileupload.querySelector('input').onchange = function () {
-          readfiles(this.files);
-        };
-      }
-      fileupload.querySelector('input').onchange = function () {
-        readfiles(this.files);
-      };
-    </script>
-  </section>
-
-  {% else %}
-  <div class="row">
-    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-      <p>You need to be logged in, buck-eye.</p>
+      {# Navigation Buttons #}
+      <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary me-2">
+          <i class="fa fa-home me-2"></i>Home
+        </a>
+        <a href="/add" class="btn btn-outline-primary">
+          <i class="fa fa-plus me-2"></i>New Post
+        </a>
+      </div>
     </div>
   </div>
-  {% endif %}
-  {% endblock %}
+</div>
+
+<style>
+  .drop-zone {
+    border: 3px dashed #dee2e6;
+    border-radius: 1rem;
+    padding: 3rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+
+  .drop-zone.hover {
+    border-color: #0d6efd;
+    background: #e9ecef;
+  }
+
+  .drop-zone img {
+    max-width: 100%;
+    max-height: 200px;
+    margin: 1rem auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .drop-zone-prompt {
+    color: #6c757d;
+  }
+
+  .drop-zone-prompt i {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .progress {
+    height: 1.5rem;
+  }
+
+  .custom-file-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .alert {
+    display: none;
+  }
+
+  .alert.fail {
+    display: block;
+    background: #dc3545;
+    color: white;
+  }
+</style>
+
+<script>
+  var holder = document.getElementById('holder'),
+    tests = {
+      filereader: typeof FileReader != 'undefined',
+      dnd: 'draggable' in document.createElement('span'),
+      formdata: !!window.FormData,
+      progress: "upload" in new XMLHttpRequest
+    },
+    support = {
+      filereader: document.getElementById('filereader'),
+      formdata: document.getElementById('formdata'),
+      progress: document.getElementById('progress')
+    },
+    acceptedTypes = {
+      'image/png': true,
+      'image/jpeg': true,
+      'image/gif': true
+    },
+    progress = document.getElementById('uploadprogress');
+
+  // Show/hide support warnings
+  "filereader formdata progress".split(' ').forEach(function (api) {
+    if (tests[api] === false) {
+      support[api].classList.remove('d-none');
+      support[api].classList.add('fail');
+    }
+  });
+
+  function previewfile(file) {
+    if (tests.filereader === true && acceptedTypes[file.type] === true) {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        var image = new Image();
+        image.src = event.target.result;
+        image.width = 250;
+        image.classList.add('img-fluid', 'mb-3');
+        holder.appendChild(image);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function readfiles(files) {
+    var formData = tests.formdata ? new FormData() : null;
+    files = files || document.querySelector('input[type="file"]').files;
+
+    for (var i = 0; i < files.length; i++) {
+      if (tests.formdata) formData.append('file', files[i]);
+      previewfile(files[i]);
+    }
+
+    if (tests.formdata) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/bulk_upload');
+      xhr.setRequestHeader('X-CSRFToken', document.querySelector('meta[name="csrf-token"]').content);
+
+      xhr.onload = function () {
+        progress.style.width = '100%';
+        progress.textContent = '100%';
+      };
+
+      if (tests.progress) {
+        xhr.upload.onprogress = function (event) {
+          if (event.lengthComputable) {
+            var complete = (event.loaded / event.total * 100 | 0);
+            progress.style.width = complete + '%';
+            progress.textContent = complete + '%';
+          }
+        }
+      }
+
+      xhr.send(formData);
+    }
+  }
+
+  // Setup drag and drop handlers
+  if (tests.dnd) {
+    holder.ondragover = function () {
+      this.classList.add('hover');
+      return false;
+    };
+
+    holder.ondragleave = holder.ondragend = function () {
+      this.classList.remove('hover');
+      return false;
+    };
+
+    holder.ondrop = function (e) {
+      this.classList.remove('hover');
+      e.preventDefault();
+      readfiles(e.dataTransfer.files);
+    }
+  }
+
+  // Setup file input change handler
+  document.querySelector('input[type="file"]').onchange = function () {
+    readfiles(this.files);
+  };
+</script>
+
+{% else %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2 text-center">
+      <div class="alert alert-warning">
+        <i class="fa fa-lock me-2"></i>
+        You need to be logged in to access this feature.
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
