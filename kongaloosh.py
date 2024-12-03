@@ -168,7 +168,11 @@ def get_entries_by_date() -> List[BlogPost]:
     cur = g.db.execute(EntryQueries.SELECT_ALL)
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
-            entries.append(file_parser_json(row + ".json"))
+            try:
+                entries.append(file_parser_json(row + ".json"))
+            except json.JSONDecodeError:
+                app.logger.error(f"Invalid JSON in file: {row}.json")
+                continue
     return entries
 
 
