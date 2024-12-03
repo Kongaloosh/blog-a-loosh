@@ -168,7 +168,11 @@ def get_entries_by_date() -> List[BlogPost]:
     cur = g.db.execute(EntryQueries.SELECT_ALL)
     for (row,) in cur.fetchall():
         if os.path.exists(row + ".json"):
-            entries.append(file_parser_json(row + ".json"))
+            try:
+                entries.append(file_parser_json(row + ".json"))
+            except json.JSONDecodeError:
+                app.logger.error(f"Invalid JSON in file: {row}.json")
+                continue
     return entries
 
 
@@ -189,9 +193,18 @@ def resolve_placename(location: str) -> PlaceInfo:
         location (str): the geocoords of some location in the format 'geo:lat,long'
     Returns:
         Optional[PlaceInfo]: the placename info of the resolved place, or None.
+    Raises:
+        ValueError: If location format is invalid or API request fails
     """
     try:
-        lat, long = location[4:].split(",")
+        if not location.startswith("geo:"):
+            raise ValueError("Invalid location format: must start with 'geo:'")
+
+        coords = location[4:].split(",")
+        if len(coords) != 2:
+            raise ValueError("Invalid location format: must be 'geo:lat,long'")
+
+        lat, long = coords
         long = long.split(";")[0]  # Remove any additional parameters after semicolon
 
         url = f"http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat={lat}&lng={long}&username={GEONAMES}"
@@ -425,9 +438,15 @@ def handle_event_data(request: Request) -> Event:
     for key in ["dt_start", "dt_end", "event_name"]:
         value = request.form.get(key)
         if value:
-            event_data[key] = (
-                datetime.date.parse(value) if key.startswith("dt_") else value
-            )
+            try:
+                event_data[key] = (
+                    datetime.strptime(value.strip(), "%Y-%m-%d").date()
+                    if key.startswith("dt_")
+                    else value.strip()
+                )
+            except ValueError:
+                # If date parsing fails, return empty event
+                return Event()
         else:
             return Event()
     return Event(**event_data)
@@ -441,21 +460,19 @@ def get_post_for_editing(file_path: str) -> Union[BlogPost, DraftPost]:
     with open(f"{file_path}.json", "r") as f:
         data = json.load(f)
 
-    if data.get("in_reply_to"):
-        if isinstance(data["in_reply_to"], list):
-            data["in_reply_to"] = ", ".join(
-                [
-                    reply["url"] if isinstance(reply, dict) else reply
-                    for reply in data["in_reply_to"]
-                ]
-            )
-
     for date_field in ["published", "updated", "dt_start", "dt_end"]:
         if data.get(date_field):
             try:
                 data[date_field] = datetime.fromisoformat(data[date_field])
             except (ValueError, TypeError):
                 data[date_field] = None
+
+    if data.get("in_reply_to"):
+        if isinstance(data["in_reply_to"], list):
+            data["in_reply_to"] = [
+                {"url": reply} if isinstance(reply, str) else reply
+                for reply in data["in_reply_to"]
+            ]
 
     try:
         return BlogPost(**data)
