@@ -30,7 +30,7 @@ config.read("config.ini")
 BULK_UPLOAD_DIR = config["PhotoLocations"]["BulkUploadLocation"]
 PERMANENT_PHOTOS_DIR = config["PhotoLocations"]["PermStorage"]
 BLOG_STORAGE = config["PhotoLocations"]["BlogStorage"]
-
+HIGH_RES_URL = "images/"
 
 class AlbumExtension(Extension):
 
@@ -72,7 +72,7 @@ class AlbumPreprocessor(Preprocessor):
                             base_path = base_path.lstrip("/")
                             src_path = posixpath.join("/", image_location)
                             href_path = posixpath.join(
-                                "/", PERMANENT_PHOTOS_DIR, base_path
+                                "/", HIGH_RES_URL, src_path
                             )
                         generated_html += IMG_WRAP % (href_path, src_path)
                     except Exception as e:
