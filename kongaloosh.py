@@ -91,15 +91,16 @@ temp_photos = Blueprint(
     static_folder=os.path.join(os.getcwd(), BULK_UPLOAD_DIR),
 )
 
-permanent_photos = Blueprint(
+high_res_storage = Blueprint(
     "perm_photos_data_storage",
     __name__,
-    static_url_path=f"/{PERMANENT_PHOTOS_DIR}",
-    static_folder=os.path.join(os.getcwd(), PERMANENT_PHOTOS_DIR),
+    static_url_path=f"/images",
+    static_folder=PERMANENT_PHOTOS_DIR
 )
+
 app.register_blueprint(photos)
 app.register_blueprint(temp_photos)
-app.register_blueprint(permanent_photos)
+app.register_blueprint(high_res_storage)
 
 cfg = None
 
