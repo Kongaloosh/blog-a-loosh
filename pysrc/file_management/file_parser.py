@@ -17,6 +17,7 @@ from typing import Any, Union
 from pysrc.markdown_albums.markdown_album_extension import album_regexp
 from pysrc.database.queries import EntryQueries, CategoryQueries
 import shutil
+from pysrc.video_converter import convert_video_to_mp4
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
 
@@ -360,8 +361,23 @@ def create_json_entry(
                     from_location = video_i
                     new_name = data.slug + "-" + str(i) + extension
                     final_location = os.path.join(BLOG_STORAGE, date_location, new_name)
-                    shutil.copy2(from_location, final_location)
-                    video_list.append(final_location)
+
+                    # Convert video to MP4 if needed
+                    if not video_i.lower().endswith(".mp4"):
+                        converted_path = convert_video_to_mp4(
+                            from_location, final_location
+                        )
+                        if converted_path:
+                            # Store relative path
+                            video_list.append(
+                                os.path.relpath(converted_path, BLOG_STORAGE)
+                            )
+                    else:
+                        # If already MP4, just copy
+                        shutil.copy2(from_location, final_location)
+                        # Store relative path
+                        video_list.append(os.path.relpath(final_location, BLOG_STORAGE))
+
             data.video = video_list
         try:
             if data.travel and data.travel.map_data:
