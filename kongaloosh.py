@@ -49,7 +49,6 @@ from werkzeug.utils import secure_filename
 import yaml
 from pysrc.database.queries import EntryQueries, CategoryQueries
 from flask_wtf.csrf import CSRFProtect, generate_csrf
-from flask import Flask
 
 jinja_env = Environment()
 
@@ -76,6 +75,15 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.config["STATIC_FOLDER"] = os.getcwd()
 
+# Initialize CSRF protection - move this here, right after app creation
+csrf = CSRFProtect(app)
+
+
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf)  # Note: removed the () here
+
+
 # Add a second static folder specifically for serving photos
 photos = Blueprint(
     "blog_data_storage",
@@ -95,7 +103,7 @@ high_res_storage = Blueprint(
     "perm_photos_data_storage",
     __name__,
     static_url_path=f"/images",
-    static_folder=PERMANENT_PHOTOS_DIR
+    static_folder=PERMANENT_PHOTOS_DIR,
 )
 
 app.register_blueprint(photos)
@@ -114,10 +122,6 @@ def init_db():
 
 def connect_db() -> sqlite3.Connection:
     return sqlite3.connect(app.config["DATABASE"])
-
-
-csrf = CSRFProtect(app)
-app.config["WTF_CSRF_TIME_LIMIT"] = None  # Optional: removes token expiration
 
 
 @app.errorhandler(500)
@@ -833,12 +837,14 @@ def pagination(number):
         # get the next 10 entries starting at the page grouping
         entries = entries[start : start + 10]
     except IndexError:
-        #  if there is an index error, it might be that there are fewer than 10 posts left...
+        #  if there is an index error, it might be that there are
+        #  fewer than 10 posts left...
         try:
             # try to get the remaining entries
             entries = entries[start : len(entries)]
         except IndexError:
-            # if this still produces an index error, we are at the end and return no entries.
+            # if this still produces an index error,
+            #  we are at the end and return no entries.
             entries = None
             before = 0  # set before so that we know we're at the end
     return render_template("blog_entries.html", entries=entries, before=before)
@@ -1589,9 +1595,6 @@ def add_security_headers(response):
         "https://maxcdn.bootstrapcdn.com;"
         "connect-src 'self' https://webmention.io"
     )
-    response.headers["Content-Security-Policy-Report-Only"] = csp
-    return response
-    # Start in report-only mode
     response.headers["Content-Security-Policy-Report-Only"] = csp
     return response
 
