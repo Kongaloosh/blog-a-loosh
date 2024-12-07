@@ -102,7 +102,7 @@ temp_photos = Blueprint(
 high_res_storage = Blueprint(
     "perm_photos_data_storage",
     __name__,
-    static_url_path=f"/images",
+    static_url_path="/images",
     static_folder=PERMANENT_PHOTOS_DIR,
 )
 
@@ -1577,8 +1577,13 @@ def verify_url():
 
 
 @app.after_request
-def add_security_headers(response):
-    csp = (
+def add_security_headers(response: Union[Response, str]) -> Response:
+    """Add security headers to the response"""
+    if not isinstance(response, Response):
+        response = Response(response)
+
+    # Update CSP to allow blob: URLs for media previews
+    response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' "
         "https://code.jquery.com "
@@ -1593,10 +1598,26 @@ def add_security_headers(response):
         "https://maxcdn.bootstrapcdn.com;"
         "font-src 'self' https://fonts.gstatic.com"
         "https://maxcdn.bootstrapcdn.com;"
-        "connect-src 'self' https://webmention.io"
+        "connect-src 'self' https://webmention.io;"
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ajax.googleapis.com https://cdnjs.cloudflare.com;"  # noqa
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "img-src 'self' data: blob: https:; "  # Allow blob: URLs for image previews
+        "media-src 'self' blob: data:; "  # Allow blob: and data: URLs for video previews
+        "font-src 'self' https://fonts.gstatic.com; "
+        "connect-src 'self'"
     )
-    response.headers["Content-Security-Policy-Report-Only"] = csp
+
+    # Other security headers remain the same
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
     return response
+
+
+# Apply headers to all responses
+app.after_request(add_security_headers)
 
 
 if __name__ == "__main__":

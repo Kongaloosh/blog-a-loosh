@@ -86,10 +86,13 @@
 
 
                     <p>
-                        <label>Photo</label>
-                        <input type="file" name="photo_file[]" id="img_input" accept="image/*" multiple />
+                        <label>Media (Photos/Videos)</label>
+                        <input type="file" name="media_file[]" id="media_input"
+                            accept="image/*,video/*,.mov,.qt,.m4v,.avi,.wmv,.flv,.mkv" multiple />
                         <input type="text" style="width:100%" name="photo" id="img_loc"
                             value="{%if entry.photo%}{% if entry.photo is iterable and entry.photo is not string %}{% for photo in entry.photo %}{{photo | safe}}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}{{entry.photo | safe}}{% endif %}{%endif%}">
+                        <input type="text" style="width:100%" name="video" id="video_loc"
+                            value="{%if entry.video%}{% if entry.video is iterable and entry.video is not string %}{% for video in entry.video %}{{video}}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}{{entry.video}}{% endif %}{%endif%}">
                     </p>
 
                     <p>
@@ -161,8 +164,9 @@
                     <div style="margin-left:  0px;margin-right: 0px; padding:0.5em">
                         <h2 class="post-title p-name" id="title_format"></h2>
                         <div class="d-flex flex-row p-2 justify-content-center">
-                            <img id="blah" src="#" class="img-responsive center-block img-thumbnail img-rounded u-photo"
-                                style="image-orientation: from-image; max-height:300px" alt="your image" />
+                            <img id="featured_image_preview" src="#"
+                                class="img-responsive center-block img-thumbnail img-rounded u-photo"
+                                style="image-orientation: from-image; max-height:300px" alt="Featured image preview" />
                         </div>
                         <div class="post-subtitle p-summary">
                             <p><i id="summary_format"></i></p>
@@ -199,13 +203,85 @@ MathJax.Hub.Config({
         if (input.files && input.files[0]) {
             var reader = new FileReader();
             reader.onload = function (e) {
-                $('#blah').attr('src', e.target.result);
+                $('#featured_image_preview').attr('src', e.target.result);
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
     $("#img_input").change(function () {
         readURL(this);
+    });
+
+    function previewMedia(input) {
+        const videoTypes = [
+            'video/mp4',
+            'video/quicktime',  // .mov and .qt
+            'video/x-m4v',      // .m4v
+            'video/avi',
+            'video/x-ms-wmv',   // .wmv
+            'video/x-flv',      // .flv
+            'video/x-matroska'  // .mkv
+        ];
+
+        if (input.files && input.files[0]) {
+            Array.from(input.files).forEach((file, index) => {
+                const objectUrl = URL.createObjectURL(file);
+
+                if (videoTypes.includes(file.type) || file.name.endsWith('.mov') || file.name.endsWith('.qt')) {
+                    // Video preview only in WYSIWYG
+                    const video = document.createElement('video');
+                    video.className = 'u-video h-x-video';
+                    video.controls = true;
+                    video.style.maxHeight = '300px';
+                    video.src = objectUrl;
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'u-video';
+                    wrapper.appendChild(video);
+
+                    // Add cleanup when video is removed
+                    video.onload = () => URL.revokeObjectURL(objectUrl);
+
+                    const wysiwygPreview = document.getElementById('wysiwyg');
+                    wysiwygPreview.appendChild(wrapper);
+
+                } else if (file.type.startsWith('image/')) {
+                    // Image preview code stays the same
+                    const img = document.createElement('img');
+                    img.className = 'img-responsive img-fluid center-block img-thumbnail img-rounded u-photo';
+                    img.style.maxHeight = '300px';
+                    img.src = objectUrl;
+
+                    // Add cleanup when image loads
+                    img.onload = () => URL.revokeObjectURL(objectUrl);
+
+                    const previewContainer = document.getElementById('photo_holder');
+                    previewContainer.appendChild(img);
+
+                    // Update the featured image preview
+                    const featuredImagePreview = document.getElementById('featured_image_preview');
+                    if (index === 0) {
+                        featuredImagePreview.src = objectUrl;
+                        featuredImagePreview.style.display = 'block';
+                    }
+                }
+            });
+        }
+    }
+
+    // Update the existing event listeners
+    document.getElementById('media_input').addEventListener('change', function () {
+        const previewContainer = document.getElementById('photo_holder');
+        const wysiwygPreview = document.getElementById('wysiwyg');
+        const featuredImagePreview = document.getElementById('featured_image_preview');
+
+        // Clear existing previews
+        previewContainer.innerHTML = '';
+        wysiwygPreview.innerHTML = '';
+        featuredImagePreview.src = '#';
+        featuredImagePreview.style.display = 'none';
+
+        previewMedia(this);
     });
 
 </script>

@@ -73,10 +73,22 @@
 
             {% if entry.video %}
             <div class="flex-row justify-content-center">
-                <video class="u-video" controls="controls" src="{{entry.video}}" poster="https://kongaloosh.com"
-                    style="max-height:300px;">
-                    alternate text content only for browsers that do not support the video tag
-                </video>
+                {% if entry.video is iterable and entry.video is not string %}
+                {% for video in entry.video %}
+                <div class="u-video">
+                    <video controls="controls" src="{{video}}" class="u-video h-x-video" style="max-height:300px;">
+                        <a class="p-name u-url" href="{{video}}">Video</a>
+                    </video>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="u-video">
+                    <video controls="controls" src="{{entry.video}}" class="u-video h-x-video"
+                        style="max-height:300px;">
+                        <a class="p-name u-url" href="{{entry.video}}">Video</a>
+                    </video>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
 
