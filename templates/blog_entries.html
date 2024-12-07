@@ -76,22 +76,21 @@
                 {% if entry.video is iterable and entry.video is not string %}
                 {% for video in entry.video %}
                 <div class="u-video">
-                    <video controls="controls" src="{{video}}" class="u-video h-x-video" style="max-height:300px;">
-                        <a class="p-name u-url" href="{{video}}">Video</a>
+                    <video controls="controls" src="/{{video}}" class="u-video h-x-video" style="max-height:300px;">
+                        <a class="p-name u-url" href="/{{video}}">Video</a>
                     </video>
                 </div>
                 {% endfor %}
                 {% else %}
                 <div class="u-video">
-                    <video controls="controls" src="{{entry.video}}" class="u-video h-x-video"
+                    <video controls="controls" src="/{{entry.video}}" class="u-video h-x-video"
                         style="max-height:300px;">
-                        <a class="p-name u-url" href="{{entry.video}}">Video</a>
+                        <a class="p-name u-url" href="/{{entry.video}}">Video</a>
                     </video>
                 </div>
                 {% endif %}
             </div>
             {% endif %}
-
 
             {% if entry.photo %}
             {% if entry.photo is iterable and entry.photo is not string %}

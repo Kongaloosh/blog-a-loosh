@@ -3,7 +3,7 @@
 import configparser
 from functools import wraps
 import json
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 import markdown
 import os
 from pysrc.file_management.file_parser import run
@@ -249,6 +249,7 @@ class PostFormData:
     event: Optional[Event] = None
     travel: Optional[Travel] = None
     photo: Optional[List[str]] = None  # Stores existing photo paths
+    video: Optional[List[str]] = None  # Stores existing video paths
 
 
 def process_form_data(request: Request) -> PostFormData:
@@ -278,29 +279,81 @@ def process_form_data(request: Request) -> PostFormData:
     if photo_list := request.form.get("photo"):
         data.photo = [p.strip() for p in photo_list.split(",")]
 
+    # Handle existing videos
+    if video_list := request.form.get("video"):
+        data.video = [v.strip() for v in video_list.split(",")]
+
     return data
 
 
-def handle_uploaded_files(request: Request) -> List[str]:
-    """Process only the file uploads from the request"""
-    photo_paths = []
+def handle_uploaded_files(request: Request) -> Tuple[List[str], List[str]]:
+    """Handle both photo and video file uploads, returns paths to saved files"""
+    photo_paths: List[str] = []
+    video_paths: List[str] = []
+
+    # Debug request information
+    app.logger.info(f"Form data keys: {list(request.form.keys())}")
+    app.logger.info(f"Files keys: {list(request.files.keys())}")
+    app.logger.info(f"Content type: {request.content_type}")
+
     upload_dir = os.path.join(os.getcwd(), BULK_UPLOAD_DIR)
     os.makedirs(upload_dir, exist_ok=True)
 
-    if files := request.files.getlist("photo_file[]"):
+    files = request.files.getlist("media_file[]")
+    app.logger.info(f"Number of files: {len(files)}")
+
+    if files:
         for file in files:
-            if file and file.filename:
+            if file.filename:
+                app.logger.info(
+                    f"Processing file: {file.filename} of type {file.content_type}"
+                )
                 filename = secure_filename(file.filename)
                 path = os.path.join(upload_dir, filename)
 
-                # Open and rotate image if needed
-                image = Image.open(file.stream)
-                rotated_image = rotate_image_by_exif(image)
-                rotated_image.save(path)
+                if file.filename.lower().endswith(
+                    (".mp4", ".mov", ".qt", ".m4v", ".avi", ".wmv", ".flv", ".mkv")
+                ):
+                    try:
+                        file_size_before = len(file.read())
+                        file.stream.seek(0)
+                        app.logger.info(
+                            f"Video file size before save: {file_size_before}"
+                        )
 
-                photo_paths.append(os.path.join(BULK_UPLOAD_DIR, filename))
+                        with open(path, "wb") as f:
+                            content = file.read()
+                            f.write(content)
+                            app.logger.info(f"Wrote {len(content)} bytes to {path}")
 
-    return photo_paths
+                        final_size = os.path.getsize(path)
+                        app.logger.info(f"Final file size: {final_size}")
+
+                        if final_size == 0:
+                            app.logger.error(
+                                f"Video file {filename} is empty after save"
+                            )
+                            continue
+
+                        video_paths.append(os.path.join(BULK_UPLOAD_DIR, filename))
+                    except Exception as e:
+                        app.logger.error(f"Error saving video {filename}: {str(e)}")
+                        app.logger.exception(e)
+                else:
+                    # Handle image with rotation
+                    try:
+                        image = Image.open(file.stream)
+                        rotated_image = rotate_image_by_exif(image)
+                        rotated_image.save(path)
+                        photo_paths.append(os.path.join(BULK_UPLOAD_DIR, filename))
+                    except Exception as e:
+                        app.logger.error(f"Error processing image {filename}: {str(e)}")
+                        file.save(path)
+                        photo_paths.append(os.path.join(BULK_UPLOAD_DIR, filename))
+
+        return photo_paths, video_paths
+
+    return [], []
 
 
 def post_from_request(
@@ -308,29 +361,33 @@ def post_from_request(
 ) -> Union[BlogPost, DraftPost]:
     """Process form data into a Post model based on the form action"""
     try:
-        # Get form data
         form_data = process_form_data(request)
-        uploaded_photos = handle_uploaded_files(request)
+        photo_paths, video_paths = handle_uploaded_files(request)
 
-        # Handle travel data
-        travel_data = None
-        if "geo[]" in request.form and request.form.getlist("geo[]")[0]:
-            try:
-                travel_data = handle_travel_data(request)
-            except TravelValidationError:
-                raise
-        else:
-            travel_data = Travel()
-
-        # Base post data
+        # Base post data with safe list handling
         post_data = {
             "title": form_data.title,
             "content": form_data.content,
             "summary": form_data.summary,
             "category": form_data.category,
-            "photo": (form_data.photo or []) + uploaded_photos,
+            "photo": (
+                []
+                if form_data.photo is None
+                else [p.strip() for p in form_data.photo if p.strip()]
+            )
+            + photo_paths,
+            "video": (
+                []
+                if form_data.video is None
+                else [v.strip() for v in form_data.video if v.strip()]
+            )
+            + video_paths,
             "in_reply_to": form_data.in_reply_to,
-            "travel": travel_data,
+            "travel": (
+                handle_travel_data(request)
+                if "geo[]" in request.form and request.form.getlist("geo[]")[0]
+                else Travel()
+            ),
         }
 
         if existing_post:
@@ -1026,22 +1083,40 @@ def mobile_upload():
             assert uploaded_file.filename
             app.logger.info("file " + uploaded_file.filename)
             file_loc = file_path + "{0}".format(uploaded_file.filename)
-            image = Image.open(uploaded_file.stream)
 
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == "Orientation":
-                    break
+            # Check if it's a video file
+            if uploaded_file.filename.lower().endswith(
+                (".mp4", ".mov", ".qt", ".m4v", ".avi", ".wmv", ".flv", ".mkv")
+            ):
+                # Save the video file directly
+                uploaded_file.save(file_loc)
+            else:
+                # Handle image with EXIF rotation as before
+                try:
+                    image = Image.open(uploaded_file.stream)
 
-            exif = dict(image.getexif().items())
+                    for orientation in ExifTags.TAGS.keys():
+                        if ExifTags.TAGS[orientation] == "Orientation":
+                            break
 
-            if exif[orientation] == 3:
-                image = image.rotate(180, expand=True)
-            elif exif[orientation] == 6:
-                image = image.rotate(270, expand=True)
-            elif exif[orientation] == 8:
-                image = image.rotate(90, expand=True)
+                    exif = dict(image.getexif().items())
 
-            image.save(file_loc)
+                    if orientation in exif:
+                        if exif[orientation] == 3:
+                            image = image.rotate(180, expand=True)
+                        elif exif[orientation] == 6:
+                            image = image.rotate(270, expand=True)
+                        elif exif[orientation] == 8:
+                            image = image.rotate(90, expand=True)
+
+                    image.save(file_loc)
+                except Exception as e:
+                    app.logger.error(
+                        f"Error processing image {uploaded_file.filename}: {str(e)}"
+                    )
+                    # Save the original file if image processing fails
+                    uploaded_file.save(file_loc)
+
         return redirect("/")
     else:
         return redirect("/404")
