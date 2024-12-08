@@ -117,42 +117,73 @@ function initializePreviews() {
     // Text content preview
     const textInput = document.getElementById('text_input');
     if (textInput) {
-        textInput.addEventListener('input', e => getHTMLFromMD(e.target.value));
+        textInput.addEventListener('input', function (e) {
+            getHTMLFromMD(e.target.value);
+        });
         if (textInput.value) {
             getHTMLFromMD(textInput.value);
         }
     }
 
-    // Media preview
-    const mediaInput = document.querySelector('input[name="media_file[]"]');
-    if (mediaInput) {
-        mediaInput.addEventListener('change', function () {
-            handlePhotoUpload(this);
-        });
-    }
-
     // Initialize existing photos if editing
-    if (window.entryData && window.entryData.photo) {
-        const photoHolder = document.getElementById('featured_image_preview');
-        console.log("Photo holder found:", photoHolder);
-        console.log("Photo array:", window.entryData.photo);
-        if (photoHolder && Array.isArray(window.entryData.photo)) {
-            console.log("Photo holder found and photo array is valid");
-            window.entryData.photo.forEach(photoPath => {
-                console.log("Photo path:", photoPath);
+    const mediaPreviewGrid = document.getElementById('media_preview_grid');
+    if (mediaPreviewGrid) {
+        // Clear existing content first
+        mediaPreviewGrid.innerHTML = '';
+
+        // Add existing photos if any
+        if (window.entryData && Array.isArray(window.entryData.photo)) {
+            console.log("Loading photos:", window.entryData.photo);
+
+            window.entryData.photo.forEach(function (photoPath) {
+                if (!photoPath) return; // Skip null/undefined entries
+
+                console.log("Adding photo:", photoPath);
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'media-preview';
+
                 const img = document.createElement('img');
                 img.src = '/' + photoPath;
-                img.classList.add('img-fluid', 'mb-3');
-                photoHolder.appendChild(img);
+                img.classList.add('img-fluid');
+
+                // Add delete overlay
+                const deleteOverlay = document.createElement('div');
+                deleteOverlay.className = 'delete-overlay';
+                deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
+
+                // Add click handler for delete
+                deleteOverlay.onclick = function () {
+                    if (confirm('Are you sure you want to delete this media?')) {
+                        previewContainer.remove();
+                        updateMediaPaths();
+                    }
+                };
+
+                previewContainer.appendChild(img);
+                previewContainer.appendChild(deleteOverlay);
+                mediaPreviewGrid.appendChild(previewContainer);
             });
         }
+    }
+
+    // Media upload listener - remove any existing listeners first
+    const mediaInput = document.querySelector('input[name="media_file[]"]');
+    if (mediaInput) {
+        // Remove existing listeners
+        mediaInput.replaceWith(mediaInput.cloneNode(true));
+
+        // Add new listener to the fresh element
+        document.querySelector('input[name="media_file[]"]').addEventListener('change', function () {
+            handlePhotoUpload(this);
+        });
     }
 
     // Title preview
     const titleInput = document.getElementById('title_form');
     if (titleInput) {
-        titleInput.addEventListener('input', e =>
-            updatePreview('title', 'title_format', e.target.value));
+        titleInput.addEventListener('input', function (e) {
+            updatePreview('title', 'title_format', e.target.value);
+        });
         if (titleInput.value) {
             updatePreview('title', 'title_format', titleInput.value);
         }
@@ -161,57 +192,76 @@ function initializePreviews() {
     // Summary preview
     const summaryInput = document.getElementById('summary_form');
     if (summaryInput) {
-        summaryInput.addEventListener('input', e =>
-            updatePreview('summary', 'summary_format', e.target.value));
+        summaryInput.addEventListener('input', function (e) {
+            updatePreview('summary', 'summary_format', e.target.value);
+        });
         if (summaryInput.value) {
             updatePreview('summary', 'summary_format', summaryInput.value);
         }
     }
-
-    // Initialize featured image preview
-    // initializeFeaturedImage();
 }
 
+// Remove the duplicate initialization calls
+document.addEventListener('DOMContentLoaded', function () {
+    // Only call once
+    initializePreviews();
+});
+
 function handlePhotoUpload(input) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const reader = new FileReader();
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
 
-        reader.onload = function (e) {
-            const isVideo = file.type.startsWith('video/');
-            let mediaElement;
-            let previewContainer = document.createElement('div');
-            previewContainer.className = 'media-preview';
+            reader.onload = function (e) {
+                const isVideo = file.type.startsWith('video/');
+                let mediaElement;
+                let previewContainer = document.createElement('div');
+                previewContainer.className = 'media-preview';
 
-            if (isVideo) {
-                mediaElement = document.createElement('video');
-                mediaElement.src = e.target.result;
-                mediaElement.controls = true;
-                mediaElement.preload = 'metadata';
-                mediaElement.classList.add('img-fluid');
-            } else {
-                mediaElement = document.createElement('img');
-                mediaElement.src = e.target.result;
-                mediaElement.classList.add('img-fluid');
-            }
+                if (isVideo) {
+                    mediaElement = document.createElement('video');
+                    mediaElement.src = e.target.result;
+                    mediaElement.controls = true;
+                    mediaElement.preload = 'metadata';
+                    mediaElement.classList.add('img-fluid');
+                } else {
+                    mediaElement = document.createElement('img');
+                    mediaElement.src = e.target.result;
+                    mediaElement.classList.add('img-fluid');
+                }
 
-            // Add delete overlay
-            const deleteOverlay = document.createElement('div');
-            deleteOverlay.className = 'delete-overlay';
-            deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
+                // Store the file name as a data attribute
+                mediaElement.dataset.fileName = file.name;
 
-            // Add to preview container
-            previewContainer.appendChild(mediaElement);
-            previewContainer.appendChild(deleteOverlay);
+                // Add delete overlay
+                const deleteOverlay = document.createElement('div');
+                deleteOverlay.className = 'delete-overlay';
+                deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
 
-            // Add to preview grid
-            const previewGrid = document.getElementById('media_preview_grid');
-            if (previewGrid) {
-                previewGrid.appendChild(previewContainer);
-            }
-        }
+                // Add click handler for delete
+                deleteOverlay.onclick = function () {
+                    if (confirm('Are you sure you want to delete this media?')) {
+                        previewContainer.remove();
+                        updateMediaPaths();
+                    }
+                };
 
-        reader.readAsDataURL(file);
+                // Add to preview container
+                previewContainer.appendChild(mediaElement);
+                previewContainer.appendChild(deleteOverlay);
+
+                // Add to preview grid
+                const mediaPreviewGrid = document.getElementById('media_preview_grid');
+                if (mediaPreviewGrid) {
+                    mediaPreviewGrid.appendChild(previewContainer);
+                }
+
+                // Update the hidden input
+                updateMediaPaths();
+            };
+
+            reader.readAsDataURL(file);
+        });
     }
 }
 
@@ -278,9 +328,58 @@ document.addEventListener('DOMContentLoaded', function () {
     initializePreviews();
 });
 
-// Backup initialization in case DOMContentLoaded already fired
-if (document.readyState === 'complete') {
-    initializeTagSystem();
-    initializePreviews();
+// Initialize featured image preview
+function initializeFeaturedImage() {
+    if (window.entryData && window.entryData.photo) {
+        const featuredPreview = document.getElementById('featured_image_preview');
+        if (featuredPreview) {
+            const photoPath = Array.isArray(window.entryData.photo)
+                ? window.entryData.photo[0]
+                : window.entryData.photo;
+            featuredPreview.src = '/' + photoPath;
+            featuredPreview.style.display = 'block';
+        }
+    }
+}
+
+function updateMediaPaths() {
+    // Get all media elements from preview grid
+    const mediaElements = document.querySelectorAll('#media_preview_grid img, #media_preview_grid video');
+    const mediaPaths = Array.from(mediaElements).map(media => {
+        // For new uploads (data URLs), use the fileName attribute
+        if (media.src.includes('data:')) {
+            return media.dataset.fileName || '';
+        }
+        // For existing media, get the full path
+        return media.src.replace(window.location.origin + '/', '');
+    }).filter(path => path); // Remove empty paths
+
+    console.log('Updated media paths:', mediaPaths);
+
+    // Update hidden inputs for both new and existing media
+    const existingMediaInput = document.getElementById('existing_media');
+    const newMediaInput = document.getElementById('new_media');
+
+    if (existingMediaInput && newMediaInput) {
+        // Split paths between existing and new
+        const newPaths = mediaPaths.filter(path =>
+            // Check if it's a new file (either starts with BULK_UPLOAD_DIR or is just a filename)
+            path.startsWith(window.BULK_UPLOAD_DIR || '') ||
+            !path.includes('/')
+        );
+        const existingPaths = mediaPaths.filter(path =>
+            // Existing files have paths but don't start with BULK_UPLOAD_DIR
+            path.includes('/') &&
+            !path.startsWith(window.BULK_UPLOAD_DIR || '')
+        );
+
+        existingMediaInput.value = existingPaths.join(',');
+        newMediaInput.value = newPaths.join(',');
+
+        console.log('Existing media paths:', existingPaths);
+        console.log('New media paths:', newPaths);
+    } else {
+        console.warn('Media input elements not found');
+    }
 }
 

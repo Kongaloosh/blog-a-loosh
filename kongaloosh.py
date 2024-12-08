@@ -281,10 +281,12 @@ def process_form_data(request: Request) -> PostFormData:
 
     # Handle existing photos
     if photo_list := request.form.get("photo"):
+        app.logger.info(f"Photo list: {photo_list}")
         data.photo = [p.strip() for p in photo_list.split(",")]
 
     # Handle existing videos
     if video_list := request.form.get("video"):
+        app.logger.info(f"Video list: {video_list}")
         data.video = [v.strip() for v in video_list.split(",")]
 
     return data
@@ -368,18 +370,27 @@ def post_from_request(
         form_data = process_form_data(request)
         photo_paths, video_paths = handle_uploaded_files(request)
 
+        # Get both existing and new media paths
+        existing_media = (
+            request.form.get("existing_media", "").split(",")
+            if request.form.get("existing_media")
+            else []
+        )
+
+        # Filter out empty strings
+        existing_media = [path for path in existing_media if path.strip()]
+
+        app.logger.info(f"Existing media: {existing_media}")
+        app.logger.info(f"New media paths: {photo_paths}")
+        app.logger.info(f"all values {existing_media + photo_paths}")
+
         # Base post data with safe list handling
         post_data = {
             "title": form_data.title,
             "content": form_data.content,
             "summary": form_data.summary,
             "category": form_data.category,
-            "photo": (
-                []
-                if form_data.photo is None
-                else [p.strip() for p in form_data.photo if p.strip()]
-            )
-            + photo_paths,
+            "photo": existing_media + photo_paths,
             "video": (
                 []
                 if form_data.video is None
@@ -1254,12 +1265,10 @@ def edit(year, month, day, name):
         entry = get_post_for_editing(file_name)
         return render_template("edit_entry.html", type="edit", entry=entry)
     elif request.method == "POST":
-        if not session.get("logged_in"):
-            abort(401)
         if "Submit" in request.form:
             update_entry(request, year, month, day, name)
         return redirect("/")
-    # Add a default return statement
+
     return "", 405  # Method Not Allowed
 
 
