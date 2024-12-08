@@ -84,9 +84,14 @@
             });
 
             if (response.ok) {
-                // Remove the media preview from the DOM
-                const mediaElements = document.querySelectorAll(`.media-preview img[src="/${mediaPath}"]`);
-                mediaElements.forEach(el => el.parentElement.remove());
+                // Remove from both existing media and preview sections
+                const mediaElements = document.querySelectorAll(`img[src="/${mediaPath}"]`);
+                mediaElements.forEach(el => {
+                    const previewContainer = el.closest('.media-preview');
+                    if (previewContainer) {
+                        previewContainer.remove();
+                    }
+                });
 
                 // Update the hidden input that stores media paths
                 updateMediaPaths();
@@ -236,31 +241,11 @@
                                 placeholder="Write your post content here (Markdown supported)">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
                         </div>
 
-                        <!-- Add this section for existing media before the media upload input -->
-                        <div class="form-group mb-3">
-                            <label class="form-label">Existing Media</label>
-                            <div id="existing_media" class="d-flex flex-wrap">
-                                {% if entry and entry.photo %}
-                                {% for photo in entry.photo %}
-                                <div class="media-preview">
-                                    <img src="/{{ photo }}" class="img-fluid">
-                                    <div class="delete-overlay" onclick="confirmDeleteMedia('{{ photo }}')">
-                                        <i class="fa fa-times-circle delete-icon"></i>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-
                         <!-- Media Upload -->
                         <div class="form-group mb-3">
                             <label class="form-label">Media</label>
                             <input type="file" class="form-control" name="media_file[]" id="media_input"
                                 accept="image/*,video/*,.mov,.qt,.m4v,.avi,.wmv,.flv,.mkv" multiple />
-                            <div class="media-preview mt-2" id="photo_holder"
-                                style="max-height:400px; overflow-y: auto;">
-                            </div>
                         </div>
 
                         <!-- Travel Information -->
@@ -393,7 +378,19 @@
             <div class="card shadow-sm" style="height: 90vh; overflow-y: auto;">
                 <div class="card-body">
                     <h2 class="post-title p-name" id="title_format"></h2>
-                    <div class="text-center mb-3" id="featured_image_preview">
+                    <div class="media-preview-container mb-3">
+                        <div id="media_preview_grid" class="d-flex flex-wrap justify-content-center">
+                            {% if entry and entry.photo %}
+                            {% for photo in entry.photo %}
+                            <div class="media-preview">
+                                <img src="/{{ photo }}" class="img-fluid">
+                                <div class="delete-overlay" onclick="confirmDeleteMedia('{{ photo }}')">
+                                    <i class="fa fa-times-circle delete-icon"></i>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="post-subtitle p-summary">
                         <p><i id="summary_format"></i></p>

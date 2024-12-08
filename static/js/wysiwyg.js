@@ -180,57 +180,34 @@ function handlePhotoUpload(input) {
         reader.onload = function (e) {
             const isVideo = file.type.startsWith('video/');
             let mediaElement;
+            let previewContainer = document.createElement('div');
+            previewContainer.className = 'media-preview';
 
             if (isVideo) {
-                // Create video element
                 mediaElement = document.createElement('video');
                 mediaElement.src = e.target.result;
                 mediaElement.controls = true;
                 mediaElement.preload = 'metadata';
-                mediaElement.classList.add('h-x-video');
-                mediaElement.style.maxHeight = '300px';
-
-                // Add source element
-                const source = document.createElement('source');
-                source.src = e.target.result;
-                source.type = file.type;
-                mediaElement.appendChild(source);
-
-                // Create wrapper div for video
-                const videoWrapper = document.createElement('div');
-                videoWrapper.classList.add('u-video');
-                videoWrapper.appendChild(mediaElement);
-
-                // Update featured preview
-                const featuredPreview = document.getElementById('featured_image_preview');
-                if (featuredPreview) {
-                    const videoPreview = videoWrapper.cloneNode(true);
-                    featuredPreview.parentNode.appendChild(videoPreview);
-                }
-
-                // Add to photo holder
-                const photoHolder = document.getElementById('photo_holder');
-                if (photoHolder) {
-                    photoHolder.appendChild(videoWrapper);
-                }
+                mediaElement.classList.add('img-fluid');
             } else {
-                // Handle image
                 mediaElement = document.createElement('img');
                 mediaElement.src = e.target.result;
-                mediaElement.classList.add('img-fluid', 'mb-3', 'mx-auto', 'd-block');
+                mediaElement.classList.add('img-fluid');
+            }
 
-                // Update featured preview
-                const featuredPreview = document.getElementById('featured_image_preview');
-                if (featuredPreview) {
-                    featuredPreview.src = e.target.result;
-                    featuredPreview.style.display = 'block';
-                }
+            // Add delete overlay
+            const deleteOverlay = document.createElement('div');
+            deleteOverlay.className = 'delete-overlay';
+            deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
 
-                // Add to photo holder
-                const photoHolder = document.getElementById('photo_holder');
-                if (photoHolder) {
-                    photoHolder.appendChild(mediaElement);
-                }
+            // Add to preview container
+            previewContainer.appendChild(mediaElement);
+            previewContainer.appendChild(deleteOverlay);
+
+            // Add to preview grid
+            const previewGrid = document.getElementById('media_preview_grid');
+            if (previewGrid) {
+                previewGrid.appendChild(previewContainer);
             }
         }
 
@@ -305,18 +282,5 @@ document.addEventListener('DOMContentLoaded', function () {
 if (document.readyState === 'complete') {
     initializeTagSystem();
     initializePreviews();
-}
-// Initialize featured image preview
-function initializeFeaturedImage() {
-    if (window.entryData && window.entryData.photo) {
-        const featuredPreview = document.getElementById('featured_image_preview');
-        if (featuredPreview) {
-            const photoPath = Array.isArray(window.entryData.photo)
-                ? window.entryData.photo[0]
-                : window.entryData.photo;
-            featuredPreview.src = '/' + photoPath;
-            featuredPreview.style.display = 'block';
-        }
-    }
 }
 
