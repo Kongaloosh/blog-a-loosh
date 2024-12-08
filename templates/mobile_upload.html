@@ -2,8 +2,7 @@
 
 {% extends "layout.html" %}
 {% block content %}
-<header class="intro-header"
-        style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
+<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
         background-size:cover;
 ">
     <div class="container">
@@ -20,25 +19,28 @@
     </div>
 </header>
 {% if session.logged_in %}
+
 <body>
-<section id="wrapper">
-<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+    <section id="wrapper">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
 
-    <form id="uploadbanner" enctype="multipart/form-data" action"/bulkupload" method="post">
-        <input enctype="multipart/form-data" type="file" accept="image/*,video/*" name="files[]" multiple="multiple">
-        <input type="submit">
-    </form>
+            <form id="uploadbanner" enctype="multipart/form-data" action="/mobile_upload" method="post">
+                <input enctype="multipart/form-data" type="file" accept="image/*,video/*" name="files[]"
+                    multiple="multiple">
+                <input type="submit">
+            </form>
 
-    <button onclick="location.href = '/'">Home</button> <button onclick="location.href = '/add'">New Post</button>
-</div>
+            <button onclick="location.href = '/'">Home</button> <button onclick="location.href = '/add'">New
+                Post</button>
+        </div>
 
-</section>
+    </section>
 
-{% else %}
-<div class="row">
-    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <p>You need to be logged in, buck-eye.</p>
+    {% else %}
+    <div class="row">
+        <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <p>You need to be logged in, buck-eye.</p>
+        </div>
     </div>
-</div>
-{% endif %}
-{% endblock %}
+    {% endif %}
+    {% endblock %}

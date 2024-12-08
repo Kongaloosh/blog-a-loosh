@@ -16,6 +16,8 @@ from pydantic import ValidationError
 from typing import Any, Union
 from pysrc.markdown_albums.markdown_album_extension import album_regexp
 from pysrc.database.queries import EntryQueries, CategoryQueries
+import shutil
+from pysrc.video_converter import convert_video_to_mp4
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
 
@@ -298,6 +300,7 @@ def create_json_entry(
         data.url = os.path.join(DRAFTS_STORAGE, data.slug)
 
     else:  # if it's not a draft we need to prep for saving
+        assert isinstance(data, BlogPost)
         date_location = "{year}/{month}/{day}/".format(
             year=str(data.published.year),
             month=str(data.published.month),
@@ -318,11 +321,7 @@ def create_json_entry(
     relative_post_path = os.path.join(directory_of_post, data.slug)
 
     # check to make sure that the .json and human-readable versions do not exist currently
-    if (
-        not os.path.isfile(relative_post_path + ".md")
-        and not os.path.isfile(relative_post_path + ".json")
-        or update
-    ):
+    if not os.path.isfile(relative_post_path + ".json") or update:
         # Find all the multimedia files which were added with the posts.
         # we name the files based on the slug of the post and colocate them.
         if data.photo:
@@ -348,10 +347,38 @@ def create_json_entry(
                         web_size_location,
                         high_res_location,
                     )
-
                     file_list.append(web_size_location)
-
             data.photo = file_list
+        if data.video:
+            extension = ".mp4"
+            video_list = []
+            for video_i in data.video:
+                if isinstance(video_i, str) and video_i.startswith(BULK_UPLOAD_DIR):
+                    i = 0
+                    while os.path.isfile(relative_post_path + "-" + str(i) + extension):
+                        i += 1
+
+                    from_location = video_i
+                    new_name = data.slug + "-" + str(i) + extension
+                    final_location = os.path.join(BLOG_STORAGE, date_location, new_name)
+
+                    # Convert video to MP4 if needed
+                    if not video_i.lower().endswith(".mp4"):
+                        converted_path = convert_video_to_mp4(
+                            from_location, final_location
+                        )
+                        if converted_path:
+                            # Store relative path
+                            video_list.append(
+                                os.path.relpath(converted_path, BLOG_STORAGE)
+                            )
+                    else:
+                        # If already MP4, just copy
+                        shutil.copy2(from_location, final_location)
+                        # Store relative path
+                        video_list.append(os.path.relpath(final_location, BLOG_STORAGE))
+
+            data.video = video_list
         try:
             if data.travel and data.travel.map_data:
                 map_file_path = save_map_file(data.travel.map_data, relative_post_path)
@@ -430,7 +457,15 @@ def update_json_entry(
                 )
             g.commit()
 
-        # 4. Save the updated entry
+        # 4. Handle videos
+        old_videos = data.video or []
+        videos_to_delete = [i for i in (old_entry.video or []) if i not in old_videos]
+
+        for i in videos_to_delete:
+            if os.path.exists(i):
+                os.remove(i)
+
+        # 5. Save the updated entry
         create_json_entry(data=data, g=g, draft=draft, update=True)
 
     except Exception as e:
@@ -529,3 +564,38 @@ def rotate_image_by_exif(image: Image.Image) -> Image.Image:
         app.logger.error(f"Error processing EXIF orientation: {e}")
 
     return image
+
+
+def handle_media_file(
+    file_path: str, target_dir: str, slug: str, file_type: str
+) -> str:
+    """
+    Handles saving of media files (photos or videos)
+
+    Args:
+        file_path: Source file path
+        target_dir: Directory to save the file
+        slug: Post slug for naming
+        file_type: Type of media ('photo' or 'video')
+
+    Returns:
+        str: Path where the file was saved
+    """
+    extension = ".mp4" if file_type == "video" else ".jpg"
+    i = 0
+    while os.path.isfile(os.path.join(target_dir, f"{slug}-{i}{extension}")):
+        i += 1
+
+    new_name = f"{slug}-{i}{extension}"
+
+    if file_type == "video":
+        # Videos only need one copy
+        final_location = os.path.join(BLOG_STORAGE, target_dir, new_name)
+        shutil.copy2(file_path, final_location)
+        return final_location
+    else:
+        # Photos need two copies (high-res and web)
+        high_res_location = os.path.join(PERMANENT_PHOTOS_DIR, target_dir, new_name)
+        web_size_location = os.path.join(BLOG_STORAGE, target_dir, new_name)
+        move_and_resize(file_path, web_size_location, high_res_location)
+        return web_size_location

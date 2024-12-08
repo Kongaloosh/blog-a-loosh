@@ -74,6 +74,7 @@ class DraftPost(BaseModel):
 
     # Media
     photo: Optional[List[str]] = None
+    video: Optional[List[str]] = None
 
     # Location
     location: Optional[str] = None
