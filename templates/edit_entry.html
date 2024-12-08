@@ -19,6 +19,50 @@
         }
     };
 </script>
+
+<script>
+    async function getRecentPhotos() {
+        try {
+            const response = await fetch('/recent_uploads');
+            if (!response.ok) {
+                throw new Error('Failed to fetch recent uploads');
+            }
+
+            // Get the HTML response
+            const html = await response.text();
+
+            // Update the photo holder with the returned HTML
+            const photoHolder = document.getElementById('photo_holder');
+            photoHolder.innerHTML = html;
+
+        } catch (error) {
+            console.error('Error fetching recent uploads:', error);
+            alert('Failed to load recent photos');
+        }
+    }
+
+    // Add the insertAtCaret function since it's used by the returned HTML
+    function insertAtCaret(areaId, text, imgId) {
+        const txtarea = document.getElementById(areaId);
+        if (!txtarea) {
+            console.error('Textarea not found:', areaId);
+            return;
+        }
+
+        const scrollPos = txtarea.scrollTop;
+        let strPos = txtarea.selectionStart;
+        const front = txtarea.value.substring(0, strPos);
+        const back = txtarea.value.substring(strPos);
+
+        txtarea.value = front + text + back;
+        strPos = strPos + text.length;
+        txtarea.selectionStart = strPos;
+        txtarea.selectionEnd = strPos;
+        txtarea.focus();
+        txtarea.scrollTop = scrollPos;
+    }
+</script>
+
 <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 </script>
 

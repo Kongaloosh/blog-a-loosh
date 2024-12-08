@@ -1205,7 +1205,7 @@ def recent_uploads():
         file_list = [
             os.path.join(BULK_UPLOAD_DIR, file) for file in os.listdir(directory)
         ]
-
+        app.logger.debug(f"File list: {file_list}")
         rows = []
         for i in range(0, len(file_list), 3):
             row_images = file_list[i : i + 3]
@@ -1213,7 +1213,7 @@ def recent_uploads():
                 [
                     f"""
                 <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
-                    <img src="{image}" id="img_{j}" class="img-fluid" style="max-height:auto; width:25%;">
+                    <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:auto; width:25%;">
                 </a>
                 """  # noqa: E501
                     for j, image in enumerate(row_images, start=i)
