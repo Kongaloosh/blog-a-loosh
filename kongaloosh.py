@@ -1202,10 +1202,15 @@ def recent_uploads():
         directory = BULK_UPLOAD_DIR
         insert_pattern = "%s" if request.args.get("stream") else "[](%s)"
 
+        # Define allowed image extensions
+        IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
+
         file_list = [
-            os.path.join(BULK_UPLOAD_DIR, file) for file in os.listdir(directory)
+            os.path.join(BULK_UPLOAD_DIR, file)
+            for file in os.listdir(directory)
+            if os.path.splitext(file.lower())[1] in IMAGE_EXTENSIONS
         ]
-        app.logger.debug(f"File list: {file_list}")
+
         rows = []
         for i in range(0, len(file_list), 3):
             row_images = file_list[i : i + 3]
@@ -1213,9 +1218,9 @@ def recent_uploads():
                 [
                     f"""
                 <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
-                    <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:auto; width:25%;">
+                    <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:200px; width:auto;">
                 </a>
-                """  # noqa: E501
+                """
                     for j, image in enumerate(row_images, start=i)
                 ]
             )
