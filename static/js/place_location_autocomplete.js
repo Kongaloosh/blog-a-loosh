@@ -1,86 +1,120 @@
 async function getCandidatePlaces(str) {
-    const response = await fetch('https://kongaloosh.com/geonames/'+str, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-                }
-            });
+  console.log('Fetching places for:', str);
+  try {
+    const url = '/geonames/' + encodeURIComponent(str);
+    console.log('Making request to:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+      }
+    });
+    console.log('Response status:', response.status);
+
     const json = await response.json();
-    console.log(json);
-    return json.geonames
+    console.log('Response data:', json);
+
+    return json.geonames || [];
+  } catch (error) {
+    console.error('Error fetching places:', error);
+    return [];
+  }
 }
 
 function autocomplete(inp) {
+  if (!inp) {
+    console.error('No input element provided to autocomplete');
+    return;
+  }
+  console.log('Initializing autocomplete for:', inp.id);
+
   /*the autocomplete function takes two arguments,
   the text field element and an array of possible autocompleted values:*/
   var currentFocus;
   /*execute a function when someone writes in the text field:*/
-  inp.addEventListener("input", function(e) {
-      var a, b, i, val = this.value;
-      /*close any already open lists of autocompleted values*/
-      closeAllLists();
-      if (!val) { return false;}
-      currentFocus = -1;
-      /*create a DIV element that will contain the items (values):*/
+  inp.addEventListener("input", async function (e) {
+    console.log('Input event fired for:', inp.id);
+    console.log('Current value:', this.value);
+    var a, b, i, val = this.value;
+
+    if (!val) {
+      console.log('Empty value, skipping search');
+      return false;
+    }
+
+    try {
+      const places = await getCandidatePlaces(val);
+      console.log('Got places:', places);
+
+      if (!places || places.length === 0) {
+        console.log('No places found');
+        return;
+      }
+
+      // Create dropdown container
       a = document.createElement("DIV");
       a.setAttribute("id", this.id + "autocomplete-list");
       a.setAttribute("class", "autocomplete-items");
-      /*append the DIV element as a child of the autocomplete container:*/
       this.parentNode.appendChild(a);
-      /*for each item in the array...*/
-      getCandidatePlaces(val).then( function ( arr ) {
-        for (i = 0; i < arr.length; i++) {
-          /*create a DIV element for each matching element:*/
-          b = document.createElement("DIV");
-          // add the title of the matching geoname place to the drop-down
-          b.innerHTML += arr[i]['title']
-          /*insert a input field that will hold the current array item's value:*/
-          b.innerHTML += "<input type='hidden' value='" + i + "'>";
-          /*execute a function when someone clicks on the item value (DIV element):*/
-              b.addEventListener("click", function(e) {
-              /*insert the value for the autocomplete text field:*/
-              console.log(arr[this.getElementsByTagName("input")[0].value].title)
-              inp.value = arr[this.getElementsByTagName("input")[0].value].title;
 
-              var geo = "geo:" + arr[this.getElementsByTagName("input")[0].value].lat + "," + arr[this.getElementsByTagName("input")[0].value].lng
-              var name = inp.id
-              console.log(name)
-              console.log("name is: geo_"+name.substring(name.length-1, name.length))
-              var element = document.getElementById("geo_"+name.substring(name.length-1, name.length));
-              element.value = geo
-              /*close the list of autocompleted values,
-              (or any other open lists of autocompleted values:*/
-              closeAllLists();
-          });
-          a.appendChild(b);
-        }
-      })
+      places.forEach((place, i) => {
+        console.log('Adding place to dropdown:', place.title);
+
+        // Create dropdown item
+        b = document.createElement("DIV");
+        b.innerHTML = place.title;
+
+        // Add click handler to set both location name and geo coordinates
+        b.addEventListener("click", function (e) {
+          inp.value = place.title;
+          // Find the corresponding geo input by looking at the parent form-id div
+          const formDiv = inp.closest('.form-id');
+          if (formDiv) {
+            const geoInput = formDiv.querySelector('input[name="geo[]"]');
+            if (geoInput) {
+              geoInput.value = `geo:${place.lat},${place.lng}`;
+              console.log('Set geo value:', geoInput.value);
+            } else {
+              console.error('Could not find geo input in form div');
+            }
+          } else {
+            console.error('Could not find parent form-id div');
+          }
+          closeAllLists();
+        });
+
+        a.appendChild(b);
+      });
+    } catch (error) {
+      console.error('Error in autocomplete handler:', error);
+    }
   });
   /*execute a function presses a key on the keyboard:*/
-  inp.addEventListener("keydown", function(e) {
-      var x = document.getElementById(this.id + "autocomplete-list");
-      if (x) x = x.getElementsByTagName("div");
-      if (e.keyCode == 40) {
-        /*If the arrow DOWN key is pressed,
-        increase the currentFocus variable:*/
-        currentFocus++;
-        /*and and make the current item more visible:*/
-        addActive(x);
-      } else if (e.keyCode == 38) { //up
-        /*If the arrow UP key is pressed,
-        decrease the currentFocus variable:*/
-        currentFocus--;
-        /*and and make the current item more visible:*/
-        addActive(x);
-      } else if (e.keyCode == 13) {
-        /*If the ENTER key is pressed, prevent the form from being submitted,*/
-        e.preventDefault();
-        if (currentFocus > -1) {
-          /*and simulate a click on the "active" item:*/
-          if (x) x[currentFocus].click();
-        }
+  inp.addEventListener("keydown", function (e) {
+    var x = document.getElementById(this.id + "autocomplete-list");
+    if (x) x = x.getElementsByTagName("div");
+    if (e.keyCode == 40) {
+      /*If the arrow DOWN key is pressed,
+      increase the currentFocus variable:*/
+      currentFocus++;
+      /*and and make the current item more visible:*/
+      addActive(x);
+    } else if (e.keyCode == 38) { //up
+      /*If the arrow UP key is pressed,
+      decrease the currentFocus variable:*/
+      currentFocus--;
+      /*and and make the current item more visible:*/
+      addActive(x);
+    } else if (e.keyCode == 13) {
+      /*If the ENTER key is pressed, prevent the form from being submitted,*/
+      e.preventDefault();
+      if (currentFocus > -1) {
+        /*and simulate a click on the "active" item:*/
+        if (x) x[currentFocus].click();
       }
+    }
   });
   function addActive(x) {
     /*a function to classify an item as "active":*/
@@ -104,14 +138,14 @@ function autocomplete(inp) {
     var x = document.getElementsByClassName("autocomplete-items");
     for (var i = 0; i < x.length; i++) {
       if (elmnt != x[i] && elmnt != inp) {
-      x[i].parentNode.removeChild(x[i]);
+        x[i].parentNode.removeChild(x[i]);
+      }
     }
   }
-}
 
-/*execute a function when someone clicks in the document:*/
-document.addEventListener("click", function (e) {
+  /*execute a function when someone clicks in the document:*/
+  document.addEventListener("click", function (e) {
     closeAllLists(e.target);
-});
+  });
 }
 

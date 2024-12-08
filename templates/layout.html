@@ -14,7 +14,7 @@
     ░▐░░░▒▒▒▒▒▒▒▒▌██▀▒▒░░░▒▒▒▀▄▌░
     ░▌░▒▄██▄▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒▌░
     ▀▒▀▐▄█▄█▌▄░▀▒▒░░░░░░░░░░▒▒▒▐░
-    ▐▒▒▐▀▐▀▒░▄▄▒▄▒▒▒▒▒▒░▒░▒░▒▒▒▒▌
+    ▐▒▒▐▀▐▀▒░▄▄▒▄▒▒▒▒▒▒░▒░▒░▒▒▒���▌
     ▐▒▒▒▀▀▄▄▒▒▒▄▒▒▒▒▒▒▒▒░▒░▒░▒▒▐░
     ░▌▒▒▒▒▒▒▀▀▀▒▒▒▒▒▒░▒░▒░▒░▒▒▒▌░
     ░▐▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒░▒░▒▒▄▒▒▐░░
@@ -63,6 +63,7 @@
     <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='video.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
         type="text/css">
@@ -93,12 +94,12 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
 
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
 
 </head>
 {% with messages = get_flashed_messages() %}
@@ -238,17 +239,14 @@
         </div>
     </footer>
 
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
         integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
         crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
-
-    <!--http://webmention.io/js/mentions.js-->
 
     <script>
         (function (i, s, o, g, r, a, m) {
@@ -262,63 +260,18 @@
         ga('send', 'pageview');
     </script>
 
-    <script type="text/javascript">
-        jQuery(function ($) {
-            var urls = [];
-            var base;
-            $("*[data-webmention-count]").each(function (i, e) {
-                var parser = document.createElement('a');
-                parser.href = $(e).data('url');
-                base = parser.protocol + "//" + parser.hostname;
-                urls.push(parser.pathname + parser.search);
-            });
-
-            $.getJSON("https://webmention.io/api/count?jsonp=?", {
-                base: base,
-                targets: urls.join(",")
-            }, function (data) {
-                $("*[data-webmention-count]").each(function (i, e) {
-                    var count = parseInt(data.count[$(e).data('url')]) || 0;
-                    $(e).text(count.toString());
-                });
-            });
-        });
-    </script>
-
-    <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
     <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
 
-
-
-    <!-- Add mousewheel plugin (this is optional) -->
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='fancybox/lib/jquery.mousewheel-3.0.6.pack.js') }}"></script>
-
-    <!-- Add fancyBox -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/jquery.fancybox.css') }}"
-        type="text/css" media="screen" />
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='fancybox/source/jquery.fancybox.pack.js') }}"></script>
-
-    <!-- Optionally add helpers - button, thumbnail and/or media -->
-    <link rel="stylesheet"
-        href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.css') }}" type="text/css"
-        media="screen" />
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-buttons.js') }}"></script>
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-media.js') }}"></script>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.css') }}"
-        type="text/css" media="screen" />
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='fancybox/source/helpers/jquery.fancybox-thumbs.js') }}"></script>
-
     <script type="text/javascript">
         $(document).ready(function () {
-            $(".fancybox").fancybox();
+            $(".fancybox").fancybox({
+                helpers: {
+                    overlay: {
+                        locked: false
+                    }
+                }
+            });
         });
     </script>
     <script>
