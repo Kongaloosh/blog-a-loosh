@@ -164,6 +164,41 @@ function initializePreviews() {
                 mediaPreviewGrid.appendChild(previewContainer);
             });
         }
+        // Add existing videos if any
+        if (window.entryData && Array.isArray(window.entryData.video)) {
+            console.log("Loading videos:", window.entryData.video);
+
+            window.entryData.video.forEach(function (videoPath) {
+                if (!videoPath) return; // Skip null/undefined entries
+
+                console.log("Adding video:", videoPath);
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'media-preview';
+
+                const video = document.createElement('video');
+                video.src = '/' + videoPath;
+                video.controls = true;
+                video.classList.add('img-fluid');
+
+                // Add delete overlay
+                const deleteOverlay = document.createElement('div');
+                deleteOverlay.className = 'delete-overlay';
+                deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
+
+                // Add click handler for delete
+                deleteOverlay.onclick = function () {
+                    if (confirm('Are you sure you want to delete this media?')) {
+                        previewContainer.remove();
+                        updateMediaPaths();
+                    }
+                };
+
+                previewContainer.appendChild(video);
+                previewContainer.appendChild(deleteOverlay);
+                mediaPreviewGrid.appendChild(previewContainer);
+            });
+        }
+
     }
 
     // Media upload listener - remove any existing listeners first

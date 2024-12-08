@@ -358,8 +358,13 @@ def create_json_entry(
             extension = ".jpg"
             file_list = []
             for file_i in data.photo:
-                # if the image is a location ref in the bulk upload directory
-                if isinstance(file_i, str) and file_i.startswith(BULK_UPLOAD_DIR):
+                # if the image is already in the blog storage directory
+                # we don't need to move it. It's already where we want it.
+                if isinstance(file_i, str) and file_i.startswith(BLOG_STORAGE):
+                    file_list.append(file_i)
+                # if the image is in the bulk upload directory
+                # we need to move it to the blog storage directory.
+                elif isinstance(file_i, str) and file_i.startswith(BULK_UPLOAD_DIR):
                     i = 0
                     while os.path.isfile(relative_post_path + "-" + str(i) + extension):
                         i += 1
@@ -378,15 +383,20 @@ def create_json_entry(
                         high_res_location,
                     )
                     file_list.append(web_size_location)
-                else:
-                    file_list.append(file_i)
+
             data.photo = file_list
         if data.video:
             extension = ".mp4"
             video_list = []
             for video_i in data.video:
                 app.logger.info(f"Processing video: {video_i}")
-                if isinstance(video_i, str) and video_i.startswith(BULK_UPLOAD_DIR):
+                # if the video is already in the blog storage directory
+                # we don't need to move it. It's already where we want it.
+                if isinstance(video_i, str) and video_i.startswith(BLOG_STORAGE):
+                    video_list.append(video_i)
+                # if the video is in the bulk upload directory
+                # we need to move it to the blog storage directory.
+                elif isinstance(video_i, str) and video_i.startswith(BULK_UPLOAD_DIR):
                     app.logger.info(f"Video is in bulk upload directory: {video_i}")
                     i = 0
                     while os.path.isfile(relative_post_path + "-" + str(i) + extension):
@@ -482,6 +492,10 @@ def update_json_entry(
         new_videos = data.video or []
         old_videos = old_entry.video or []
         to_delete = [i for i in old_videos if i not in new_videos]
+
+        app.logger.info(f"To delete: {to_delete}")
+        app.logger.info(f"New videos: {new_videos}")
+        app.logger.info(f"old videos: {old_videos}")
 
         for i in to_delete:
             if os.path.exists(i):

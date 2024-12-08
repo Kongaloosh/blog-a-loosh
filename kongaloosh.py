@@ -388,6 +388,13 @@ def post_from_request(
         existing_photos = [path for path in existing_photos if path.strip()]
         existing_videos = [path for path in existing_videos if path.strip()]
 
+        app.logger.info(f"Existing photos: {existing_photos}")
+        app.logger.info(f"New photos: {photo_paths}")
+        app.logger.info(f"Existing videos: {existing_videos}")
+        app.logger.info(f"New videos: {video_paths}")
+        app.logger.info(f"All photos: {existing_photos + photo_paths}")
+        app.logger.info(f"All videos: {existing_videos + video_paths}")
+
         # Base post data with safe list handling
         post_data = {
             "title": form_data.title,
@@ -1265,6 +1272,11 @@ def edit(year, month, day, name):
         return render_template("edit_entry.html", type="edit", entry=entry)
     elif request.method == "POST":
         if "Submit" in request.form:
+            # video and photo logging
+            app.logger.info(f"Existing photos: {request.form.get('existing_photos')}")
+            app.logger.info(f"New photos: {request.form.get('new_photos')}")
+            app.logger.info(f"Existing videos: {request.form.get('existing_videos')}")
+            app.logger.info(f"New videos: {request.form.get('new_videos')}")
             update_entry(request, year, month, day, name)
         return redirect("/")
 

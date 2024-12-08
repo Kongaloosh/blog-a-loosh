@@ -106,11 +106,6 @@
         // Get the main form
         const mainForm = document.getElementById('input');
 
-        // Validate form if it's a submission
-        // if (action === 'Submit' && !validateTravelForm()) {
-        //     return false;
-        // }
-
         const formData = new FormData(mainForm);
         formData.append(action, action);
 
@@ -186,9 +181,9 @@
 
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <!-- Existing media: this is a comma-separated list of paths -->
-                        <input type="hidden" id="existing_media" name="existing_photos"
+                        <input type="hidden" id="existing_photos" name="existing_photos"
                             value="{{ ','.join(entry.photo) if entry and entry.photo else '' }}">
-                        <input type="hidden" id="new_media" name="new_photos" value="">
+                        <input type="hidden" id="new_photos" name="new_photos" value="">
                         <input type="hidden" id="existing_videos" name="existing_videos"
                             value="{{ ','.join(entry.video) if entry and entry.video else '' }}">
                         <input type="hidden" id="new_videos" name="new_videos" value="">
@@ -468,7 +463,3 @@
         display: flex;
     }
 </style>
-
-<input type="hidden" id="existing_media" name="existing_media"
-    value="{{ ','.join(entry.photo) if entry and entry.photo else '' }}">
-<input type="hidden" id="new_media" name="new_media" value="">
