@@ -27,6 +27,60 @@
     console.log('Entry data loaded:', window.entryData);
 </script>
 
+<script>
+    function submitMainForm(event, action) {
+        event.preventDefault();
+
+        // Get the main form
+        const mainForm = document.getElementById('input');
+        const formData = new FormData(mainForm);
+
+        // Add the action (Submit or Save)
+        formData.append(action, action);
+
+        // Create a temporary form to submit all data
+        const tempForm = document.createElement('form');
+        tempForm.method = 'POST';
+        tempForm.action = event.target.action;
+        tempForm.style.display = 'none';
+
+        // Copy all form data to the temporary form
+        for (let [key, value] of formData.entries()) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            tempForm.appendChild(input);
+        }
+
+        // Submit the form
+        document.body.appendChild(tempForm);
+        tempForm.submit();
+        return false;
+    }
+</script>
+
+<script>
+    function handleDelete(event) {
+        event.preventDefault();
+        console.log('Delete button clicked');
+
+        const form = document.getElementById('deleteForm');
+        console.log('Found form:', form);  // This will help us see if the form is found
+
+        if (!form) {
+            console.error('Delete form not found!');
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete this post?')) {
+            console.log('Delete confirmed');
+            console.log('Form action:', form.action);
+            form.submit();
+        }
+    }
+</script>
+
 {% extends "layout.html" %}
 {% block content %}
 <header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), 
@@ -185,35 +239,39 @@
                             {% endif %}
                         </div>
 
-                        <!-- Social Sharing -->
-                        <div class="form-group mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" name="twitter" id="twitter"
-                                    value="twitter" checked>
-                                <label class="form-check-label" for="twitter">Share on Twitter</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" name="facebook" id="facebook"
-                                    value="facebook" checked>
-                                <label class="form-check-label" for="facebook">Share on Facebook</label>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
+                        <!-- Move the buttons inside the main form -->
                         <div class="form-group d-flex gap-2">
                             <button type="submit" name="Submit" class="btn btn-primary">
                                 <i class="fa fa-paper-plane me-1"></i>Publish
                             </button>
+
                             {% if type == 'add' or (type == 'draft' and entry) %}
                             <button type="submit" name="Save" value="Save" class="btn btn-outline-secondary">
                                 <i class="fa fa-save me-1"></i>Save Draft
                             </button>
                             {% endif %}
+
+                            {% if entry %}
+                            {% if session.logged_in %}
+                            <button type="button" class="btn btn-outline-danger" onclick="handleDelete(event)">
+                                <i class="fa fa-trash me-1"></i>Delete
+                            </button>
+                            {% endif %}
+                            {% endif %}
+
                             <button type="button" class="btn btn-outline-info ms-auto" onclick="getRecentPhotos()">
                                 <i class="fa fa-camera me-1"></i>Recent Photos
                             </button>
                         </div>
                     </form>
+
+                    <!-- Move delete form outside main form -->
+                    {% if entry and session.logged_in %}
+                    <form id="deleteForm" method="post"
+                        action="{{ '/delete_entry/' + entry.url if type != 'draft' else '/delete_draft/' + entry.slug }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

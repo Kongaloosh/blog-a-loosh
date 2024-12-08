@@ -947,8 +947,8 @@ def add():
     return "", 501
 
 
-@app.route("/delete_draft/<name>", methods=["GET"])
-def delete_drafts():
+@app.route("/delete_draft/<name>", methods=["GET", "POST"])
+def delete_drafts(name):
     """Deletes a given draft and associated files based on the name."""
     # todo: should have a 404 or something if the post doesn't actually exist.
     if not session.get("logged_in"):  # check permissions before deleting
@@ -982,7 +982,7 @@ def delete_entry(year, month, day, name):
     if not session.get("logged_in"):
         abort(401)
     else:
-
+        app.logger.info(f"Deleting entry {year}/{month}/{day}/{name}")
         totalpath = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
         if not os.path.isfile(totalpath + ".json"):
             return redirect("/")
