@@ -361,10 +361,11 @@ function updateTags() {
     // Update display
     const display = document.getElementById('tag_display');
     display.innerHTML = Array.from(window.tags).map(tag => `
-        <span class="badge bg-primary me-1 mb-1">
-            ${tag}
-            <button type="button" class="btn-close btn-close-white ms-1" 
-                onclick="removeTag('${tag}')" aria-label="Remove"></button>
+        <span class="badge rounded-pill bg-light text-dark border me-2 mb-2">
+            <span class="d-inline-flex align-items-center py-2 px-3">
+                ${tag}
+                <i class="fa fa-times ms-2 tag-remove-button" onclick="removeTag('${tag}')" aria-label="Remove" style="cursor: pointer; font-size: 0.7em;"></i>
+            </span>
         </span>
     `).join('');
 }
@@ -462,6 +463,15 @@ function updateMediaPaths() {
         console.log('New videos paths:', newVideosInput.value);
     } else {
         console.warn('Media input elements not found');
+    }
+}
+
+function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
     }
 }
 

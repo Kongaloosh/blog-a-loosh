@@ -74,3 +74,9 @@ input.is-valid {
 .media-preview:hover .delete-overlay {
     display: flex;
 }
+
+.tag-remove-button {
+    cursor: pointer;
+    font-size: 0.7em;
+    margin-left: 5px;
+}

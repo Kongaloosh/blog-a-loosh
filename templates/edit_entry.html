@@ -188,12 +188,17 @@
                             value="{{ ','.join(entry.video) if entry and entry.video else '' }}">
                         <input type="hidden" id="new_videos" name="new_videos" value="">
 
-                        <!-- Reply To -->
+                        <!-- In Reply To Section -->
                         <div class="form-group mb-3">
-                            <label class="form-label">In Reply To</label>
-                            <input type="url" class="form-control" name="in_reply_to"
-                                placeholder="URL you're replying to"
-                                value="{{ entry.in_reply_to[0].url if entry and entry.in_reply_to else '' }}">
+                            <button type="button" class="btn btn-link" onclick="toggleSection('replyToSection')">
+                                In Reply To
+                            </button>
+                            <div id="replyToSection" class="collapsible-section" style="display: none;">
+                                <label class="form-label">In Reply To</label>
+                                <input type="url" class="form-control" name="in_reply_to"
+                                    placeholder="URL you're replying to"
+                                    value="{{ entry.in_reply_to[0].url if entry and entry.in_reply_to else '' }}">
+                            </div>
                         </div>
 
                         <!-- Title and Summary -->
@@ -223,48 +228,6 @@
                                 accept="image/*,video/*,.mov,.qt,.m4v,.avi,.wmv,.flv,.mkv" multiple />
                         </div>
 
-                        <!-- Travel Information -->
-                        <div class="form-group mb-3">
-                            <label class="form-label">Travel</label>
-                            <div id="travel_form">
-                                <!-- Fields will be added dynamically -->
-                            </div>
-                            <div class="mt-2">
-                                <button type="button"
-                                    class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 mx-auto"
-                                    onclick="addFieldFunction()" style="border-radius: 20px; padding: 8px 16px;">
-                                    <i class="fa fa-plane"></i>
-                                    Add Stop
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Event Information -->
-                        <div class="form-group mb-3">
-                            <label class="form-label">Event</label>
-                            <div class="row">
-                                <div class="col-12 mb-2">
-                                    <input type="text" class="form-control" name="event_name" placeholder="Event Name"
-                                        value="{{ entry.event.event_name if entry and entry.event else '' }}">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Start Time</label>
-                                    <input type="datetime-local" class="form-control" name="dt_start"
-                                        value="{{ entry.event.dt_start.isoformat() if entry and entry.event and entry.event.dt_start else '' }}">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">End Time</label>
-                                    <input type="datetime-local" class="form-control" name="dt_end"
-                                        value="{{ entry.event.dt_end.isoformat() if entry and entry.event and entry.event.dt_end else '' }}">
-                                </div>
-                                <div class="col-12">
-                                    <input type="url" class="form-control" name="event_url"
-                                        placeholder="Event URL (optional)"
-                                        value="{{ entry.event.url if entry and entry.event and entry.event.url else '' }}">
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Publish Date -->
                         <div class="form-group mb-3">
                             <label class="form-label">Publish Date</label>
@@ -273,49 +236,88 @@
                                 {% if type=='draft' %} disabled {% endif %}>
                         </div>
 
-                        <!-- Categories/Tags -->
+                        <!-- Travel Section -->
                         <div class="form-group mb-3">
-                            <label class="form-label">Tags</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="tag_input" placeholder="Add a tag">
-                                <button class="btn btn-primary" type="button" onclick="addTag()">
-                                    <i class="fa fa-plus"></i>
-                                </button>
-                            </div>
-
-                            <input type="hidden" name="category" id="tags"
-                                value="{{ ','.join(entry.category) if entry and entry.category else '' }}">
-
-                            <div id="tag_display" class="mt-2">
-                                {% if entry and entry.category %}
-                                {% for tag in entry.category %}
-                                <span class="badge rounded-pill bg-light text-dark border me-2 mb-2">
-                                    <span class="d-inline-flex align-items-center py-2 px-3">
-                                        {{ tag }}
-                                        <button type="button" class="btn-close ms-2" onclick="removeTag('{{ tag }}')"
-                                            aria-label="Remove" style="font-size: 0.7em;"></button>
-                                    </span>
-                                </span>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            {% if popular_tags %}
-                            <div class="mt-3">
-                                <small class="text-muted">Popular tags:</small>
-                                <div class="mt-1">
-                                    {% for tag in popular_tags %}
-                                    <a href="#"
-                                        class="badge rounded-pill bg-light text-primary border-primary me-2 mb-2"
-                                        onclick="addExistingTag('{{tag}}'); return false;">
-                                        <span class="d-inline-flex align-items-center py-2 px-3">
-                                            {{tag}}
-                                        </span>
-                                    </a>
-                                    {% endfor %}
+                            <button type="button" class="btn btn-link" onclick="toggleSection('travelSection')">
+                                Travel
+                            </button>
+                            <div id="travelSection" class="collapsible-section" style="display: none;">
+                                <label class="form-label">Travel</label>
+                                <div id="travel_form">
+                                    <!-- Fields will be added dynamically -->
+                                </div>
+                                <div class="mt-2">
+                                    <button type="button"
+                                        class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 mx-auto"
+                                        onclick="addFieldFunction()" style="border-radius: 20px; padding: 8px 16px;">
+                                        <i class="fa fa-plane"></i>
+                                        Add Stop
+                                    </button>
                                 </div>
                             </div>
-                            {% endif %}
+                        </div>
+
+                        <!-- Event Section -->
+                        <div class="form-group mb-3">
+                            <button type="button" class="btn btn-link" onclick="toggleSection('eventSection')">
+                                Event
+                            </button>
+                            <div id="eventSection" class="collapsible-section" style="display: none;">
+                                <label class="form-label">Event</label>
+                                <div class="row">
+                                    <div class="col-12 mb-2">
+                                        <input type="text" class="form-control" name="event_name"
+                                            placeholder="Event Name"
+                                            value="{{ entry.event.event_name if entry and entry.event else '' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Start Time</label>
+                                        <input type="datetime-local" class="form-control" name="dt_start"
+                                            value="{{ entry.event.dt_start.isoformat() if entry and entry.event and entry.event.dt_start else '' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">End Time</label>
+                                        <input type="datetime-local" class="form-control" name="dt_end"
+                                            value="{{ entry.event.dt_end.isoformat() if entry and entry.event and entry.event.dt_end else '' }}">
+                                    </div>
+                                    <div class="col-12">
+                                        <input type="url" class="form-control" name="event_url"
+                                            placeholder="Event URL (optional)"
+                                            value="{{ entry.event.url if entry and entry.event and entry.event.url else '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tags Section -->
+                        <div class="form-group mb-3">
+                            <button type="button" class="btn btn-link" onclick="toggleSection('tagsSection')">
+                                Tags
+                            </button>
+                            <div id="tagsSection" class="collapsible-section" style="display: none;">
+                                <label class="form-label">Tags</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="tag_input" placeholder="Add a tag">
+                                    <button class="btn btn-primary" type="button" onclick="addTag()">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="category" id="tags"
+                                    value="{{ ','.join(entry.category) if entry and entry.category else '' }}">
+                                <div id="tag_display" class="mt-2">
+                                    {% if entry and entry.category %}
+                                    {% for tag in entry.category %}
+                                    <span class="badge rounded-pill bg-light text-dark border me-2 mb-2">
+                                        <span class="d-inline-flex align-items-center py-2 px-3">
+                                            {{ tag }}
+                                            <i class="fa fa-times ms-2 tag-remove-button" onclick="removeTag('${tag}')"
+                                                aria-label="Remove" style="cursor: pointer; font-size: 0.7em;"></i>
+                                        </span>
+                                    </span>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Move the buttons inside the main form -->
@@ -489,4 +491,22 @@
         color: white;
         font-size: 24px;
     } */
+
+    .collapsible-section {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+    .btn-link {
+        color: #007bff;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-link:hover {
+        text-decoration: underline;
+    }
 </style>
