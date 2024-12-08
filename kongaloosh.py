@@ -430,28 +430,34 @@ def post_from_request(
 
             return type(existing_post)(**post_data)
         elif "Save" in request.form:
-            # Generate temporary values for required fields
-            now = datetime.now()
+            if publish_date := request.form.get("publish_date"):
+                date = parse(publish_date)
+            else:
+                date = datetime.now()
             post_data.update(
                 {
                     "slug": (
                         slugify(form_data.title)
                         if form_data.title
-                        else f"draft-{now.timestamp()}"
+                        else f"draft-{date.timestamp()}"
                     ),
-                    "url": f"/drafts/{now.strftime('%Y/%m/%d')}/untitled",
-                    "published": now,
+                    "url": f"/drafts/{date.strftime('%Y/%m/%d')}/untitled",
+                    "published": date,
                     "u_uid": str(uuid.uuid4()),
                 }
             )
             return DraftPost(**post_data)
         else:
-            # Normal submission - these will be set by add_entry
+            if publish_date := request.form.get("publish_date"):
+                date = parse(publish_date)
+            else:
+                date = datetime.now()
+
             post_data.update(
                 {
                     "slug": "",
                     "url": "",
-                    "published": datetime.now(),
+                    "published": date,
                     "u_uid": str(uuid.uuid4()),
                 }
             )
