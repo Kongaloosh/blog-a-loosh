@@ -71,6 +71,7 @@ GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
 BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
 BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermStorage")
+DRAFT_STORAGE = config.get("PhotoLocations", "DraftsStorage")
 
 # create our little application :)
 app = Flask(__name__)
@@ -954,7 +955,7 @@ def delete_drafts(name):
     if not session.get("logged_in"):  # check permissions before deleting
         abort(401)
     # the file will be located in drafts under the slug name
-    totalpath = "drafts/{name}"
+    totalpath = os.path.join(DRAFT_STORAGE, name)
     # for all of the files associated with a post
     for extension in [".md", ".json", ".jpg"]:
         # if there's an associated file...

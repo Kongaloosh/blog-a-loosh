@@ -33,29 +33,29 @@
 
         // Get the main form
         const mainForm = document.getElementById('input');
-        const formData = new FormData(mainForm);
 
-        // Add the action (Submit or Save)
-        formData.append(action, action);
-
-        // Create a temporary form to submit all data
-        const tempForm = document.createElement('form');
-        tempForm.method = 'POST';
-        tempForm.action = event.target.action;
-        tempForm.style.display = 'none';
-
-        // Copy all form data to the temporary form
-        for (let [key, value] of formData.entries()) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value;
-            tempForm.appendChild(input);
+        // Validate form if it's a submission
+        if (action === 'Submit' && !validateTravelForm()) {
+            return false;
         }
 
-        // Submit the form
-        document.body.appendChild(tempForm);
-        tempForm.submit();
+        const formData = new FormData(mainForm);
+        formData.append(action, action);
+
+        // Submit the form data using fetch
+        fetch(mainForm.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
         return false;
     }
 </script>
@@ -110,7 +110,7 @@
                 <div class="card-body">
                     <form enctype="multipart/form-data"
                         action="{{ '/add' if type == 'add' else ('/drafts/' + entry.slug if type == 'draft' else '/edit' + entry.url) }}"
-                        method="post" id="input" onsubmit="return validateTravelForm()" novalidate>
+                        method="post" id="input" onsubmit="return false" novalidate>
 
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
@@ -241,12 +241,13 @@
 
                         <!-- Move the buttons inside the main form -->
                         <div class="form-group d-flex gap-2">
-                            <button type="submit" name="Submit" class="btn btn-primary">
+                            <button type="button" class="btn btn-primary" onclick="submitMainForm(event, 'Submit')">
                                 <i class="fa fa-paper-plane me-1"></i>Publish
                             </button>
 
                             {% if type == 'add' or (type == 'draft' and entry) %}
-                            <button type="submit" name="Save" value="Save" class="btn btn-outline-secondary">
+                            <button type="button" class="btn btn-outline-secondary"
+                                onclick="submitMainForm(event, 'Save')">
                                 <i class="fa fa-save me-1"></i>Save Draft
                             </button>
                             {% endif %}
