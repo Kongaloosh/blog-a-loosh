@@ -1736,5 +1736,43 @@ def add_security_headers(response: Union[Response, str]) -> Response:
 app.after_request(add_security_headers)
 
 
+@app.route("/delete_media", methods=["POST"])
+@require_auth
+def delete_media():
+    """Delete a media file from the server."""
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    try:
+        assert request.json
+        media_path = request.json.get("media_path")
+        if not media_path:
+            return jsonify({"error": "No media path provided"}), 400
+
+        # Check if file exists in either permanent or bulk upload directory
+        file_path = None
+        if os.path.isfile(os.path.join(os.getcwd(), media_path)):
+            file_path = os.path.join(os.getcwd(), media_path)
+        elif os.path.isfile(
+            os.path.join(PERMANENT_PHOTOS_DIR, os.path.basename(media_path))
+        ):
+            file_path = os.path.join(PERMANENT_PHOTOS_DIR, os.path.basename(media_path))
+        elif os.path.isfile(
+            os.path.join(BULK_UPLOAD_DIR, os.path.basename(media_path))
+        ):
+            file_path = os.path.join(BULK_UPLOAD_DIR, os.path.basename(media_path))
+
+        if not file_path:
+            return jsonify({"error": "File not found"}), 404
+
+        # Delete the file
+        os.remove(file_path)
+        return jsonify({"message": "Media deleted successfully"}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error deleting media: {str(e)}")
+        return jsonify({"error": "Failed to delete media"}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True)

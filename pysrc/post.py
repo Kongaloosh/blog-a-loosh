@@ -90,10 +90,7 @@ class DraftPost(BaseModel):
 
     # Events
     event: Optional[Event] = None
-    event_name: Optional[str] = None
-    dt_start: Optional[datetime] = None
-    dt_end: Optional[datetime] = None
-    url: Optional[HttpUrl] = None
+
     # Travel
     travel: Travel = Field(default_factory=Travel)
 

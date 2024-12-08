@@ -31,9 +31,9 @@
             // Get the HTML response
             const html = await response.text();
 
-            // Update the photo holder with the returned HTML
+            // Append to the photo holder instead of replacing
             const photoHolder = document.getElementById('photo_holder');
-            photoHolder.innerHTML = html;
+            photoHolder.insertAdjacentHTML('beforeend', html);
 
         } catch (error) {
             console.error('Error fetching recent uploads:', error);
@@ -63,6 +63,56 @@
     }
 </script>
 
+<script>
+    function confirmDeleteMedia(mediaPath) {
+        if (confirm('Are you sure you want to delete this media?')) {
+            deleteMedia(mediaPath);
+        }
+    }
+
+    async function deleteMedia(mediaPath) {
+        try {
+            const response = await fetch('/delete_media', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify({
+                    media_path: mediaPath
+                })
+            });
+
+            if (response.ok) {
+                // Remove the media preview from the DOM
+                const mediaElements = document.querySelectorAll(`.media-preview img[src="/${mediaPath}"]`);
+                mediaElements.forEach(el => el.parentElement.remove());
+
+                // Update the hidden input that stores media paths
+                updateMediaPaths();
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete media');
+            }
+        } catch (error) {
+            console.error('Error deleting media:', error);
+            alert('Failed to delete media');
+        }
+    }
+
+    function updateMediaPaths() {
+        // Get all remaining media paths
+        const mediaPaths = Array.from(document.querySelectorAll('#existing_media img'))
+            .map(img => img.src.split('/').slice(-1)[0]);
+
+        // Update hidden input or form data
+        const mediaInput = document.getElementById('media_paths');
+        if (mediaInput) {
+            mediaInput.value = mediaPaths.join(',');
+        }
+    }
+</script>
+
 <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 </script>
 
@@ -79,9 +129,9 @@
         const mainForm = document.getElementById('input');
 
         // Validate form if it's a submission
-        if (action === 'Submit' && !validateTravelForm()) {
-            return false;
-        }
+        // if (action === 'Submit' && !validateTravelForm()) {
+        //     return false;
+        // }
 
         const formData = new FormData(mainForm);
         formData.append(action, action);
@@ -184,6 +234,23 @@
                             <label class="form-label">Content</label>
                             <textarea class="form-control" rows="12" name="content" id="text_input"
                                 placeholder="Write your post content here (Markdown supported)">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
+                        </div>
+
+                        <!-- Add this section for existing media before the media upload input -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Existing Media</label>
+                            <div id="existing_media" class="d-flex flex-wrap">
+                                {% if entry and entry.photo %}
+                                {% for photo in entry.photo %}
+                                <div class="media-preview">
+                                    <img src="/{{ photo }}" class="img-fluid">
+                                    <div class="delete-overlay" onclick="confirmDeleteMedia('{{ photo }}')">
+                                        <i class="fa fa-times-circle delete-icon"></i>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
                         </div>
 
                         <!-- Media Upload -->
@@ -389,3 +456,41 @@
         }
     };
 </script>
+
+<style>
+    .media-preview {
+        position: relative;
+        display: inline-block;
+        margin: 10px;
+    }
+
+    .media-preview img {
+        max-height: 200px;
+        width: auto;
+    }
+
+    .delete-overlay {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .delete-icon {
+        color: white;
+        font-size: 24px;
+    }
+
+    .media-preview:hover .delete-overlay {
+        display: flex;
+    }
+</style>
+
+<input type="hidden" name="media_paths" id="media_paths"
+    value="{{ ','.join(entry.photo) if entry and entry.photo else '' }}">
