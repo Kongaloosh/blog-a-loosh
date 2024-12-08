@@ -49,6 +49,8 @@ from werkzeug.utils import secure_filename
 import yaml
 from pysrc.database.queries import EntryQueries, CategoryQueries
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+from pydantic import HttpUrl, AnyHttpUrl
+
 
 jinja_env = Environment()
 
@@ -69,6 +71,7 @@ GOOGLE_MAPS_KEY = config.get("GoogleMaps", "key")
 BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
 BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermStorage")
+DRAFT_STORAGE = config.get("PhotoLocations", "DraftsStorage")
 
 # create our little application :)
 app = Flask(__name__)
@@ -81,7 +84,8 @@ csrf = CSRFProtect(app)
 
 @app.context_processor
 def inject_csrf_token():
-    return dict(csrf_token=generate_csrf)  # Note: removed the () here
+    token = generate_csrf()
+    return dict(csrf_token=token)
 
 
 # Add a second static folder specifically for serving photos
@@ -277,10 +281,12 @@ def process_form_data(request: Request) -> PostFormData:
 
     # Handle existing photos
     if photo_list := request.form.get("photo"):
+        app.logger.info(f"Photo list: {photo_list}")
         data.photo = [p.strip() for p in photo_list.split(",")]
 
     # Handle existing videos
     if video_list := request.form.get("video"):
+        app.logger.info(f"Video list: {video_list}")
         data.video = [v.strip() for v in video_list.split(",")]
 
     return data
@@ -364,30 +370,46 @@ def post_from_request(
         form_data = process_form_data(request)
         photo_paths, video_paths = handle_uploaded_files(request)
 
+        # Get both existing and new media paths
+        existing_photos = (
+            request.form.get("existing_photos", "").split(",")
+            if request.form.get("existing_photos")
+            else []
+        )
+
+        # Get existing videos
+        existing_videos = (
+            request.form.get("existing_videos", "").split(",")
+            if request.form.get("existing_videos")
+            else []
+        )
+
+        # Filter out empty strings
+        existing_photos = [path for path in existing_photos if path.strip()]
+        existing_videos = [path for path in existing_videos if path.strip()]
+
+        app.logger.info(f"Existing photos: {existing_photos}")
+        app.logger.info(f"New photos: {photo_paths}")
+        app.logger.info(f"Existing videos: {existing_videos}")
+        app.logger.info(f"New videos: {video_paths}")
+        app.logger.info(f"All photos: {existing_photos + photo_paths}")
+        app.logger.info(f"All videos: {existing_videos + video_paths}")
+
         # Base post data with safe list handling
         post_data = {
             "title": form_data.title,
             "content": form_data.content,
             "summary": form_data.summary,
             "category": form_data.category,
-            "photo": (
-                []
-                if form_data.photo is None
-                else [p.strip() for p in form_data.photo if p.strip()]
-            )
-            + photo_paths,
-            "video": (
-                []
-                if form_data.video is None
-                else [v.strip() for v in form_data.video if v.strip()]
-            )
-            + video_paths,
+            "photo": existing_photos + photo_paths,
+            "video": existing_videos + video_paths,
             "in_reply_to": form_data.in_reply_to,
             "travel": (
                 handle_travel_data(request)
                 if "geo[]" in request.form and request.form.getlist("geo[]")[0]
                 else Travel()
             ),
+            "event": handle_event_data(request),  # Add event handling here
         }
 
         if existing_post:
@@ -495,23 +517,24 @@ def handle_travel_data(request: Request) -> Travel:
     return Travel(trips=[])
 
 
-def handle_event_data(request: Request) -> Event:
-    event_data = {}
-    for key in ["dt_start", "dt_end", "event_name"]:
-        value = request.form.get(key)
-        if value:
-            try:
-                event_data[key] = (
-                    datetime.strptime(value.strip(), "%Y-%m-%d").date()
-                    if key.startswith("dt_")
-                    else value.strip()
-                )
-            except ValueError:
-                # If date parsing fails, return empty event
-                return Event()
-        else:
-            return Event()
-    return Event(**event_data)
+def handle_event_data(request: Request) -> Optional[Event]:
+    """Process event data from the form request."""
+    app.logger.info(f"Event data: {request.form}")
+    event_name = request.form.get("event_name")
+    dt_start = request.form.get("dt_start")
+    dt_end = request.form.get("dt_end")
+    event_url = request.form.get("event_url")
+    app.logger.info(f"Event data: {event_name}, {dt_start}, {dt_end}, {event_url}")
+    if (
+        event_name and dt_start
+    ):  # Only create event if we have at least a name and start time
+        return Event(
+            event_name=event_name,
+            dt_start=parse(dt_start) if dt_start else None,
+            dt_end=parse(dt_end) if dt_end else None,
+            url=HttpUrl(event_url) if event_url else None,
+        )
+    return None
 
 
 def get_post_for_editing(file_path: str) -> Union[BlogPost, DraftPost]:
@@ -942,14 +965,14 @@ def add():
     return "", 501
 
 
-@app.route("/delete_draft/<name>", methods=["GET"])
-def delete_drafts():
+@app.route("/delete_draft/<name>", methods=["GET", "POST"])
+def delete_drafts(name):
     """Deletes a given draft and associated files based on the name."""
     # todo: should have a 404 or something if the post doesn't actually exist.
     if not session.get("logged_in"):  # check permissions before deleting
         abort(401)
     # the file will be located in drafts under the slug name
-    totalpath = "drafts/{name}"
+    totalpath = os.path.join(DRAFT_STORAGE, name)
     # for all of the files associated with a post
     for extension in [".md", ".json", ".jpg"]:
         # if there's an associated file...
@@ -977,7 +1000,7 @@ def delete_entry(year, month, day, name):
     if not session.get("logged_in"):
         abort(401)
     else:
-
+        app.logger.info(f"Deleting entry {year}/{month}/{day}/{name}")
         totalpath = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
         if not os.path.isfile(totalpath + ".json"):
             return redirect("/")
@@ -1124,38 +1147,69 @@ def mobile_upload():
 
 @app.route("/md_to_html", methods=["POST"])
 def md_to_html():
-    """Convert markdown to HTML with extensions"""
-    if request.method == "POST":
-        # Create markdown instance with output format and extensions
-        md = markdown.Markdown(
-            extensions=[
-                "fenced_code",
-                "mdx_math",
-                AlbumExtension(),
-                HashtagExtension(),
-            ],
-            output_format="html",  # Changed from 'html5' to 'html'
-        )
+    try:
+        app.logger.debug(f"Request headers: {dict(request.headers)}")
+        app.logger.debug(f"Request data: {request.get_data()}")
 
-        # Convert markdown to HTML
-        html = md.convert(request.data.decode("utf-8"))
-        return jsonify({"html": html})
-    else:
-        return redirect("/404"), 404
+        if not request.is_json:
+            app.logger.error(f"Invalid content type: {request.content_type}")
+            return (
+                jsonify({"error": f"Request must be JSON, got {request.content_type}"}),
+                400,
+            )
+
+        data = request.get_json()
+        app.logger.debug(f"Parsed JSON data: {data}")
+
+        if not data or "text" not in data:
+            app.logger.error("Missing text in request data")
+            return jsonify({"error": "No text provided in request"}), 400
+
+        # Your existing markdown conversion logic
+        md = markdown.Markdown(
+            extensions=["extra", HashtagExtension(), AlbumExtension()]
+        )
+        html = md.convert(data["text"])
+
+        response = jsonify({"html": html})
+        # Set CSRF token in response
+        response.headers["X-CSRF-Token"] = generate_csrf()
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Error processing markdown: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 
 @app.route("/geonames/<query>", methods=["GET"])
 def geonames_wrapper(query):
     if request.method == "GET":
-        resp = requests.get(
-            f"http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q={query}"
-        )
-        response = jsonify(resp.json())
-        response.status_code = resp.status_code
-        response.headers.extend(resp.headers)
-        return response
-    else:
-        return redirect("/404"), 404
+        print(f"Received geonames search request for: {query}")
+        try:
+            url = f"http://api.geonames.org/searchJSON?q={query}&maxRows=10&username={GEONAMES}"
+            print(f"Calling geonames API: {url}")
+            resp = requests.get(url)
+            print(f"Geonames response status: {resp.status_code}")
+            results = resp.json()
+            print(f"Geonames raw response: {results}")
+
+            if "geonames" in results:
+                results["geonames"] = [
+                    {
+                        "title": f"{place['name']}, {place.get('adminName1', '')}, {place['countryName']}",
+                        "lat": place["lat"],
+                        "lng": place["lng"],
+                    }
+                    for place in results["geonames"]
+                ]
+                print(f"Transformed response: {results}")
+
+            response = jsonify(results)
+            return response
+        except Exception as e:
+            print(f"Error in geonames_wrapper: {str(e)}")
+            return jsonify({"error": str(e)}), 500
+    return redirect("/404"), 404
 
 
 @app.route("/recent_uploads", methods=["GET", "POST"])
@@ -1165,8 +1219,13 @@ def recent_uploads():
         directory = BULK_UPLOAD_DIR
         insert_pattern = "%s" if request.args.get("stream") else "[](%s)"
 
+        # Define allowed image extensions
+        IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
+
         file_list = [
-            os.path.join(BULK_UPLOAD_DIR, file) for file in os.listdir(directory)
+            os.path.join(BULK_UPLOAD_DIR, file)
+            for file in os.listdir(directory)
+            if os.path.splitext(file.lower())[1] in IMAGE_EXTENSIONS
         ]
 
         rows = []
@@ -1176,9 +1235,9 @@ def recent_uploads():
                 [
                     f"""
                 <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
-                    <img src="{image}" id="img_{j}" class="img-fluid" style="max-height:auto; width:25%;">
+                    <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:200px; width:auto;">
                 </a>
-                """  # noqa: E501
+                """
                     for j, image in enumerate(row_images, start=i)
                 ]
             )
@@ -1196,7 +1255,8 @@ def recent_uploads():
                 os.remove(file_path)
                 return "deleted"
             return "file not found", 404
-        except KeyError:
+        except KeyError as e:
+            app.logger.error(f"KeyError: {e}")
             abort(400)
 
     abort(405)  # Method Not Allowed
@@ -1211,12 +1271,15 @@ def edit(year, month, day, name):
         entry = get_post_for_editing(file_name)
         return render_template("edit_entry.html", type="edit", entry=entry)
     elif request.method == "POST":
-        if not session.get("logged_in"):
-            abort(401)
         if "Submit" in request.form:
+            # video and photo logging
+            app.logger.info(f"Existing photos: {request.form.get('existing_photos')}")
+            app.logger.info(f"New photos: {request.form.get('new_photos')}")
+            app.logger.info(f"Existing videos: {request.form.get('existing_videos')}")
+            app.logger.info(f"New videos: {request.form.get('new_videos')}")
             update_entry(request, year, month, day, name)
         return redirect("/")
-    # Add a default return statement
+
     return "", 405  # Method Not Allowed
 
 
@@ -1660,26 +1723,24 @@ def add_security_headers(response: Union[Response, str]) -> Response:
     # Update CSP to allow blob: URLs for media previews
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' "
-        "https://code.jquery.com "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+        "https://code.jquery.com "  # Adding back code.jquery.com
         "https://cdnjs.cloudflare.com "
         "https://maxcdn.bootstrapcdn.com "
         "https://cdn.jsdelivr.net "
-        "https://webmention.io; "
+        "https://webmention.io "
+        "https://ajax.googleapis.com "
+        "https://www.google-analytics.com "
+        "http://www.google-analytics.com "
+        "https://www.googletagmanager.com; "
         "style-src 'self' 'unsafe-inline' "
         "https://maxcdn.bootstrapcdn.com "
         "https://fonts.googleapis.com "
-        "https://cdn.jsdelivr.net "
-        "https://maxcdn.bootstrapcdn.com;"
-        "font-src 'self' https://fonts.gstatic.com"
-        "https://maxcdn.bootstrapcdn.com;"
-        "connect-src 'self' https://webmention.io;"
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ajax.googleapis.com https://cdnjs.cloudflare.com;"  # noqa
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "img-src 'self' data: blob: https:; "  # Allow blob: URLs for image previews
-        "media-src 'self' blob: data:; "  # Allow blob: and data: URLs for video previews
-        "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self'"
+        "https://cdn.jsdelivr.net; "
+        "font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com; "
+        "connect-src 'self' https://webmention.io https://www.google-analytics.com; "
+        "img-src 'self' data: blob: https: https://www.google-analytics.com; "
+        "media-src 'self' blob: data:; "
     )
 
     # Other security headers remain the same
@@ -1693,6 +1754,44 @@ def add_security_headers(response: Union[Response, str]) -> Response:
 
 # Apply headers to all responses
 app.after_request(add_security_headers)
+
+
+@app.route("/delete_media", methods=["POST"])
+@require_auth
+def delete_media():
+    """Delete a media file from the server."""
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    try:
+        assert request.json
+        media_path = request.json.get("media_path")
+        if not media_path:
+            return jsonify({"error": "No media path provided"}), 400
+
+        # Check if file exists in either permanent or bulk upload directory
+        file_path = None
+        if os.path.isfile(os.path.join(os.getcwd(), media_path)):
+            file_path = os.path.join(os.getcwd(), media_path)
+        elif os.path.isfile(
+            os.path.join(PERMANENT_PHOTOS_DIR, os.path.basename(media_path))
+        ):
+            file_path = os.path.join(PERMANENT_PHOTOS_DIR, os.path.basename(media_path))
+        elif os.path.isfile(
+            os.path.join(BULK_UPLOAD_DIR, os.path.basename(media_path))
+        ):
+            file_path = os.path.join(BULK_UPLOAD_DIR, os.path.basename(media_path))
+
+        if not file_path:
+            return jsonify({"error": "File not found"}), 404
+
+        # Delete the file
+        os.remove(file_path)
+        return jsonify({"message": "Media deleted successfully"}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error deleting media: {str(e)}")
+        return jsonify({"error": "Failed to delete media"}), 500
 
 
 if __name__ == "__main__":

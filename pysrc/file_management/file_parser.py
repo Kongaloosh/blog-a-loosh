@@ -71,23 +71,53 @@ def resize(img: Image.Image, max_dim: int) -> Image.Image:
     return img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
 
-def move_and_resize(from_location: str, to_blog_location: str, to_copy: str) -> None:
-    """
-    Moves an image, scales it and stores a low-res with the blog post and a high-res
-    in a long-term storage folder.
-    """
-    to_blog_location = to_blog_location.lower()
-    to_copy = to_copy.lower()
+def move_and_resize(from_location: str, to_copy: str, high_res: str) -> None:
+    """Move a file from a temporary location to a permanent one."""
+    try:
+        # Create directories if they don't exist
+        os.makedirs(os.path.dirname(to_copy), exist_ok=True)
+        os.makedirs(os.path.dirname(high_res), exist_ok=True)
 
-    os.makedirs(os.path.dirname(to_copy), exist_ok=True)
-    os.makedirs(os.path.dirname(to_blog_location), exist_ok=True)
+        # Open and process the image
+        img = Image.open(from_location)
 
-    with Image.open(from_location) as img:
-        img.save(to_copy, "JPEG")
-        resized_img = resize(img, _MAX_SIZE)
-        resized_img.save(to_blog_location, "JPEG")
+        # Convert RGBA to RGB if necessary
+        if img.mode in ("RGBA", "LA") or (
+            img.mode == "P" and "transparency" in img.info
+        ):
+            # Create a white background
+            background = Image.new("RGB", img.size, (255, 255, 255))
+            # Paste the image on the background using alpha channel as mask
+            if img.mode == "RGBA":
+                background.paste(img, mask=img.split()[3])
+            else:
+                background.paste(img, mask=img.convert("RGBA").split()[3])
+            img = background
 
-    os.remove(from_location)
+        # Save the web-sized version
+        img.thumbnail((800, 800))  # Resize for web
+        img.save(to_copy, "JPEG", quality=85)
+
+        # Save the high-res version
+        img_high = Image.open(from_location)
+        if img_high.mode in ("RGBA", "LA") or (
+            img_high.mode == "P" and "transparency" in img_high.info
+        ):
+            background = Image.new("RGB", img_high.size, (255, 255, 255))
+            if img_high.mode == "RGBA":
+                background.paste(img_high, mask=img_high.split()[3])
+            else:
+                background.paste(img_high, mask=img_high.convert("RGBA").split()[3])
+            img_high = background
+        img_high.save(high_res, "JPEG", quality=95)
+
+        # Clean up the original file if it's in the temporary directory
+        if BULK_UPLOAD_DIR in from_location:
+            os.remove(from_location)
+
+    except Exception as e:
+        app.logger.error(f"Error processing image {from_location}: {str(e)}")
+        raise ValueError(f"Failed to process image: {str(e)}")
 
 
 def save_to_two(image: str, to_blog_location: str, to_copy: str) -> None:
@@ -328,8 +358,13 @@ def create_json_entry(
             extension = ".jpg"
             file_list = []
             for file_i in data.photo:
-                # if the image is a location ref
-                if isinstance(file_i, str) and file_i.startswith(BULK_UPLOAD_DIR):
+                # if the image is already in the blog storage directory
+                # we don't need to move it. It's already where we want it.
+                if isinstance(file_i, str) and file_i.startswith(BLOG_STORAGE):
+                    file_list.append(file_i)
+                # if the image is in the bulk upload directory
+                # we need to move it to the blog storage directory.
+                elif isinstance(file_i, str) and file_i.startswith(BULK_UPLOAD_DIR):
                     i = 0
                     while os.path.isfile(relative_post_path + "-" + str(i) + extension):
                         i += 1
@@ -348,12 +383,21 @@ def create_json_entry(
                         high_res_location,
                     )
                     file_list.append(web_size_location)
+
             data.photo = file_list
         if data.video:
             extension = ".mp4"
             video_list = []
             for video_i in data.video:
-                if isinstance(video_i, str) and video_i.startswith(BULK_UPLOAD_DIR):
+                app.logger.info(f"Processing video: {video_i}")
+                # if the video is already in the blog storage directory
+                # we don't need to move it. It's already where we want it.
+                if isinstance(video_i, str) and video_i.startswith(BLOG_STORAGE):
+                    video_list.append(video_i)
+                # if the video is in the bulk upload directory
+                # we need to move it to the blog storage directory.
+                elif isinstance(video_i, str) and video_i.startswith(BULK_UPLOAD_DIR):
+                    app.logger.info(f"Video is in bulk upload directory: {video_i}")
                     i = 0
                     while os.path.isfile(relative_post_path + "-" + str(i) + extension):
                         i += 1
@@ -368,15 +412,17 @@ def create_json_entry(
                             from_location, final_location
                         )
                         if converted_path:
-                            # Store relative path
+                            # Include BLOG_STORAGE in path
                             video_list.append(
-                                os.path.relpath(converted_path, BLOG_STORAGE)
+                                os.path.join(BLOG_STORAGE, date_location, new_name)
                             )
                     else:
                         # If already MP4, just copy
                         shutil.copy2(from_location, final_location)
-                        # Store relative path
-                        video_list.append(os.path.relpath(final_location, BLOG_STORAGE))
+                        # Include BLOG_STORAGE in path
+                        video_list.append(
+                            os.path.join(BLOG_STORAGE, date_location, new_name)
+                        )
 
             data.video = video_list
         try:
@@ -394,6 +440,7 @@ def create_json_entry(
             json.dump(json_data, file_writer)
 
         if not draft and not update and g:  # if this isn't a draft, put it in the dbms
+            assert isinstance(data, BlogPost)
             g.execute(
                 EntryQueries.INSERT, [data.slug, data.published, relative_post_path]
             )
@@ -433,14 +480,28 @@ def update_json_entry(
             data.u_uid = old_entry.u_uid
 
         # 2. Handle photos
-        old_photos = data.photo or []
-        to_delete = [i for i in (old_entry.photo or []) if i not in old_photos]
+        new_photos = data.photo or []
+        old_photos = old_entry.photo or []
+        to_delete = [i for i in old_photos if i not in new_photos]
 
         for i in to_delete:
             if os.path.exists(i):
                 os.remove(i)
 
-        # 3. Handle categories
+        # 4. Handle videos
+        new_videos = data.video or []
+        old_videos = old_entry.video or []
+        to_delete = [i for i in old_videos if i not in new_videos]
+
+        app.logger.info(f"To delete: {to_delete}")
+        app.logger.info(f"New videos: {new_videos}")
+        app.logger.info(f"old videos: {old_videos}")
+
+        for i in to_delete:
+            if os.path.exists(i):
+                os.remove(i)
+
+        # 4. Handle categories
         if data.category and not draft and g:
             # Delete old categories
             for c in old_entry.category or []:
@@ -456,14 +517,6 @@ def update_json_entry(
                     [data.slug, data.published, c],
                 )
             g.commit()
-
-        # 4. Handle videos
-        old_videos = data.video or []
-        videos_to_delete = [i for i in (old_entry.video or []) if i not in old_videos]
-
-        for i in videos_to_delete:
-            if os.path.exists(i):
-                os.remove(i)
 
         # 5. Save the updated entry
         create_json_entry(data=data, g=g, draft=draft, update=True)
