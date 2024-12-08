@@ -4,67 +4,108 @@ function increment() {
   i += 1;
 }
 
-function removeElement(elementId){
-    var element = document.getElementById(elementId);
-    element.parentNode.removeChild(element);
+function removeElement(elementId) {
+  var element = document.getElementById(elementId);
+  element.parentNode.removeChild(element);
 }
 
 
-function remove_trip(i) {
-    removeElement("geo_"+i);
-    removeElement("origin_"+i);
-    removeElement("datetime_"+i);
-    removeElement("remove_"+i);
-    removeElement("break_"+i);
-    removeElement("form-id_"+i);
+function remove_trip(index) {
+  // Remove the form element
+  const element = document.getElementById(`form-id_${index}`);
+  if (element) {
+    element.remove();
+  }
+
+  // Reindex remaining elements
+  const formElements = document.querySelectorAll('.form-id');
+  formElements.forEach((el, newIndex) => {
+    // Update all IDs and names
+    el.id = `form-id_${newIndex}`;
+
+    // Update hidden geo input
+    const geoInput = el.querySelector('input[name="geo[]"]');
+    if (geoInput) geoInput.id = `geo_${newIndex}`;
+
+    // Update date input
+    const dateInput = el.querySelector('input[name="date[]"]');
+    if (dateInput) dateInput.id = `datetime_${newIndex}`;
+
+    // Update location input
+    const locationInput = el.querySelector('input[name="location[]"]');
+    if (locationInput) locationInput.id = `origin_${newIndex}`;
+
+    // Update remove button
+    const removeBtn = el.querySelector('button');
+    if (removeBtn) removeBtn.setAttribute('onclick', `remove_trip(${newIndex})`);
+  });
+
+  // Update the global counter
+  i = formElements.length;
 }
 
 function addFieldFunction() {
+  // Create container div
   var r = document.createElement('div');
   r.setAttribute("class", "form-id");
-  r.setAttribute("id", "form-id_"+i)
+  r.setAttribute("id", "form-id_" + i);
 
-  var a_x = document.createElement("INPUT");
-  var a_y = document.createElement("INPUT");
-  var a_z = document.createElement("INPUT");
-  var remove_icon = document.createElement("a");
-  var br = document.createElement("BR");
+  // Create inputs
+  var geoInput = document.createElement("INPUT");
+  var dateInput = document.createElement("INPUT");
+  var locationContainer = document.createElement("div");
+  var locationInput = document.createElement("INPUT");
+  var removeBtn = document.createElement("button");
 
-  a_x.setAttribute("type", "hidden")
-  a_x.setAttribute("id", "geo_"+i);
-  a_y.setAttribute("class", "dash-input");
-  a_y.setAttribute("type", "text");
-  a_y.setAttribute("placeholder", "Origin");
-  a_y.setAttribute("id", "origin_"+i);
-  a_z.setAttribute("class", "dash-input");
-  a_z.setAttribute("type", "datetime-local");
-  a_z.setAttribute("id", "datetime_"+i);
-  a_z.setAttribute("placeholder", "dt-departure");
+  // Hidden geo input
+  geoInput.setAttribute("type", "hidden");
+  geoInput.setAttribute("id", "geo_" + i);
+  geoInput.setAttribute("name", "geo[]");
+  geoInput.setAttribute("value", "");
 
-  remove_icon.innerHTML = '<i class="fa fa-minus-circle"></i>'
-  remove_icon.setAttribute("id","remove_"+i)
-  remove_icon.setAttribute("onclick","remove_trip("+i+")")
+  // Date input
+  dateInput.setAttribute("type", "datetime-local");
+  dateInput.setAttribute("class", "form-control mb-2");
+  dateInput.setAttribute("id", "datetime_" + i);
+  dateInput.setAttribute("name", "date[]");
 
-  br.setAttribute("id", "break_"+i)
+  // Location container with inline remove button
+  locationContainer.setAttribute("class", "autocomplete d-flex align-items-center gap-2");
+  locationContainer.style.width = "100%";
 
-  a_x.setAttribute("name", "geo[]"); //Keep attribute in lower case
-  a_y.setAttribute("name", "location[]"); //Keep attribute in lower case
-  a_z.setAttribute("name", "date[]");
-//  a_z.setAttribute("value", "2000-07-01T12:00")
+  // Location input
+  locationInput.setAttribute("type", "text");
+  locationInput.setAttribute("class", "form-control");
+  locationInput.setAttribute("id", "origin_" + i);
+  locationInput.setAttribute("name", "location[]");
+  locationInput.setAttribute("placeholder", "Location");
 
-  r.appendChild(a_x);
-  r.appendChild(a_z);
-  r.appendChild(a_y);
-  r.appendChild(remove_icon);
-  r.appendChild(br);
+  // Set up location input to update geo field when location is selected
+  locationInput.addEventListener('location-selected', function (e) {
+    if (e.detail && e.detail.geo) {
+      geoInput.value = e.detail.geo;
+    }
+  });
 
-  document.getElementById("form-div").appendChild(r);
-  // add autocomplete listeners
-  autocomplete(document.getElementById("geo_"+i));
-  autocomplete(document.getElementById("origin_"+i));
+  // Remove button
+  removeBtn.setAttribute("type", "button");
+  removeBtn.setAttribute("class", "btn btn-outline-danger btn-sm rounded-circle p-1");
+  removeBtn.setAttribute("onclick", "remove_trip(" + i + ")");
+  removeBtn.setAttribute("style", "width: 32px; height: 32px; padding: 0 !important;");
+  removeBtn.innerHTML = '<i class="fa fa-minus"></i>';
+
+  // Assemble the elements
+  locationContainer.appendChild(locationInput);
+  locationContainer.appendChild(removeBtn);
+  r.appendChild(geoInput);
+  r.appendChild(dateInput);
+  r.appendChild(locationContainer);
+
+  // Add to form
+  document.getElementById("travel_form").appendChild(r);
+
+  // Initialize autocomplete
+  autocomplete(locationInput);
+
   increment();
-//  if this is the first leg of the trip, we need an additional input to act as the endpoint
-  if (i == 1){
-    addFieldFunction()
-  }
 }

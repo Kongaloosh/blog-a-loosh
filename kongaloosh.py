@@ -49,6 +49,8 @@ from werkzeug.utils import secure_filename
 import yaml
 from pysrc.database.queries import EntryQueries, CategoryQueries
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+from pydantic import HttpUrl, AnyHttpUrl
+
 
 jinja_env = Environment()
 
@@ -81,7 +83,8 @@ csrf = CSRFProtect(app)
 
 @app.context_processor
 def inject_csrf_token():
-    return dict(csrf_token=generate_csrf)  # Note: removed the () here
+    token = generate_csrf()
+    return dict(csrf_token=token)
 
 
 # Add a second static folder specifically for serving photos
@@ -388,6 +391,7 @@ def post_from_request(
                 if "geo[]" in request.form and request.form.getlist("geo[]")[0]
                 else Travel()
             ),
+            "event": handle_event_data(request),  # Add event handling here
         }
 
         if existing_post:
@@ -495,23 +499,24 @@ def handle_travel_data(request: Request) -> Travel:
     return Travel(trips=[])
 
 
-def handle_event_data(request: Request) -> Event:
-    event_data = {}
-    for key in ["dt_start", "dt_end", "event_name"]:
-        value = request.form.get(key)
-        if value:
-            try:
-                event_data[key] = (
-                    datetime.strptime(value.strip(), "%Y-%m-%d").date()
-                    if key.startswith("dt_")
-                    else value.strip()
-                )
-            except ValueError:
-                # If date parsing fails, return empty event
-                return Event()
-        else:
-            return Event()
-    return Event(**event_data)
+def handle_event_data(request: Request) -> Optional[Event]:
+    """Process event data from the form request."""
+    app.logger.info(f"Event data: {request.form}")
+    event_name = request.form.get("event_name")
+    dt_start = request.form.get("dt_start")
+    dt_end = request.form.get("dt_end")
+    event_url = request.form.get("event_url")
+    app.logger.info(f"Event data: {event_name}, {dt_start}, {dt_end}, {event_url}")
+    if (
+        event_name and dt_start
+    ):  # Only create event if we have at least a name and start time
+        return Event(
+            event_name=event_name,
+            dt_start=parse(dt_start) if dt_start else None,
+            dt_end=parse(dt_end) if dt_end else None,
+            url=HttpUrl(event_url) if event_url else None,
+        )
+    return None
 
 
 def get_post_for_editing(file_path: str) -> Union[BlogPost, DraftPost]:
@@ -1124,38 +1129,69 @@ def mobile_upload():
 
 @app.route("/md_to_html", methods=["POST"])
 def md_to_html():
-    """Convert markdown to HTML with extensions"""
-    if request.method == "POST":
-        # Create markdown instance with output format and extensions
-        md = markdown.Markdown(
-            extensions=[
-                "fenced_code",
-                "mdx_math",
-                AlbumExtension(),
-                HashtagExtension(),
-            ],
-            output_format="html",  # Changed from 'html5' to 'html'
-        )
+    try:
+        app.logger.debug(f"Request headers: {dict(request.headers)}")
+        app.logger.debug(f"Request data: {request.get_data()}")
 
-        # Convert markdown to HTML
-        html = md.convert(request.data.decode("utf-8"))
-        return jsonify({"html": html})
-    else:
-        return redirect("/404"), 404
+        if not request.is_json:
+            app.logger.error(f"Invalid content type: {request.content_type}")
+            return (
+                jsonify({"error": f"Request must be JSON, got {request.content_type}"}),
+                400,
+            )
+
+        data = request.get_json()
+        app.logger.debug(f"Parsed JSON data: {data}")
+
+        if not data or "text" not in data:
+            app.logger.error("Missing text in request data")
+            return jsonify({"error": "No text provided in request"}), 400
+
+        # Your existing markdown conversion logic
+        md = markdown.Markdown(
+            extensions=["extra", HashtagExtension(), AlbumExtension()]
+        )
+        html = md.convert(data["text"])
+
+        response = jsonify({"html": html})
+        # Set CSRF token in response
+        response.headers["X-CSRF-Token"] = generate_csrf()
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Error processing markdown: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 
 @app.route("/geonames/<query>", methods=["GET"])
 def geonames_wrapper(query):
     if request.method == "GET":
-        resp = requests.get(
-            f"http://api.geonames.org/wikipediaSearchJSON?username=kongaloosh&q={query}"
-        )
-        response = jsonify(resp.json())
-        response.status_code = resp.status_code
-        response.headers.extend(resp.headers)
-        return response
-    else:
-        return redirect("/404"), 404
+        print(f"Received geonames search request for: {query}")
+        try:
+            url = f"http://api.geonames.org/searchJSON?q={query}&maxRows=10&username={GEONAMES}"
+            print(f"Calling geonames API: {url}")
+            resp = requests.get(url)
+            print(f"Geonames response status: {resp.status_code}")
+            results = resp.json()
+            print(f"Geonames raw response: {results}")
+
+            if "geonames" in results:
+                results["geonames"] = [
+                    {
+                        "title": f"{place['name']}, {place.get('adminName1', '')}, {place['countryName']}",
+                        "lat": place["lat"],
+                        "lng": place["lng"],
+                    }
+                    for place in results["geonames"]
+                ]
+                print(f"Transformed response: {results}")
+
+            response = jsonify(results)
+            return response
+        except Exception as e:
+            print(f"Error in geonames_wrapper: {str(e)}")
+            return jsonify({"error": str(e)}), 500
+    return redirect("/404"), 404
 
 
 @app.route("/recent_uploads", methods=["GET", "POST"])
@@ -1196,7 +1232,8 @@ def recent_uploads():
                 os.remove(file_path)
                 return "deleted"
             return "file not found", 404
-        except KeyError:
+        except KeyError as e:
+            app.logger.error(f"KeyError: {e}")
             abort(400)
 
     abort(405)  # Method Not Allowed
@@ -1660,26 +1697,24 @@ def add_security_headers(response: Union[Response, str]) -> Response:
     # Update CSP to allow blob: URLs for media previews
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' "
-        "https://code.jquery.com "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+        "https://code.jquery.com "  # Adding back code.jquery.com
         "https://cdnjs.cloudflare.com "
         "https://maxcdn.bootstrapcdn.com "
         "https://cdn.jsdelivr.net "
-        "https://webmention.io; "
+        "https://webmention.io "
+        "https://ajax.googleapis.com "
+        "https://www.google-analytics.com "
+        "http://www.google-analytics.com "
+        "https://www.googletagmanager.com; "
         "style-src 'self' 'unsafe-inline' "
         "https://maxcdn.bootstrapcdn.com "
         "https://fonts.googleapis.com "
-        "https://cdn.jsdelivr.net "
-        "https://maxcdn.bootstrapcdn.com;"
-        "font-src 'self' https://fonts.gstatic.com"
-        "https://maxcdn.bootstrapcdn.com;"
-        "connect-src 'self' https://webmention.io;"
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ajax.googleapis.com https://cdnjs.cloudflare.com;"  # noqa
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "img-src 'self' data: blob: https:; "  # Allow blob: URLs for image previews
-        "media-src 'self' blob: data:; "  # Allow blob: and data: URLs for video previews
-        "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self'"
+        "https://cdn.jsdelivr.net; "
+        "font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com; "
+        "connect-src 'self' https://webmention.io https://www.google-analytics.com; "
+        "img-src 'self' data: blob: https: https://www.google-analytics.com; "
+        "media-src 'self' blob: data:; "
     )
 
     # Other security headers remain the same

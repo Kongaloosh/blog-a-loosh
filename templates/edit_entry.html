@@ -1,305 +1,247 @@
-<!--<link rel=stylesheet type=text/css href="{{ url_for('static', filename='autocomplete.css') }}"> &lt;!&ndash; blog roll styling &ndash;&gt;-->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"
+    integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"></script>
+<script src="{{ url_for('static', filename='js/wysiwyg.js') }}"></script>
+<script src="{{ url_for('static', filename='js/place_location_autocomplete.js') }}"></script>
+<script src="{{ url_for('static', filename='js/add_trip.js') }}"></script>
+<script src="{{ url_for('static', filename='js/travel_init.js') }}"></script>
+
+<script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+
+<script>
+    window.entryData = {{ entry.model_dump(mode = "json") | tojson | safe if entry else 'null' }};
+    console.log('Entry data loaded:', window.entryData);
+</script>
 
 {% extends "layout.html" %}
 {% block content %}
-<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%;
-        background-size:cover
-">
+<header class="intro-header" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.3)), 
+    url('{{ url_for('static', filename='img/home-bg.jpg') }}') no-repeat fixed 50%; background-size:cover">
     <div class="container">
-        <div class="flexbox-row">
-            <div class="flexbox-column">
-                <div class="site-heading">
-                    <h1>Edit</h1>
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2 col-md-10 offset-md-1">
+                <div class="site-heading text-center">
+                    <h1>{{ 'New Post' if type == 'add' else 'Edit Post' }}</h1>
                     <hr class="small">
-                    <span class="subheading">Time to Edit.</span>
+                    <span class="subheading">{{ 'Create something amazing' if type == 'add' else 'Make it better'
+                        }}</span>
                 </div>
             </div>
         </div>
     </div>
 </header>
+
+<meta name="csrf-token" content="{{ csrf_token }}">
+
 {% if session.logged_in %}
-<div class="container-fluid">
-    <div class="col-lg-12 col-md-12 col-sm-12">
-        <div class="flex-row" style="padding 10px">
-            {% if type == "edit"%}
-            <div class=float-right">
-                <a class="float-right" href="/delete_entry{{entry.url}}"><i class="fa fa-times"
-                        aria-hidden="true"></i></a>
-            </div>
-            {% elif type == "draft" %}
-            <div class=float-right">
-                <a class="float-right" href="/delete_draft{{entry.url}}"><i class="fa fa-times"
-                        aria-hidden="true"></i></a>
-            </div>
-            {%endif%}
-            <br>
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Editor Column -->
+        <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form enctype="multipart/form-data"
+                        action="{{ '/add' if type == 'add' else ('/drafts/' + entry.slug if type == 'draft' else '/edit' + entry.url) }}"
+                        method="post" id="input" onsubmit="return validateTravelForm()" novalidate>
 
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                        <!-- Reply To -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">In Reply To</label>
+                            <input type="url" class="form-control" name="in_reply_to"
+                                placeholder="URL you're replying to"
+                                value="{{ entry.in_reply_to[0].url if entry and entry.in_reply_to else '' }}">
+                        </div>
+
+                        <!-- Title and Summary -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" name="title" id="title_form"
+                                value="{% if entry.title%}{{entry.title}}{% endif %}" placeholder="Post title">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Summary</label>
+                            <textarea class="form-control" rows="2" name="summary" id="summary_form"
+                                placeholder="Brief summary of your post">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Content</label>
+                            <textarea class="form-control" rows="12" name="content" id="text_input"
+                                placeholder="Write your post content here (Markdown supported)">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
+                        </div>
+
+                        <!-- Media Upload -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Media</label>
+                            <input type="file" class="form-control" name="media_file[]" id="media_input"
+                                accept="image/*,video/*,.mov,.qt,.m4v,.avi,.wmv,.flv,.mkv" multiple />
+                            <div class="media-preview mt-2" id="photo_holder"
+                                style="max-height:400px; overflow-y: auto;">
+                            </div>
+                        </div>
+
+                        <!-- Travel Information -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Travel</label>
+                            <div id="travel_form">
+                                <!-- Fields will be added dynamically -->
+                            </div>
+                            <div class="mt-2">
+                                <button type="button"
+                                    class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 mx-auto"
+                                    onclick="addFieldFunction()" style="border-radius: 20px; padding: 8px 16px;">
+                                    <i class="fa fa-plane"></i>
+                                    Add Stop
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Event Information -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Event</label>
+                            <div class="row">
+                                <div class="col-12 mb-2">
+                                    <input type="text" class="form-control" name="event_name" placeholder="Event Name"
+                                        value="{{ entry.event.event_name if entry and entry.event else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Start Time</label>
+                                    <input type="datetime-local" class="form-control" name="dt_start"
+                                        value="{{ entry.event.dt_start.isoformat() if entry and entry.event and entry.event.dt_start else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">End Time</label>
+                                    <input type="datetime-local" class="form-control" name="dt_end"
+                                        value="{{ entry.event.dt_end.isoformat() if entry and entry.event and entry.event.dt_end else '' }}">
+                                </div>
+                                <div class="col-12">
+                                    <input type="url" class="form-control" name="event_url"
+                                        placeholder="Event URL (optional)"
+                                        value="{{ entry.event.url if entry and entry.event and entry.event.url else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories/Tags -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Tags</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="tag_input" placeholder="Add a tag">
+                                <button class="btn btn-primary" type="button" onclick="addTag()">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+
+                            <input type="hidden" name="category" id="tags"
+                                value="{{ ','.join(entry.category) if entry and entry.category else '' }}">
+
+                            <div id="tag_display" class="mt-2">
+                                {% if entry and entry.category %}
+                                {% for tag in entry.category %}
+                                <span class="badge rounded-pill bg-light text-dark border me-2 mb-2">
+                                    <span class="d-inline-flex align-items-center py-2 px-3">
+                                        {{ tag }}
+                                        <button type="button" class="btn-close ms-2" onclick="removeTag('{{ tag }}')"
+                                            aria-label="Remove" style="font-size: 0.7em;"></button>
+                                    </span>
+                                </span>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            {% if popular_tags %}
+                            <div class="mt-3">
+                                <small class="text-muted">Popular tags:</small>
+                                <div class="mt-1">
+                                    {% for tag in popular_tags %}
+                                    <a href="#"
+                                        class="badge rounded-pill bg-light text-primary border-primary me-2 mb-2"
+                                        onclick="addExistingTag('{{tag}}'); return false;">
+                                        <span class="d-inline-flex align-items-center py-2 px-3">
+                                            {{tag}}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Social Sharing -->
+                        <div class="form-group mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="twitter" id="twitter"
+                                    value="twitter" checked>
+                                <label class="form-check-label" for="twitter">Share on Twitter</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="facebook" id="facebook"
+                                    value="facebook" checked>
+                                <label class="form-check-label" for="facebook">Share on Facebook</label>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="form-group d-flex gap-2">
+                            <button type="submit" name="Submit" class="btn btn-primary">
+                                <i class="fa fa-paper-plane me-1"></i>Publish
+                            </button>
+                            {% if type == 'add' or (type == 'draft' and entry) %}
+                            <button type="submit" name="Save" value="Save" class="btn btn-outline-secondary">
+                                <i class="fa fa-save me-1"></i>Save Draft
+                            </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-info ms-auto" onclick="getRecentPhotos()">
+                                <i class="fa fa-camera me-1"></i>Recent Photos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="row">
-            <div class="col-lg-6 col-md-6 col-sm-12">
-                <form enctype="multipart/form-data"
-                    action="{{ '/add' if type == 'add' else ('/drafts/' + entry.slug if type == 'draft' else '/edit' + entry.url) }}"
-                    method="post" class="input-large" id="input" onsubmit="return validateTravelForm()" novalidate>
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <p>
-                        <input type="text" style="width: 100%" name="title" id="title_form"
-                            value="{% if entry.title%}{{entry.title}}{% endif %}" placeholder="title">
-                    </p>
-                    <p>
-                        <textarea type="text" style="width:100%" rows=2 name="summary" id="summary_form"
-                            placeholder="summary">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
-                    </p>
-                    <p>
-                        <textarea style="width: 100%" rows=5" name="content" id="text_input" form_id="input"
-                            placeholder="Post content">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
-                    </p>
-                    <hr>
-                    <p>
 
-                        {% if entry.video %}
-                        <video class="u-video" controls="controls" src="{{entry.video}}"
-                            poster="http://ben.example.com/camcorder.png">
-                        </video>
-                        {% endif %}
-
-                    <div class="text-center" id="photo_holder" style="overflow:scroll; width:100%; max-height:400px;">
+        <!-- Preview Column -->
+        <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="card shadow-sm" style="height: 90vh; overflow-y: auto;">
+                <div class="card-body">
+                    <h2 class="post-title p-name" id="title_format"></h2>
+                    <div class="text-center mb-3" id="featured_image_preview">
                     </div>
-                    </p>
-
-                    <p>
-
-                        <input type="text" style="width: 100%" name="category"
-                            value="{%if entry.category%}{% for cat in entry.category %}{{cat}}{% if not loop.last %}, {% endif %}{% endfor %}{%endif%}"
-                            placeholder="tags">
-                    </p>
-
-                    {% if popular_tags %}
-                    <p> Common tags include: {% for tag in popular_tags%} <a
-                            onclick="insertAtCaret('tags', '{{tag}},');return false;">{{tag}}</a>{% if not loop.last %},
-                        {% endif %} {%if loop.index == loop.length-1%} and {%endif%} {%endfor%}</p>
-                    {%endif%}
-
-                    <p>
-                        <input type="datetime-local" name="published" value="{{entry.published}}" style="width:100%">
-                    </p>
-
-
-                    <p>
-                        <label>Media (Photos/Videos)</label>
-                        <input type="file" name="media_file[]" id="media_input"
-                            accept="image/*,video/*,.mov,.qt,.m4v,.avi,.wmv,.flv,.mkv" multiple />
-                        <input type="text" style="width:100%" name="photo" id="img_loc"
-                            value="{%if entry.photo%}{% if entry.photo is iterable and entry.photo is not string %}{% for photo in entry.photo %}{{photo | safe}}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}{{entry.photo | safe}}{% endif %}{%endif%}">
-                        <input type="text" style="width:100%" name="video" id="video_loc"
-                            value="{%if entry.video%}{% if entry.video is iterable and entry.video is not string %}{% for video in entry.video %}{{video}}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}{{entry.video}}{% endif %}{%endif%}">
-                    </p>
-
-                    <p>
-                        <input type="text" style="width: 100%" name="in_reply_to"
-                            value="{%if entry.in_reply_to%}{{entry.in_reply_to}}{%endif%}" placeholder="Reply-to URL">
-                    </p>
-
-                    <hr>
-
-                    <div id="form-div">
-                        <label>Travel</label><br>
-                        {% if entry.travel %}
-                        {% for destination in entry.travel.trips %}
-                        <div class="form-id" id="form-id_{{loop.index}}">
-                            <input type="hidden" id="geo_{{loop.index}}" name="geo[]" value="{{destination.location}}">
-                            <input class="dash-input" type="datetime-local" placeholder="dt-departure"
-                                id="datetime_{{loop.index}}" name="date[]" value="{{destination.date}}">
-                            <input class="dash-input" type="text" placeholder="Origin" id="origin_{{loop.index}}"
-                                name="location[]" value="{{destination.location_name}}"><br>
-                            <a id="remove_{{loop.index}}" onclick="remove_trip({{loop.index}})"><i
-                                    class="fa fa-minus-circle"></i></a>
-                            <br id="break_{{loop.index}}">
-                        </div>
-                        {% endfor %}
-                        {% endif %}
+                    <div class="post-subtitle p-summary">
+                        <p><i id="summary_format"></i></p>
                     </div>
-
-                    <div class="dash-add">
-                        <button type="button" class="dash-add-button" onclick="addFieldFunction()">Add Stop</button>
-                    </div>
-
-                    <hr>
-
-                    <p>
-                        <input type="text" name="event_name"
-                            value="{%if entry.event%}{{entry.event.event_name}}{%endif%}" placeholder="event"><br>
-                        <b>start </b><input type="datetime-local" name="dt_start"
-                            value="{%if entry.event%}{{entry.event.dt_start}}{%endif%}"><br>
-                        <b>end </b><input type="datetime-local" name="dt_end"
-                            value="{%if entry.event%}{{entry.event.dt_end}}{%endif%}">
-                    </p>
-
-                    <hr>
-
-                    <p>
-                        <label>twitter </label> <input type="checkbox" name="twitter" value="twitter"><br>
-                        <label>brid.gy twitter </label> <input type="checkbox" name="bridgy_twitter"
-                            value="brigy_twitter"><br>
-
-                        <label>Geo </label><input type="checkbox" name="geo_check" value="geo_check" id="geo_check"
-                            checked>
-                        <textarea style="width: 100%" type="text" name="location"
-                            id="geo_coord">{%if entry.location%}{{entry.location}}{%endif%}</textarea>
-                    </p>
-
-                    <div class="form-actions">
-                        <button type="submit" name="Submit" class="btn btn-primary">Submit</button>
-                        {% if type == 'add' or (type == 'draft' and entry) %}
-                        <button type="submit" name="Save" value="Save" class="btn btn-secondary">Save Draft</button>
-                        {% endif %}
-                    </div>
-                </form>
-                <button style='width:49%' onclick="getRecentPhotos()">Show Recent Photos</button>
-            </div>
-
-            <div class="col-lg-6 col-md-6 col-sm-12"
-                style="box-shadow: 0px 0px 10px 5px #aaaaaa; height: 100vh; overflow-y: scroll;">
-                <div class="row clearfix">
-                    <div style="margin-left:  0px;margin-right: 0px; padding:0.5em">
-                        <h2 class="post-title p-name" id="title_format"></h2>
-                        <div class="d-flex flex-row p-2 justify-content-center">
-                            <img id="featured_image_preview" src="#"
-                                class="img-responsive center-block img-thumbnail img-rounded u-photo"
-                                style="image-orientation: from-image; max-height:300px" alt="Featured image preview" />
-                        </div>
-                        <div class="post-subtitle p-summary">
-                            <p><i id="summary_format"></i></p>
-                        </div>
-                        <div id="wysiwyg"></div>
-                    </div>
+                    <div id="wysiwyg"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-</div>
-
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  config: ["MMLorHTML.js"],
-  jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
-  extensions: ["MathMenu.js", "MathZoom.js"]
-});
-</script>
-<script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js??config=TeX-AMS-MML_HTMLorMML">
-    </script>
-<script src="/static/js/jquery.js"></script>
-<script src="/static/js/wysiwyg.js"></script>
-<script src="/static/js/place_location_autocomplete.js"></script>
-<script src="/static/js/add_trip.js"></script>
-<script src="/static/js/photostream.js"></script>
-<script src="/static/js/geolocation.js"></script>
-<script src="/static/js/travel_validation.js"></script>
-
-<script>
-    function readURL(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                $('#featured_image_preview').attr('src', e.target.result);
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-    $("#img_input").change(function () {
-        readURL(this);
-    });
-
-    function previewMedia(input) {
-        const videoTypes = [
-            'video/mp4',
-            'video/quicktime',  // .mov and .qt
-            'video/x-m4v',      // .m4v
-            'video/avi',
-            'video/x-ms-wmv',   // .wmv
-            'video/x-flv',      // .flv
-            'video/x-matroska'  // .mkv
-        ];
-
-        if (input.files && input.files[0]) {
-            Array.from(input.files).forEach((file, index) => {
-                const objectUrl = URL.createObjectURL(file);
-
-                if (videoTypes.includes(file.type) || file.name.endsWith('.mov') || file.name.endsWith('.qt')) {
-                    // Video preview only in WYSIWYG
-                    const video = document.createElement('video');
-                    video.className = 'u-video h-x-video';
-                    video.controls = true;
-                    video.style.maxHeight = '300px';
-                    video.src = objectUrl;
-
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'u-video';
-                    wrapper.appendChild(video);
-
-                    // Add cleanup when video is removed
-                    video.onload = () => URL.revokeObjectURL(objectUrl);
-
-                    const wysiwygPreview = document.getElementById('wysiwyg');
-                    wysiwygPreview.appendChild(wrapper);
-
-                } else if (file.type.startsWith('image/')) {
-                    // Image preview code stays the same
-                    const img = document.createElement('img');
-                    img.className = 'img-responsive img-fluid center-block img-thumbnail img-rounded u-photo';
-                    img.style.maxHeight = '300px';
-                    img.src = objectUrl;
-
-                    // Add cleanup when image loads
-                    img.onload = () => URL.revokeObjectURL(objectUrl);
-
-                    const previewContainer = document.getElementById('photo_holder');
-                    previewContainer.appendChild(img);
-
-                    // Update the featured image preview
-                    const featuredImagePreview = document.getElementById('featured_image_preview');
-                    if (index === 0) {
-                        featuredImagePreview.src = objectUrl;
-                        featuredImagePreview.style.display = 'block';
-                    }
-                }
-            });
-        }
-    }
-
-    // Update the existing event listeners
-    document.getElementById('media_input').addEventListener('change', function () {
-        const previewContainer = document.getElementById('photo_holder');
-        const wysiwygPreview = document.getElementById('wysiwyg');
-        const featuredImagePreview = document.getElementById('featured_image_preview');
-
-        // Clear existing previews
-        previewContainer.innerHTML = '';
-        wysiwygPreview.innerHTML = '';
-        featuredImagePreview.src = '#';
-        featuredImagePreview.style.display = 'none';
-
-        previewMedia(this);
-    });
-
-</script>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-{% for category, message in messages %}
-<div class="alert alert-{{ category }}">
-    {{ message }}
-</div>
-{% endfor %}
-{% endif %}
-{% endwith %}
-
 {% else %}
-<div class="row">
-    <div class="input col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-        <p>You need to be logged in, buck-eye.</p>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2 text-center">
+            <div class="alert alert-warning">
+                <i class="fa fa-lock me-2"></i>You need to be logged in to access this page.
+            </div>
+        </div>
     </div>
 </div>
 {% endif %}
@@ -307,4 +249,40 @@ MathJax.Hub.Config({
 
 <script>
     console.log("All scripts loaded");
+</script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/autocomplete.css') }}">
+<script src="{{ url_for('static', filename='js/place_location_autocomplete.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM Content Loaded');
+        const locationInput = document.getElementById("origin_0");
+        console.log('Found input element:', locationInput);
+
+        // Test the input event manually
+        if (locationInput) {
+            console.log('Adding test input event');
+            locationInput.dispatchEvent(new Event('input'));
+
+            // Also add a direct keyup listener to verify the element is receiving events
+            locationInput.addEventListener('keyup', (e) => {
+                console.log('Keyup event on location input:', e.target.value);
+            });
+
+            autocomplete(locationInput);
+        } else {
+            console.error('Could not find location input');
+        }
+    });
+
+    // Update addFieldFunction to properly initialize autocomplete for new fields
+    const originalAddFieldFunction = window.addFieldFunction;
+    window.addFieldFunction = function () {
+        originalAddFieldFunction();
+        const newIndex = i - 1;
+        const newInput = document.getElementById(`origin_${newIndex}`);
+        if (newInput) {
+            autocomplete(newInput);
+        }
+    };
 </script>
