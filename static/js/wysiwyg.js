@@ -173,28 +173,31 @@ function initializePreviews() {
 
                 console.log("Adding video:", videoPath);
                 const previewContainer = document.createElement('div');
-                previewContainer.className = 'media-preview';
+                previewContainer.className = 'media-preview video-preview';
 
                 const video = document.createElement('video');
                 video.src = '/' + videoPath;
                 video.controls = true;
                 video.classList.add('img-fluid');
 
-                // Add delete overlay
-                const deleteOverlay = document.createElement('div');
-                deleteOverlay.className = 'delete-overlay';
-                deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
-
-                // Add click handler for delete
-                deleteOverlay.onclick = function () {
-                    if (confirm('Are you sure you want to delete this media?')) {
-                        previewContainer.remove();
-                        updateMediaPaths();
+                // Create delete button instead of overlay
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'video-delete-btn';
+                deleteButton.style.width = '100%';
+                deleteButton.innerHTML = '<i class="fa fa-times-circle"></i>';
+                deleteButton.onclick = function (e) {
+                    e.stopPropagation(); // Prevent click from reaching video
+                    if (confirm('Are you sure you want to delete this video?')) {
+                        const previewContainer = deleteButton.closest('.video-preview');
+                        if (previewContainer) {
+                            previewContainer.remove();
+                            updateMediaPaths();
+                        }
                     }
                 };
 
                 previewContainer.appendChild(video);
-                previewContainer.appendChild(deleteOverlay);
+                previewContainer.appendChild(deleteButton);
                 mediaPreviewGrid.appendChild(previewContainer);
             });
         }
@@ -243,61 +246,95 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function handlePhotoUpload(input) {
-    if (input.files && input.files.length > 0) {
-        Array.from(input.files).forEach(file => {
+    Array.from(input.files).forEach(file => {
+        const isVideo = file.type.startsWith('video/');
+        let mediaElement;
+        let previewContainer = document.createElement('div');
+        previewContainer.className = 'media-preview';
+
+        if (isVideo) {
+            mediaElement = document.createElement('video');
+            // Create an object URL instead of using FileReader
+            mediaElement.src = URL.createObjectURL(file);
+            mediaElement.controls = true;
+            mediaElement.preload = 'auto';
+            mediaElement.classList.add('img-fluid');
+
+            // Add loading indicator
+            const loadingSpinner = document.createElement('div');
+            loadingSpinner.className = 'loading-spinner';
+            loadingSpinner.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+            previewContainer.appendChild(loadingSpinner);
+
+            // Wait for video data to fully load
+            mediaElement.addEventListener('loadeddata', function () {
+                loadingSpinner.remove();
+                // Ensure video is visible in preview
+                mediaElement.currentTime = 0;
+
+                // Create a poster frame after data is loaded
+                const canvas = document.createElement('canvas');
+                canvas.width = mediaElement.videoWidth;
+                canvas.height = mediaElement.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(mediaElement, 0, 0, canvas.width, canvas.height);
+                mediaElement.poster = canvas.toDataURL();
+            });
+
+            // Add error handling
+            mediaElement.addEventListener('error', function (e) {
+                console.error('Video loading error:', e);
+                loadingSpinner.innerHTML = '<i class="fa fa-exclamation-circle"></i> Error loading video';
+            });
+
+            // Clean up object URL when video is loaded
+            mediaElement.addEventListener('loadeddata', function () {
+                URL.revokeObjectURL(mediaElement.src);
+            });
+        } else {
+            // For images, continue using FileReader
             const reader = new FileReader();
-
             reader.onload = function (e) {
-                const isVideo = file.type.startsWith('video/');
-                let mediaElement;
-                let previewContainer = document.createElement('div');
-                previewContainer.className = 'media-preview';
+                mediaElement = document.createElement('img');
+                mediaElement.src = e.target.result;
+                mediaElement.classList.add('img-fluid');
+                finishPreviewSetup();
+            };
+            reader.readAsDataURL(file);
+            return; // Exit early for images, rest will be handled in onload
+        }
 
-                if (isVideo) {
-                    mediaElement = document.createElement('video');
-                    mediaElement.src = e.target.result;
-                    mediaElement.controls = true;
-                    mediaElement.preload = 'metadata';
-                    mediaElement.classList.add('img-fluid');
-                } else {
-                    mediaElement = document.createElement('img');
-                    mediaElement.src = e.target.result;
-                    mediaElement.classList.add('img-fluid');
+        // Setup function for both videos and images
+        function finishPreviewSetup() {
+            mediaElement.dataset.fileName = file.name;
+
+            const deleteOverlay = document.createElement('div');
+            deleteOverlay.className = 'delete-overlay';
+            deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
+
+            deleteOverlay.onclick = function () {
+                if (confirm('Are you sure you want to delete this media?')) {
+                    previewContainer.remove();
+                    updateMediaPaths();
                 }
-
-                // Store the file name as a data attribute
-                mediaElement.dataset.fileName = file.name;
-
-                // Add delete overlay
-                const deleteOverlay = document.createElement('div');
-                deleteOverlay.className = 'delete-overlay';
-                deleteOverlay.innerHTML = '<i class="fa fa-times-circle delete-icon"></i>';
-
-                // Add click handler for delete
-                deleteOverlay.onclick = function () {
-                    if (confirm('Are you sure you want to delete this media?')) {
-                        previewContainer.remove();
-                        updateMediaPaths();
-                    }
-                };
-
-                // Add to preview container
-                previewContainer.appendChild(mediaElement);
-                previewContainer.appendChild(deleteOverlay);
-
-                // Add to preview grid
-                const mediaPreviewGrid = document.getElementById('media_preview_grid');
-                if (mediaPreviewGrid) {
-                    mediaPreviewGrid.appendChild(previewContainer);
-                }
-
-                // Update the hidden input
-                updateMediaPaths();
             };
 
-            reader.readAsDataURL(file);
-        });
-    }
+            previewContainer.appendChild(mediaElement);
+            previewContainer.appendChild(deleteOverlay);
+
+            const mediaPreviewGrid = document.getElementById('media_preview_grid');
+            if (mediaPreviewGrid) {
+                mediaPreviewGrid.appendChild(previewContainer);
+            }
+
+            updateMediaPaths();
+        }
+
+        // For videos, call finishPreviewSetup immediately
+        if (isVideo) {
+            finishPreviewSetup();
+        }
+    });
 }
 
 // Tag management
@@ -392,10 +429,12 @@ function updateMediaPaths() {
     console.log('Updated media paths:', mediaPaths);
 
     // Update hidden inputs for both new and existing media
-    const existingMediaInput = document.getElementById('existing_media');
-    const newMediaInput = document.getElementById('new_media');
+    const existingPhotosInput = document.getElementById('existing_photos');
+    const newPhotosInput = document.getElementById('new_photos');
+    const existingVideosInput = document.getElementById('existing_videos');
+    const newVideosInput = document.getElementById('new_videos');
 
-    if (existingMediaInput && newMediaInput) {
+    if (existingPhotosInput && newPhotosInput && existingVideosInput && newVideosInput) {
         // Split paths between existing and new
         const newPaths = mediaPaths.filter(path =>
             // Check if it's a new file (either starts with BULK_UPLOAD_DIR or is just a filename)
@@ -408,11 +447,19 @@ function updateMediaPaths() {
             !path.startsWith(window.BULK_UPLOAD_DIR || '')
         );
 
-        existingMediaInput.value = existingPaths.join(',');
-        newMediaInput.value = newPaths.join(',');
+        // Separate photos and videos
+        const existingPhotos = existingPaths.filter(path => path.match(/\.(jpg|jpeg|png|gif)$/i));
+        const existingVideos = existingPaths.filter(path => path.match(/\.(mp4|mov|avi|wmv|flv|mkv)$/i));
 
-        console.log('Existing media paths:', existingPaths);
-        console.log('New media paths:', newPaths);
+        existingPhotosInput.value = existingPhotos.join(',');
+        newPhotosInput.value = newPaths.filter(path => path.match(/\.(jpg|jpeg|png|gif)$/i)).join(',');
+        existingVideosInput.value = existingVideos.join(',');
+        newVideosInput.value = newPaths.filter(path => path.match(/\.(mp4|mov|avi|wmv|flv|mkv)$/i)).join(',');
+
+        console.log('Existing photos paths:', existingPhotos);
+        console.log('New photos paths:', newPhotosInput.value);
+        console.log('Existing videos paths:', existingVideos);
+        console.log('New videos paths:', newVideosInput.value);
     } else {
         console.warn('Media input elements not found');
     }
