@@ -371,18 +371,22 @@ def post_from_request(
         photo_paths, video_paths = handle_uploaded_files(request)
 
         # Get both existing and new media paths
-        existing_media = (
-            request.form.get("existing_media", "").split(",")
-            if request.form.get("existing_media")
+        existing_photos = (
+            request.form.get("existing_photos", "").split(",")
+            if request.form.get("existing_photos")
+            else []
+        )
+
+        # Get existing videos
+        existing_videos = (
+            request.form.get("existing_videos", "").split(",")
+            if request.form.get("existing_videos")
             else []
         )
 
         # Filter out empty strings
-        existing_media = [path for path in existing_media if path.strip()]
-
-        app.logger.info(f"Existing media: {existing_media}")
-        app.logger.info(f"New media paths: {photo_paths}")
-        app.logger.info(f"all values {existing_media + photo_paths}")
+        existing_photos = [path for path in existing_photos if path.strip()]
+        existing_videos = [path for path in existing_videos if path.strip()]
 
         # Base post data with safe list handling
         post_data = {
@@ -390,13 +394,8 @@ def post_from_request(
             "content": form_data.content,
             "summary": form_data.summary,
             "category": form_data.category,
-            "photo": existing_media + photo_paths,
-            "video": (
-                []
-                if form_data.video is None
-                else [v.strip() for v in form_data.video if v.strip()]
-            )
-            + video_paths,
+            "photo": existing_photos + photo_paths,
+            "video": existing_videos + video_paths,
             "in_reply_to": form_data.in_reply_to,
             "travel": (
                 handle_travel_data(request)
