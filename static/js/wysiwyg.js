@@ -468,10 +468,14 @@ function updateMediaPaths() {
 
 function toggleSection(sectionId) {
     const section = document.getElementById(sectionId);
+    const button = document.querySelector(`button[onclick="toggleSection('${sectionId}')"] i`);
+
     if (section.style.display === 'none') {
         section.style.display = 'block';
+        button.style.transform = 'rotate(90deg)';
     } else {
         section.style.display = 'none';
+        button.style.transform = 'rotate(0deg)';
     }
 }
 

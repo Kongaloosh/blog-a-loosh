@@ -158,7 +158,7 @@
                 <div class="site-heading text-center">
                     <h1>{{ 'New Post' if type == 'add' else 'Edit Post' }}</h1>
                     <hr class="small">
-                    <span class="subheading">{{ 'Create something amazing' if type == 'add' else 'Make it better'
+                    <span class="subheading">{{ 'time to write' if type == 'add' else 'Make it better'
                         }}</span>
                 </div>
             </div>
@@ -190,11 +190,11 @@
 
                         <!-- In Reply To Section -->
                         <div class="form-group mb-3">
-                            <button type="button" class="btn btn-link" onclick="toggleSection('replyToSection')">
-                                In Reply To
+                            <button type="button" class="btn btn-link toggle-button"
+                                onclick="toggleSection('replyToSection')">
+                                <i class="fa fa-chevron-right"></i> In Reply To
                             </button>
                             <div id="replyToSection" class="collapsible-section" style="display: none;">
-                                <label class="form-label">In Reply To</label>
                                 <input type="url" class="form-control" name="in_reply_to"
                                     placeholder="URL you're replying to"
                                     value="{{ entry.in_reply_to[0].url if entry and entry.in_reply_to else '' }}">
@@ -203,20 +203,17 @@
 
                         <!-- Title and Summary -->
                         <div class="form-group mb-3">
-                            <label class="form-label">Title</label>
                             <input type="text" class="form-control" name="title" id="title_form"
                                 value="{% if entry.title%}{{entry.title}}{% endif %}" placeholder="Post title">
                         </div>
 
                         <div class="form-group mb-3">
-                            <label class="form-label">Summary</label>
                             <textarea class="form-control" rows="2" name="summary" id="summary_form"
                                 placeholder="Brief summary of your post">{%if entry.summary%}{{entry.summary}}{%endif%}</textarea>
                         </div>
 
                         <!-- Content -->
                         <div class="form-group mb-3">
-                            <label class="form-label">Content</label>
                             <textarea class="form-control" rows="12" name="content" id="text_input"
                                 placeholder="Write your post content here (Markdown supported)">{%if entry.content%}{{entry.content}}{%endif%}</textarea>
                         </div>
@@ -232,17 +229,17 @@
                         <div class="form-group mb-3">
                             <label class="form-label">Publish Date</label>
                             <input type="datetime-local" class="form-control" name="publish_date" id="publish_date"
-                                value="{{ entry.published.strftime('%Y-%m-%dT%H:%M') if entry and entry.published else '' }}"
+                                value="{{ entry.published.strftime('%Y-%m-%dT%H:%M') if entry and entry.published else now().strftime('%Y-%m-%dT%H:%M') }}"
                                 {% if type=='draft' %} disabled {% endif %}>
                         </div>
 
                         <!-- Travel Section -->
                         <div class="form-group mb-3">
-                            <button type="button" class="btn btn-link" onclick="toggleSection('travelSection')">
-                                Travel
+                            <button type="button" class="btn btn-link toggle-button"
+                                onclick="toggleSection('travelSection')">
+                                <i class="fa fa-chevron-right"></i> Travel
                             </button>
                             <div id="travelSection" class="collapsible-section" style="display: none;">
-                                <label class="form-label">Travel</label>
                                 <div id="travel_form">
                                     <!-- Fields will be added dynamically -->
                                 </div>
@@ -259,11 +256,11 @@
 
                         <!-- Event Section -->
                         <div class="form-group mb-3">
-                            <button type="button" class="btn btn-link" onclick="toggleSection('eventSection')">
-                                Event
+                            <button type="button" class="btn btn-link toggle-button"
+                                onclick="toggleSection('eventSection')">
+                                <i class="fa fa-chevron-right"></i> Event
                             </button>
                             <div id="eventSection" class="collapsible-section" style="display: none;">
-                                <label class="form-label">Event</label>
                                 <div class="row">
                                     <div class="col-12 mb-2">
                                         <input type="text" class="form-control" name="event_name"
@@ -291,11 +288,11 @@
 
                         <!-- Tags Section -->
                         <div class="form-group mb-3">
-                            <button type="button" class="btn btn-link" onclick="toggleSection('tagsSection')">
-                                Tags
+                            <button type="button" class="btn btn-link toggle-button"
+                                onclick="toggleSection('tagsSection')">
+                                <i class="fa fa-chevron-right"></i> Tags
                             </button>
                             <div id="tagsSection" class="collapsible-section" style="display: none;">
-                                <label class="form-label">Tags</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="tag_input" placeholder="Add a tag">
                                     <button class="btn btn-primary" type="button" onclick="addTag()">

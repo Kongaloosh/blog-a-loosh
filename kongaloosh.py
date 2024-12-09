@@ -53,6 +53,7 @@ from pydantic import HttpUrl, AnyHttpUrl
 
 
 jinja_env = Environment()
+jinja_env.globals.update(now=datetime.now)
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -77,6 +78,7 @@ DRAFT_STORAGE = config.get("PhotoLocations", "DraftsStorage")
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config["STATIC_FOLDER"] = os.getcwd()
+app.jinja_env.globals.update(now=datetime.now)
 
 # Initialize CSRF protection - move this here, right after app creation
 csrf = CSRFProtect(app)
