@@ -10,7 +10,8 @@
     max-width: 100%;
     max-height: 300px;
     border-radius: 4px;
-    background: #000;
+    background: #2c2f30;
+    border: 1px solid #1c4b3c;
 }
 
 .video-container {
@@ -19,6 +20,8 @@
     gap: 1rem;
     width: 100%;
     padding: 0.5rem;
+    background-color: #323536;
+    border-radius: .25rem;
 }
 
 /* For single video display */
@@ -28,7 +31,21 @@
 
 /* Video hover effects */
 .u-video video:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(51, 163, 126, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;
+    border-color: #33a37e;
+}
+
+/* Video controls styling */
+.u-video video::-webkit-media-controls {
+    background-color: #2c2f30;
+}
+
+.u-video video::-webkit-media-controls-panel {
+    background-color: #2c2f30;
+}
+
+.u-video video::-webkit-media-controls-play-button {
+    color: #33a37e;
 }

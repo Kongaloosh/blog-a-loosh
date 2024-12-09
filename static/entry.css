@@ -1,3 +1,223 @@
+/* Base styles */
+body {
+    background-color: #3a3d3f;
+    color: #cee5c2;
+    font-family: 'Fira Mono', 'Open Sans', 'Helvetica Neue', Helvetica, Arial, monospace;
+}
+
+/* Links */
+a {
+    color: #33a37e;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover,
+a:focus {
+    color: #80dbaf;
+    text-decoration: none;
+}
+
+/* Buttons */
+.btn {
+    background-color: #33a37e;
+    border: 1px solid #2a8668;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.btn:hover,
+.btn:focus {
+    background-color: #2a8668;
+    color: #ffffff;
+    border-color: #226851;
+}
+
+/* Panels and Cards */
+.panel {
+    background-color: #323536;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.panel-heading {
+    background-color: #2c2f30;
+    border-bottom: 1px solid #1c4b3c;
+    color: #cee5c2;
+}
+
+/* Form Elements */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    /* background-color: #3c3c3c; */
+    border: 1px solid #1c4b3c;
+    color: #bbcdb0;
+    padding: 8px 12px;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+    background-color: #444748;
+    border-color: #33a37e;
+    color: #cee5c2;
+    outline: none;
+}
+
+/* Lists */
+.list-group-item {
+    background-color: #323536;
+    border-color: #1c4b3c;
+    color: #cee5c2;
+}
+
+.list-group-item:hover {
+    background-color: #383b3d;
+}
+
+.list-group-item.active {
+    background-color: #33a37e;
+    border-color: #2a8668;
+}
+
+/* Alerts */
+.alert-success {
+    background-color: #216b3a;
+    border-color: #1f3d29;
+    color: #9ad992;
+}
+
+.alert-info {
+    background-color: #235a6f;
+    border-color: #243c45;
+    color: #92c8dd;
+}
+
+.alert-warning {
+    background-color: #6c512c;
+    border-color: #5a4424;
+    color: #f9c890;
+}
+
+.alert-danger {
+    background-color: #6e2727;
+    border-color: #5a2020;
+    color: #eca2a2;
+}
+
+/* Navigation */
+.navbar {
+    background-color: #252728;
+    border-color: #1c4b3c;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-inverse {
+    background-color: #252728;
+    border-color: #1c4b3c;
+}
+
+.navbar-inverse .navbar-brand,
+.navbar-inverse .navbar-nav>li>a {
+    color: #ffffff;
+    font-size: 20px;
+    padding: 8px;
+    text-shadow: none;
+}
+
+.navbar-inverse .navbar-brand:hover,
+.navbar-inverse .navbar-brand:focus,
+.navbar-inverse .navbar-nav>li>a:hover,
+.navbar-inverse .navbar-nav>li>a:focus {
+    color: #80dbaf;
+    background-color: #2c2f30;
+}
+
+.navbar-inverse .navbar-nav>.active>a,
+.navbar-inverse .navbar-nav>.active>a:hover,
+.navbar-inverse .navbar-nav>.active>a:focus {
+    color: #ffffff;
+    background-color: #33a37e;
+}
+
+/* Remove default Bootstrap gradients */
+.navbar-inverse,
+.navbar-inverse .navbar-nav>.active>a {
+    background-image: none;
+}
+
+.navbar-inverse .navbar-toggle {
+    border-color: #1c4b3c;
+}
+
+.navbar-inverse .navbar-toggle:hover,
+.navbar-inverse .navbar-toggle:focus {
+    background-color: #33a37e;
+}
+
+.navbar-inverse .navbar-collapse,
+.navbar-inverse .navbar-form {
+    border-color: #1c4b3c;
+}
+
+/* Tables */
+.table>thead>tr>th {
+    border-bottom: 2px solid #1c4b3c;
+    color: #80dbaf;
+}
+
+.table>tbody>tr>td {
+    border-top: 1px solid #1c4b3c;
+}
+
+.table-hover>tbody>tr:hover {
+    background-color: #383b3d;
+}
+
+/* Badges */
+.badge {
+    background-color: #818a67;
+    color: #ffffff;
+}
+
+/* Progress Bars */
+.progress {
+    background-color: #323536;
+}
+
+.progress-bar {
+    background-color: #33a37e;
+}
+
+/* Toggle Button (from previous implementation) */
+.toggle-button {
+    display: flex;
+    align-items: center;
+    font-size: 1.1em;
+    color: #33a37e;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.3s;
+    background: transparent;
+    border: none;
+}
+
+.toggle-button:hover,
+.toggle-button:focus {
+    color: #80dbaf;
+    text-decoration: none;
+    outline: none;
+}
+
+.toggle-button i {
+    margin-right: 8px;
+    transition: transform 0.3s;
+    color: #6db686;
+}
+
 .hentry {
     padding-right: px;
     padding-left: 40px;
@@ -31,6 +251,10 @@ input.is-valid {
 .media-preview-container {
     max-height: 50vh;
     overflow-y: auto;
+    background-color: #323536;
+    border: 1px solid #1c4b3c;
+    border-radius: .25rem;
+    padding: 10px;
 }
 
 #media_preview_grid {
@@ -79,50 +303,267 @@ input.is-valid {
     cursor: pointer;
     font-size: 0.7em;
     margin-left: 5px;
+    color: #80dbaf;
+    transition: color 0.3s ease;
 }
 
-.toggle-button {
-    display: flex;
-    align-items: center;
-    font-size: 1.1em;
-    color: #007bff;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.toggle-button:hover,
-.toggle-button:focus {
-    color: #0056b3;
-    text-decoration: none;
-}
-
-.toggle-button i {
-    display: flex;
-    align-items: center;
-    font-size: 1.1em;
-    color: #007bff;
-    text-decoration: none;
-    /* Remove underline */
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.toggle-button i {
-    margin-right: 8px;
-    transition: transform 0.3s;
+.tag-remove-button:hover {
+    color: #33a37e;
 }
 
 .collapsible-section {
     margin-top: 10px;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #1c4b3c;
     border-radius: 5px;
-    background-color: #f9f9f9;
+    background-color: #323536;
+    color: #cee5c2;
     display: none;
-    transition: max-height 0.3s ease-out;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .collapsible-section.open {
     display: block;
+}
+
+/* Optional: Add hover effect for better visual feedback */
+.collapsible-section:hover {
+    border-color: #33a37e;
+    background-color: #3a3d3f;
+}
+
+/* Style for the toggle button/header if you have one */
+.collapsible-toggle {
+    color: #80dbaf;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.collapsible-toggle:hover {
+    color: #33a37e;
+}
+
+/* Override Bootstrap's navbar-light styles */
+.navbar-light .navbar-nav .nav-link,
+.navbar-nav .nav-link,
+.navbar-light .navbar-brand,
+.navbar-brand {
+    color: #ffffff !important;
+    font-size: 20px;
+    padding: 8px;
+}
+
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link:focus,
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus,
+.navbar-light .navbar-brand:hover,
+.navbar-light .navbar-brand:focus,
+.navbar-brand:hover,
+.navbar-brand:focus {
+    color: #80dbaf !important;
+    background-color: #2c2f30;
+}
+
+/* Tag styling with improved contrast */
+.tag,
+.tag a {
+    color: #80dbaf !important;
+    /* Using the bright mint from our theme */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.tag:hover,
+.tag a:hover {
+    color: #33a37e !important;
+    /* Darker teal on hover */
+    text-decoration: none;
+}
+
+/* Post metadata styling */
+.post-date,
+.post-author {
+    color: #cee5c2;
+    /* Light sage green for better contrast */
+}
+
+.post-author a {
+    color: #80dbaf;
+    text-decoration: none;
+}
+
+.post-author a:hover {
+    color: #33a37e;
+    text-decoration: none;
+}
+
+/* Override Bootstrap card styles */
+.card,
+div.card,
+.card.shadow-sm {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #323536 !important;
+    border: 1px solid #1c4b3c !important;
+    border-radius: .25rem;
+}
+
+.card-body {
+    flex: 1 1 auto;
+    padding: 1.25rem;
+    background-color: #323536 !important;
+    color: #cee5c2 !important;
+}
+
+.card-header {
+    background-color: #2c2f30 !important;
+    border-bottom: 1px solid #1c4b3c !important;
+    color: #cee5c2 !important;
+}
+
+/* Form Controls */
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+    display: block;
+    width: 100%;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #cee5c2 !important;
+    background-color: #323536 !important;
+    background-clip: padding-box;
+    border: 1px solid #1c4b3c !important;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+/* Focus states */
+.form-control:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+    color: #cee5c2 !important;
+    background-color: #3a3d3f !important;
+    border-color: #33a37e !important;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(51, 163, 126, 0.25);
+}
+
+/* Placeholder text */
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder {
+    color: #80dbaf !important;
+    opacity: 0.6;
+}
+
+/* File input styling */
+input[type="file"] {
+    color: #cee5c2;
+}
+
+/* Custom file input button */
+input[type="file"]::file-selector-button {
+    color: #cee5c2 !important;
+    background-color: #33a37e !important;
+    /* Changed to your accent color */
+    border: 1px solid #2a8668 !important;
+    border-radius: .25rem;
+    padding: .375rem .75rem;
+    margin-right: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+/* Hover state */
+input[type="file"]::file-selector-button:hover {
+    background-color: #80dbaf !important;
+    /* Lighter mint color on hover */
+    border-color: #33a37e !important;
+    color: #323536 !important;
+    /* Dark text for contrast */
+}
+
+/* Active/Focus state */
+input[type="file"]:active::file-selector-button,
+input[type="file"]:focus::file-selector-button {
+    background-color: #80dbaf !important;
+    border-color: #33a37e !important;
+    box-shadow: 0 0 0 0.2rem rgba(51, 163, 126, 0.25);
+}
+
+/* Calendar icon and datetime input styling */
+input[type="datetime-local"] {
+    color: #cee5c2 !important;
+    background-color: #323536 !important;
+    border: 1px solid #1c4b3c !important;
+    border-radius: .25rem;
+    padding: .375rem .75rem;
+    font-family: 'Fira Mono', monospace;
+}
+
+/* Calendar icon color */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8) sepia(0.1) saturate(100%) hue-rotate(95deg);
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+/* Hover state for calendar icon */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    filter: invert(0.8) sepia(0.3) saturate(150%) hue-rotate(95deg);
+}
+
+/* Code block styling */
+pre,
+code {
+    background-color: #2c2f30;
+    color: #cee5c2;
+    border: 1px solid #1c4b3c;
+    border-radius: .25rem;
+    padding: 0.2em 0.4em;
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #323536;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1c4b3c;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #33a37e;
+}
+
+/* Focus outline for accessibility */
+*:focus {
+    outline: 2px solid #33a37e !important;
+    outline-offset: 2px;
+}
+
+/* Selection styling */
+::selection {
+    background-color: #33a37e;
+    color: #ffffff;
 }

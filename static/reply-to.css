@@ -1,27 +1,69 @@
-.reply-hentry{
-   % box-shadow: 0px -10px -10px 0.5px #aaaaaa;
-    box-shadow: 0px 0px 10px 0.5px rgba(0,0,0,0.75);
+.reply-hentry {
+    box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.2);
+    background-color: #323536;
+    border: 1px solid #1c4b3c;
+    border-radius: .25rem;
+    margin-bottom: 20px;
 }
 
-.reply-topper{
-    margin-top:8px;
-    background-color: #FCFCFC;
+.reply-topper {
+    margin-top: 8px;
+    padding: 10px 40px;
+    background-color: #2c2f30;
+    border-bottom: 1px solid #1c4b3c;
+    color: #cee5c2;
 }
 
-.reply{
+.reply {
     width: 100%;
     z-index: 0;
-    box-shadow: inset 0px 10px 10px 0.5px #aaaaaa;
+    padding: 20px 40px;
+    background-color: #323536;
+    color: #cee5c2;
     overflow-y: scroll;
-    padding: 2em;
-    background-color: #FCFCFC;
 }
 
-.reply-header{
-    margin-top:5px;
-    margin-bottom:5px
+.reply-header {
+    padding: 10px 40px;
+    margin: 5px 0;
+    border-bottom: 1px solid #1c4b3c;
+    color: #80dbaf;
 }
 
-.reply-footer{
-    margin-top:5px;
+.reply-footer {
+    padding: 10px 40px;
+    text-align: right;
+    background-color: #2c2f30;
+    border-top: 1px solid #1c4b3c;
+    color: #80dbaf;
+}
+
+/* Optional: Style scrollbar for the reply section */
+.reply::-webkit-scrollbar {
+    width: 10px;
+}
+
+.reply::-webkit-scrollbar-track {
+    background: #2c2f30;
+}
+
+.reply::-webkit-scrollbar-thumb {
+    background: #1c4b3c;
+    border-radius: 5px;
+}
+
+.reply::-webkit-scrollbar-thumb:hover {
+    background: #33a37e;
+}
+
+/* Optional: Add hover states for interactive elements */
+.reply a {
+    color: #33a37e;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.reply a:hover {
+    color: #80dbaf;
+    text-decoration: none;
 }
