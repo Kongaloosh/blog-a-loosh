@@ -1,8 +1,20 @@
 // Initialize MathJax safely
 function initMathJax() {
-    if (window.MathJax && window.MathJax.Hub) {
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
-    }
+    // Wait for MathJax to be fully loaded
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        },
+        svg: {
+            fontCache: 'global'
+        },
+        startup: {
+            ready: () => {
+                console.log('MathJax is loaded and ready');
+            }
+        }
+    };
 }
 
 // State management
