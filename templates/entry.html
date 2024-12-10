@@ -24,14 +24,13 @@
     <link rel="https://www.w3.org/ns/ldp#inbox" href="http://kongaloosh.com/inbox">
 
     <!-- Bootstrap Core CSS -->
-    <!--<link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='clean-blog.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='video.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/clean-blog.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/entry.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/reply-to.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/video.css') }}" rel="stylesheet">
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
         type="text/css">
@@ -109,13 +108,13 @@
     </nav>
 
 
-    <link href="{{ url_for('static', filename='entry.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/entry.css') }}" rel="stylesheet">
     {% if mentions %}
-    <link href="{{ url_for('static', filename='mentions.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/mentions.css') }}" rel="stylesheet">
     {% endif %}
 
     {% if reply_to %}
-    <link href="{{ url_for('static', filename='reply-to.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/reply-to.css') }}" rel="stylesheet">
     {% endif %}
 
     <article>
