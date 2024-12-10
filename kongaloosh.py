@@ -1764,7 +1764,9 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "https://ajax.googleapis.com "
         "https://www.google-analytics.com "
         "http://www.google-analytics.com "
-        "https://www.googletagmanager.com; "
+        "https://www.googletagmanager.com"
+        "https://nominatim.openstreetmap.org"
+        " https://*.openstreetmap.org;"
         # style-src: Controls CSS sources
         "style-src 'self' 'unsafe-inline' "
         "https://maxcdn.bootstrapcdn.com "
