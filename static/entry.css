@@ -567,3 +567,13 @@ code {
     background-color: #33a37e;
     color: #ffffff;
 }
+
+#post-footer {
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+.location-preview {
+    margin-bottom: 0.5rem;
+}

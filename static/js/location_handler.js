@@ -1,19 +1,22 @@
 // Function to update the WYSIWYG preview with location
 function updateLocationPreview(locationName) {
-    const wysiwyg = document.getElementById("wysiwyg");
-    if (!wysiwyg) return;
+    const postFooter = document.getElementById("post-footer");
+    if (!postFooter) return;
 
     // Find or create the location paragraph
-    let locationP = wysiwyg.querySelector('.location-preview');
+    let locationP = postFooter.querySelector('.location-preview');
     if (!locationP) {
         locationP = document.createElement('p');
         locationP.className = 'location-preview';
-        // Insert at the beginning of wysiwyg
-        wysiwyg.insertBefore(locationP, wysiwyg.firstChild);
+        postFooter.insertBefore(locationP, postFooter.firstChild);
     }
 
     if (locationName) {
-        locationP.innerHTML = `<small class="text-muted">📍 ${locationName}</small>`;
+        locationP.innerHTML = `
+            <div class="d-flex align-items-center text-muted">
+                <i class="fa fa-map-marker me-2"></i>
+                <small>${locationName}</small>
+            </div>`;
         locationP.style.display = 'block';
     } else {
         locationP.style.display = 'none';

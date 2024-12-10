@@ -64,12 +64,8 @@ const getHTMLFromMD = debounce(async (val) => {
     const wysiwyg = document.getElementById("wysiwyg");
     if (!wysiwyg) return;
 
-    // Save location preview if it exists
-    const locationPreview = wysiwyg.querySelector('.location-preview');
-    const locationHTML = locationPreview?.outerHTML;
-
     if (!val) {
-        wysiwyg.innerHTML = locationHTML || '';
+        wysiwyg.innerHTML = '';
         return;
     }
 
@@ -91,9 +87,7 @@ const getHTMLFromMD = debounce(async (val) => {
         }
 
         const result = await response.json();
-
-        // Combine location preview with markdown content
-        wysiwyg.innerHTML = (locationHTML || '') + result.html;
+        wysiwyg.innerHTML = result.html;
 
         // Add responsive classes to images
         const images = wysiwyg.getElementsByTagName('img');
@@ -108,7 +102,6 @@ const getHTMLFromMD = debounce(async (val) => {
     } catch (error) {
         console.error('Preview error:', error);
         wysiwyg.innerHTML = `
-            ${locationHTML || ''}
             <div class="alert alert-warning">
                 Preview temporarily unavailable: ${error.message}
             </div>`;
