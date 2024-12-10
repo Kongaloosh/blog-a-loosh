@@ -1764,9 +1764,9 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "https://ajax.googleapis.com "
         "https://www.google-analytics.com "
         "http://www.google-analytics.com "
-        "https://www.googletagmanager.com"
-        "https://nominatim.openstreetmap.org"
-        " https://*.openstreetmap.org;"
+        "https://www.googletagmanager.com "
+        "https://nominatim.openstreetmap.org "
+        "https://brid.gy https://fed.brid.gy; "
         # style-src: Controls CSS sources
         "style-src 'self' 'unsafe-inline' "
         "https://maxcdn.bootstrapcdn.com "
@@ -1776,8 +1776,8 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com; "
         # connect-src: Controls AJAX, WebSocket, etc
         "connect-src 'self' https://webmention.io https://www.google-analytics.com "
-        "https://nominatim.openstreetmap.org"
-        "https://brid.gy https://fed.brid.gy;"
+        "https://nominatim.openstreetmap.org "
+        "https://brid.gy https://fed.brid.gy; "
         # img-src: Controls image sources
         "img-src 'self' data: blob: https: https://www.google-analytics.com; "
         # media-src: Controls video/audio
