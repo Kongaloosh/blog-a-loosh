@@ -279,13 +279,9 @@
                                 </a>
                                 by
                                 <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
-                                {% if entry.location%} <!-- If there's a location -->
+                                {% if entry.geo and entry.geo.name %} <!-- If there's a location -->
                                 in
-                                {% if entry.location_name %}
-                                <a class="p-location" style="overflow:scroll;"> {{entry.location_name | safe }} </a>
-                                {% else %}
-                                <a class="p-location" style="overflow:scroll;"> {{entry.location | safe }} </a>
-                                {% endif %}
+                                <a class="p-location" style="overflow:scroll;"> {{entry.geo.name | safe }} </a>
                                 {% endif %}
                             </p>
                             <p>

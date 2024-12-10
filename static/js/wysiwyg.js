@@ -24,7 +24,8 @@ const state = {
     title: "",
     summary: "",
     travel: [],
-    event: {}
+    event: {},
+    geo: null
 };
 
 // Get CSRF token from meta tag or cookie
@@ -49,34 +50,31 @@ function debounce(func, wait) {
     };
 }
 
-// Preview update functions
 function updatePreview(elementId, previewId, value) {
     const previewElement = document.getElementById(previewId);
-    if (previewElement && value !== state[elementId] && value !== 'None') {
+    // Only update if the value has actually changed
+    if (previewElement && value !== state[elementId]) {
+        state[elementId] = value;  // Update state first
         previewElement.innerHTML = value;
-        state[elementId] = value;
     }
 }
 
 // Markdown to HTML conversion with proper error handling
 const getHTMLFromMD = debounce(async (val) => {
+    const wysiwyg = document.getElementById("wysiwyg");
+    if (!wysiwyg) return;
+
+    // Save location preview if it exists
+    const locationPreview = wysiwyg.querySelector('.location-preview');
+    const locationHTML = locationPreview?.outerHTML;
+
     if (!val) {
-        const wysiwyg = document.getElementById("wysiwyg");
-        if (wysiwyg) {
-            wysiwyg.innerHTML = '';
-        }
+        wysiwyg.innerHTML = locationHTML || '';
         return;
     }
 
     try {
         const token = getCSRFToken();
-        console.log('Request payload:', { text: val });
-        console.log('CSRF token:', token);
-
-        if (!token) {
-            throw new Error('CSRF token not found');
-        }
-
         const response = await fetch('/md_to_html', {
             method: 'POST',
             headers: {
@@ -93,49 +91,74 @@ const getHTMLFromMD = debounce(async (val) => {
         }
 
         const result = await response.json();
-        const wysiwyg = document.getElementById("wysiwyg");
-        if (wysiwyg) {
-            wysiwyg.innerHTML = result.html;
 
-            // Add responsive classes to images
-            const images = wysiwyg.getElementsByTagName('img');
-            Array.from(images).forEach(img => {
-                img.classList.add('img-fluid', 'mx-auto', 'd-block');
-            });
+        // Combine location preview with markdown content
+        wysiwyg.innerHTML = (locationHTML || '') + result.html;
 
-            // Typeset math if present
-            if (window.MathJax?.typesetPromise) {
-                await window.MathJax.typesetPromise([wysiwyg]);
-            }
+        // Add responsive classes to images
+        const images = wysiwyg.getElementsByTagName('img');
+        Array.from(images).forEach(img => {
+            img.classList.add('img-fluid', 'mx-auto', 'd-block');
+        });
+
+        // Typeset math if present
+        if (window.MathJax?.typesetPromise) {
+            await window.MathJax.typesetPromise([wysiwyg]);
         }
     } catch (error) {
         console.error('Preview error:', error);
-        const wysiwyg = document.getElementById("wysiwyg");
-        if (wysiwyg) {
-            wysiwyg.innerHTML = `<div class="alert alert-warning">
+        wysiwyg.innerHTML = `
+            ${locationHTML || ''}
+            <div class="alert alert-warning">
                 Preview temporarily unavailable: ${error.message}
             </div>`;
-        }
     }
-});
+}, 300);
 
 // Initialize all previews and listeners
 function initializePreviews() {
     console.log("Initializing previews...");
 
-    // Initialize MathJax
-    initMathJax();
-
-    // Text content preview
+    // Remove any existing listeners before adding new ones
+    const titleInput = document.getElementById('title_form');
+    const summaryInput = document.getElementById('summary_form');
     const textInput = document.getElementById('text_input');
-    if (textInput) {
-        textInput.addEventListener('input', function (e) {
-            getHTMLFromMD(e.target.value);
+
+    if (titleInput) {
+        const newTitleInput = titleInput.cloneNode(true);
+        titleInput.parentNode.replaceChild(newTitleInput, titleInput);
+        newTitleInput.addEventListener('input', function (e) {
+            updatePreview('title', 'title_format', e.target.value);
         });
-        if (textInput.value) {
-            getHTMLFromMD(textInput.value);
+        if (newTitleInput.value) {
+            updatePreview('title', 'title_format', newTitleInput.value);
         }
     }
+
+    if (summaryInput) {
+        const newSummaryInput = summaryInput.cloneNode(true);
+        summaryInput.parentNode.replaceChild(newSummaryInput, summaryInput);
+        newSummaryInput.addEventListener('input', function (e) {
+            updatePreview('summary', 'summary_format', e.target.value);
+        });
+        if (newSummaryInput.value) {
+            updatePreview('summary', 'summary_format', newSummaryInput.value);
+        }
+    }
+
+    if (textInput) {
+        const newTextInput = textInput.cloneNode(true);
+        textInput.parentNode.replaceChild(newTextInput, textInput);
+        newTextInput.addEventListener('input', function (e) {
+            getHTMLFromMD(e.target.value);
+        });
+        if (newTextInput.value) {
+            getHTMLFromMD(newTextInput.value);
+        }
+    }
+
+    // Initialize MathJax
+    initMathJax();
 
     // Initialize existing photos if editing
     const mediaPreviewGrid = document.getElementById('media_preview_grid');
@@ -228,33 +251,26 @@ function initializePreviews() {
         });
     }
 
-    // Title preview
-    const titleInput = document.getElementById('title_form');
-    if (titleInput) {
-        titleInput.addEventListener('input', function (e) {
-            updatePreview('title', 'title_format', e.target.value);
-        });
-        if (titleInput.value) {
-            updatePreview('title', 'title_format', titleInput.value);
-        }
-    }
-
-    // Summary preview
-    const summaryInput = document.getElementById('summary_form');
-    if (summaryInput) {
-        summaryInput.addEventListener('input', function (e) {
-            updatePreview('summary', 'summary_format', e.target.value);
-        });
-        if (summaryInput.value) {
-            updatePreview('summary', 'summary_format', summaryInput.value);
-        }
-    }
+    // Initialize location preview
+    initializeLocationPreview();
 }
 
-// Remove the duplicate initialization calls
+// Remove duplicate initialization calls
 document.addEventListener('DOMContentLoaded', function () {
-    // Only call once
-    initializePreviews();
+    // Remove any existing event listeners
+    const oldElement = document.querySelector('script[data-initialization="true"]');
+    if (oldElement) {
+        oldElement.remove();
+    }
+
+    // Add initialization script with marker
+    const script = document.createElement('script');
+    script.setAttribute('data-initialization', 'true');
+    script.textContent = `
+        initializeTagSystem();
+        initializePreviews();
+    `;
+    document.body.appendChild(script);
 });
 
 function handlePhotoUpload(input) {
@@ -407,13 +423,6 @@ function addExistingTag(tag) {
     }
 }
 
-// Initialize everything when DOM is ready
-document.addEventListener('DOMContentLoaded', function () {
-    initializeTagSystem();
-    initializePreviews();
-});
-
-// Initialize featured image preview
 function initializeFeaturedImage() {
     if (window.entryData && window.entryData.photo) {
         const featuredPreview = document.getElementById('featured_image_preview');
@@ -490,4 +499,67 @@ function toggleSection(sectionId) {
         button.style.transform = 'rotate(0deg)';
     }
 }
+
+function initializeLocationPreview() {
+    const geoName = document.getElementById('geo_name')?.value;
+    if (geoName) {
+        updateLocationPreview(geoName);
+    }
+}
+
+function createPreviewFooter() {
+    const geoName = document.getElementById('geo_name')?.value;
+    const publishDate = document.getElementById('publish_date')?.value;
+
+    return `
+    <hr>
+    <div class="row post-meta">
+        <div class="col-md-8 pull-left">
+            <p>
+                Posted by on
+                <time class="dt-published">${publishDate || 'now'}</time>
+                by
+                <a rel="author" class="p-author h-card" href="http://kongaloosh.com">Alex Kearney</a>
+                ${geoName ? `
+                in
+                <a class="p-location" style="overflow:scroll;">${geoName}</a>
+                ` : ''}
+            </p>
+        </div>
+    </div>`;
+}
+
+function updateContent() {
+    const content = document.getElementById('content').value;
+    const contentDiv = document.getElementById('wysiwyg-content');
+    const footerDiv = document.getElementById('wysiwyg-footer');
+
+    if (contentDiv && footerDiv) {
+        // Update content with markdown
+        contentDiv.innerHTML = marked.parse(content);
+        // Update footer
+        footerDiv.innerHTML = createPreviewFooter();
+    }
+
+    // Update state
+    state.text = content;
+}
+
+// Make sure any content input triggers this
+document.getElementById('content')?.addEventListener('input', updateContent);
+
+// Add some CSS to the page
+const style = document.createElement('style');
+style.textContent = `
+    #wysiwyg-content {
+        min-height: 200px;
+        margin-bottom: 20px;
+    }
+    #wysiwyg-footer {
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+        margin-top: 20px;
+    }
+`;
+document.head.appendChild(style);
 

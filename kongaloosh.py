@@ -34,7 +34,7 @@ from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
-from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost
+from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost, GeoLocation
 from pysrc.python_webmention.mentioner import get_mentions
 from slugify import slugify
 from pysrc.file_management.file_parser import (
@@ -251,11 +251,11 @@ class PostFormData:
     category: Optional[List[str]] = None
     published: Optional[datetime] = None
     in_reply_to: Optional[List[str]] = None
-    location: Optional[str] = None
+    geo: Optional[GeoLocation] = None
     event: Optional[Event] = None
     travel: Optional[Travel] = None
-    photo: Optional[List[str]] = None  # Stores existing photo paths
-    video: Optional[List[str]] = None  # Stores existing video paths
+    photo: Optional[List[str]] = None
+    video: Optional[List[str]] = None
 
 
 def process_form_data(request: Request) -> PostFormData:
@@ -290,6 +290,24 @@ def process_form_data(request: Request) -> PostFormData:
     if video_list := request.form.get("video"):
         app.logger.info(f"Video list: {video_list}")
         data.video = [v.strip() for v in video_list.split(",")]
+
+    # Handle location/geo data
+    if coordinates := request.form.get("geo_coordinates"):
+        try:
+            lat, lon = [float(x) for x in coordinates.split(",")]
+            data.geo = GeoLocation(
+                coordinates=(lat, lon),
+                name=request.form.get("geo_name"),
+                location_id=(
+                    int(request.form.get("geo_id"))
+                    if request.form.get("geo_id")
+                    else None
+                ),
+                raw_location=request.form.get("geo_raw"),
+            )
+        except (ValueError, TypeError) as e:
+            app.logger.error(f"Error processing coordinates {coordinates}: {e}")
+            # Skip setting geo if coordinates are invalid
 
     return data
 
@@ -406,12 +424,13 @@ def post_from_request(
             "photo": existing_photos + photo_paths,
             "video": existing_videos + video_paths,
             "in_reply_to": form_data.in_reply_to,
+            "geo": form_data.geo,
             "travel": (
                 handle_travel_data(request)
                 if "geo[]" in request.form and request.form.getlist("geo[]")[0]
                 else Travel()
             ),
-            "event": handle_event_data(request),  # Add event handling here
+            "event": handle_event_data(request),
         }
 
         if existing_post:
@@ -609,16 +628,19 @@ def update_entry(
 ) -> str:
     """Update an existing blog post"""
     try:
-        # Get the updated post data
         file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
         existing_entry = get_post_for_editing(file_name)
         updated_post = post_from_request(update_request, existing_entry)
 
-        # Handle location data if present
-        if updated_post.location and updated_post.location.startswith("geo:"):
-            location_info = resolve_placename(updated_post.location)
-            updated_post.location_name = location_info.name
-            updated_post.location_id = location_info.geoname_id
+        # Handle geo data if present
+        if updated_post.geo and updated_post.geo.coordinates:
+            # GeoLocation validation will handle coordinate validation
+            if not updated_post.geo.name:
+                # Only resolve name if not already provided
+                lat, lon = updated_post.geo.coordinates
+                location_info = resolve_placename(f"geo:{lat},{lon}")
+                updated_post.geo.name = location_info.name
+                updated_post.geo.location_id = location_info.geoname_id
 
         # Process markdown content
         updated_post.content = run(updated_post.content, f"{year}/{month}/{day}/")
@@ -633,7 +655,6 @@ def update_entry(
         return file_name
 
     except Exception as e:
-        app.logger.error(f"Error updating entry: {e}")
         raise ValueError(f"Failed to update entry: {str(e)}")
 
 
@@ -1746,7 +1767,8 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "https://fonts.googleapis.com "
         "https://cdn.jsdelivr.net; "
         "font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com; "
-        "connect-src 'self' https://webmention.io https://www.google-analytics.com; "
+        "connect-src 'self' https://webmention.io https://www.google-analytics.com "
+        "https://nominatim.openstreetmap.org; "
         "img-src 'self' data: blob: https: https://www.google-analytics.com; "
         "media-src 'self' blob: data:; "
     )

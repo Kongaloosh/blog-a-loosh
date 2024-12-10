@@ -6,7 +6,7 @@
 <script src="{{ url_for('static', filename='js/place_location_autocomplete.js') }}"></script>
 <script src="{{ url_for('static', filename='js/add_trip.js') }}"></script>
 <script src="{{ url_for('static', filename='js/travel_init.js') }}"></script>
-
+<script src="{{ url_for('static', filename='js/location_handler.js') }}"></script>
 <script>
     MathJax = {
         tex: {
@@ -231,6 +231,33 @@
                             <input type="datetime-local" class="form-control" name="publish_date" id="publish_date"
                                 value="{{ entry.published.strftime('%Y-%m-%dT%H:%M') if entry and entry.published else now().strftime('%Y-%m-%dT%H:%M') }}"
                                 {% if type=='draft' %} disabled {% endif %}>
+                        </div>
+
+                        <!-- Location Section -->
+                        <div class="form-group mb-3">
+                            <button type="button" class="btn btn-link toggle-button"
+                                onclick="toggleSection('locationSection')">
+                                <i class="fa fa-chevron-right"></i> Location
+                            </button>
+                            <div id="locationSection" class="collapsible-section" style="display: none;">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="location_input"
+                                        placeholder="Search for a place"
+                                        value="{{ entry.geo.name if entry and entry.geo else '' }}">
+                                    <button class="btn btn-outline-secondary" type="button" id="location_search_btn">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                                <!-- Hidden fields for storing location data -->
+                                <input type="hidden" id="geo_coordinates" name="geo_coordinates"
+                                    value="{{ '{},{}'.format(*entry.geo.coordinates) if entry and entry.geo and entry.geo.coordinates else '' }}">
+                                <input type="hidden" id="geo_name" name="geo_name"
+                                    value="{{ entry.geo.name if entry and entry.geo else '' }}">
+                                <input type="hidden" id="geo_id" name="geo_id"
+                                    value="{{ entry.geo.location_id if entry and entry.geo else '' }}">
+                                <input type="hidden" id="geo_raw" name="geo_raw"
+                                    value="{{ entry.geo.raw_location if entry and entry.geo else '' }}">
+                            </div>
                         </div>
 
                         <!-- Travel Section -->
