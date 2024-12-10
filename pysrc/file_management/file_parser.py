@@ -18,6 +18,7 @@ from pysrc.markdown_albums.markdown_album_extension import album_regexp
 from pysrc.database.queries import EntryQueries, CategoryQueries
 import shutil
 from pysrc.video_converter import convert_video_to_mp4
+from pysrc.post import GeoLocation
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
 
@@ -305,6 +306,17 @@ def create_post_from_data(
             dt_start=data.get("dt_start"),
             dt_end=data.get("dt_end"),
         )
+
+    # Handle geo data
+    if data.get("geo"):
+        if isinstance(data["geo"], dict):
+            # If coordinates are stored as string, convert to tuple
+            if "coordinates" in data["geo"] and isinstance(
+                data["geo"]["coordinates"], str
+            ):
+                lat, lon = map(float, data["geo"]["coordinates"].split(","))
+                data["geo"]["coordinates"] = (lat, lon)
+            data["geo"] = GeoLocation(**data["geo"])
 
     # 6. Create and validate BlogPost
     try:

@@ -7,6 +7,7 @@
 <script src="{{ url_for('static', filename='js/add_trip.js') }}"></script>
 <script src="{{ url_for('static', filename='js/travel_init.js') }}"></script>
 <script src="{{ url_for('static', filename='js/location_handler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/post_validation.js') }}"></script>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='autocomplete.css') }}">
 
@@ -107,6 +108,13 @@
 <script>
     function submitMainForm(event, action) {
         event.preventDefault();
+
+        // Run validation first
+        const postErrors = validatePost();
+        if (postErrors.length > 0) {
+            showValidationAlert(postErrors);
+            return false;
+        }
 
         // Get the main form
         const mainForm = document.getElementById('input');
