@@ -30,19 +30,32 @@ function autocomplete(inp) {
   }
   console.log('Initializing autocomplete for:', inp.id);
 
-  /*the autocomplete function takes two arguments,
-  the text field element and an array of possible autocompleted values:*/
   var currentFocus;
-  /*execute a function when someone writes in the text field:*/
+
+  function closeAllLists() {
+    const lists = document.getElementsByClassName("autocomplete-items");
+    while (lists.length > 0) {
+      lists[0].parentNode.removeChild(lists[0]);
+    }
+  }
+
   inp.addEventListener("input", async function (e) {
     console.log('Input event fired for:', inp.id);
-    console.log('Current value:', this.value);
-    var a, b, i, val = this.value;
+    var val = this.value;
+
+    // Close any already open lists
+    closeAllLists();
 
     if (!val) {
       console.log('Empty value, skipping search');
       return false;
     }
+
+    currentFocus = -1;
+    // Create a new container for results
+    var a = document.createElement("DIV");
+    a.setAttribute("class", "autocomplete-items");
+    this.parentNode.appendChild(a);
 
     try {
       const places = await getCandidatePlaces(val);
@@ -53,17 +66,11 @@ function autocomplete(inp) {
         return;
       }
 
-      // Create dropdown container
-      a = document.createElement("DIV");
-      a.setAttribute("id", this.id + "autocomplete-list");
-      a.setAttribute("class", "autocomplete-items");
-      this.parentNode.appendChild(a);
-
       places.forEach((place, i) => {
         console.log('Adding place to dropdown:', place.title);
 
         // Create dropdown item
-        b = document.createElement("DIV");
+        var b = document.createElement("DIV");
         b.innerHTML = place.title;
 
         // Add click handler to set both location name and geo coordinates

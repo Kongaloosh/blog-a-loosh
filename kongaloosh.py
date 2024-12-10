@@ -1743,17 +1743,20 @@ def verify_url():
         return jsonify({"valid": False, "error": str(e)})
 
 
-@app.after_request
+@app.after_request  # This decorator runs this function after every request
 def add_security_headers(response: Union[Response, str]) -> Response:
     """Add security headers to the response"""
+    # Convert string responses to Response objects if needed
     if not isinstance(response, Response):
         response = Response(response)
 
-    # Update CSP to allow blob: URLs for media previews
+    # Content Security Policy (CSP) - The main security control
     response.headers["Content-Security-Policy"] = (
+        # default-src: Fallback for other resource types
         "default-src 'self'; "
+        # script-src: Controls what JavaScript can run
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-        "https://code.jquery.com "  # Adding back code.jquery.com
+        "https://code.jquery.com "
         "https://cdnjs.cloudflare.com "
         "https://maxcdn.bootstrapcdn.com "
         "https://cdn.jsdelivr.net "
@@ -1762,22 +1765,32 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "https://www.google-analytics.com "
         "http://www.google-analytics.com "
         "https://www.googletagmanager.com; "
+        # style-src: Controls CSS sources
         "style-src 'self' 'unsafe-inline' "
         "https://maxcdn.bootstrapcdn.com "
         "https://fonts.googleapis.com "
         "https://cdn.jsdelivr.net; "
+        # font-src: Controls font loading
         "font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com; "
+        # connect-src: Controls AJAX, WebSocket, etc
         "connect-src 'self' https://webmention.io https://www.google-analytics.com "
-        "https://nominatim.openstreetmap.org; "
+        "https://nominatim.openstreetmap.org"
+        "https://brid.gy https://fed.brid.gy;"
+        # img-src: Controls image sources
         "img-src 'self' data: blob: https: https://www.google-analytics.com; "
+        # media-src: Controls video/audio
         "media-src 'self' blob: data:; "
     )
 
-    # Other security headers remain the same
-    response.headers["X-Frame-Options"] = "SAMEORIGIN"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Additional security headers
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"  # Prevents clickjacking
+    response.headers["X-Content-Type-Options"] = (
+        "nosniff"  # Prevents MIME-type sniffing
+    )
+    response.headers["X-XSS-Protection"] = "1; mode=block"  # Browser XSS protection
+    response.headers["Referrer-Policy"] = (
+        "strict-origin-when-cross-origin"  # Controls referrer info
+    )
 
     return response
 

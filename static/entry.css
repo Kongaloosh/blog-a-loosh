@@ -577,3 +577,64 @@ code {
 .location-preview {
     margin-bottom: 0.5rem;
 }
+
+/* Calendar popup styling */
+::-webkit-calendar-picker-indicator {
+    filter: invert(0.8) sepia(0.1) saturate(100%) hue-rotate(95deg);
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker {
+    background-color: #323536;
+    color: #cee5c2;
+}
+
+/* Calendar widget styling */
+input[type="datetime-local"]::-webkit-datetime-edit {
+    color: #cee5c2;
+    padding: 0 0.3em;
+}
+
+/* Calendar header and background */
+::-webkit-calendar-picker-popup {
+    background-color: #323536;
+    border: 1px solid #1c4b3c;
+    border-radius: 4px;
+    color: #cee5c2;
+}
+
+/* Calendar day cells */
+::-webkit-calendar-picker-popup td,
+::-webkit-calendar-picker-popup th {
+    color: #cee5c2;
+    background-color: #323536;
+    border: 1px solid #1c4b3c;
+    padding: 2px;
+}
+
+/* Calendar hover states */
+::-webkit-calendar-picker-popup td:hover {
+    background-color: #3a3d3f;
+    cursor: pointer;
+}
+
+/* Selected date */
+::-webkit-calendar-picker-popup td.selected {
+    background-color: #33a37e;
+    color: #ffffff;
+}
+
+/* Today's date */
+::-webkit-calendar-picker-popup td.today {
+    border: 1px solid #33a37e;
+}
+
+/* Calendar navigation buttons */
+::-webkit-calendar-picker-popup button {
+    color: #cee5c2;
+    background-color: #323536;
+    border: 1px solid #1c4b3c;
+    border-radius: 4px;
+    padding: 2px;
+}

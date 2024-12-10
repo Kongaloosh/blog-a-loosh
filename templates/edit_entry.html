@@ -7,6 +7,11 @@
 <script src="{{ url_for('static', filename='js/add_trip.js') }}"></script>
 <script src="{{ url_for('static', filename='js/travel_init.js') }}"></script>
 <script src="{{ url_for('static', filename='js/location_handler.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='autocomplete.css') }}">
+
+<script src="{{ url_for('static', filename='js/place_location_autocomplete.js') }}"></script>
+
 <script>
     MathJax = {
         tex: {
@@ -428,8 +433,6 @@
     console.log("All scripts loaded");
 </script>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/autocomplete.css') }}">
-<script src="{{ url_for('static', filename='js/place_location_autocomplete.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         console.log('DOM Content Loaded');
