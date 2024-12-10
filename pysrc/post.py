@@ -1,5 +1,5 @@
-from pydantic import BaseModel, HttpUrl, Field
-from typing import List, Optional, Union
+from pydantic import BaseModel, HttpUrl, Field, field_validator
+from typing import List, Optional, Union, Tuple
 from datetime import datetime
 import base64
 
@@ -59,6 +59,28 @@ class ReplyTo(BaseModel):
     url: HttpUrl
 
 
+class GeoLocation(BaseModel):
+    coordinates: Optional[Tuple[float, float]] = None  # (latitude, longitude)
+    location_id: Optional[int] = None  # geoname_id or similar
+    name: Optional[str] = None  # formatted place name
+    raw_location: Optional[str] = None  # original location string if needed
+
+    @field_validator("coordinates")
+    @classmethod
+    def validate_coordinates(cls, v):
+        if v is None:
+            return v
+        lat, lon = v
+        if not (-90 <= lat <= 90):
+            raise ValueError(f"Latitude must be between -90 and 90, got {lat}")
+        if not (-180 <= lon <= 180):
+            raise ValueError(f"Longitude must be between -180 and 180, got {lon}")
+        return v
+
+    class Config:
+        json_encoders = {Tuple: lambda v: f"{v[0]},{v[1]}" if v else None}
+
+
 class DraftPost(BaseModel):
     """Model for posts being created/edited before storage"""
 
@@ -78,9 +100,7 @@ class DraftPost(BaseModel):
     video: Optional[List[str]] = None
 
     # Location
-    location: Optional[str] = None
-    location_name: Optional[str] = None
-    location_id: Optional[int] = None
+    geo: Optional[GeoLocation] = None
 
     # Social/Webmention
     in_reply_to: Optional[List[Union[str, ReplyTo]]] = None
