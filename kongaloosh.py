@@ -791,11 +791,6 @@ def show_entries():
     )
 
 
-@app.route("/webfinger")
-def finger():
-    return jsonify(json.loads(open("webfinger.json", "r").read()))
-
-
 @app.route("/rss.xml")
 def show_rss():
     """The rss view: presents entries in rss form."""
@@ -1339,7 +1334,6 @@ def profile(year, month, day, name):
 @app.route("/t/<category>")
 def tag_search(category):
     """Get all entries with a specific tag"""
-
     if request.headers.get("Accept") == "application/json":
         entries = []
         query = """SELECT entries.location
@@ -1370,8 +1364,7 @@ def tag_search(category):
 
 @app.route("/t/")
 def all_tags():
-    """Get all entries with a specific tag"""
-
+    "Get all tags and order them in descending quantity."
     cur = g.db.execute(
         """
         select category, count(category) as count
@@ -1380,7 +1373,6 @@ def all_tags():
         order by count(category) desc
         """
     )
-
     tags = cur.fetchall()
 
     if request.headers.get("Accept") == "application/json":
@@ -1524,7 +1516,7 @@ def handle_micropub():
 @app.route("/list_mentions")
 def print_mentions():
     r = requests.get(
-        "https://webmention.io/api/mentions?target=https://kongaloosh.com/",
+        f"https://webmention.io/api/mentions?target={DOMAIN_NAME}",
         headers={"Accept": "application/json"},
     ).json()["links"]
     return render_template("mentions.html", mentions=r)
@@ -1593,6 +1585,7 @@ def notifier():
     return "method not allowed", 501
 
 
+# TODO: verify this still works
 @app.route("/inbox/<name>", methods=["GET"])
 def show_inbox_item(name):
     entry = json.loads(open("inbox/" + name).read())
@@ -1617,10 +1610,9 @@ def show_inbox_item(name):
 def show_drafts():
     if not session.get("logged_in"):
         abort(401)
-    drafts_location = "drafts/"
     entries = [
-        file_parser_json(os.path.join(drafts_location, f))
-        for f in os.listdir(drafts_location)
+        file_parser_json(os.path.join(DRAFT_STORAGE, f))
+        for f in os.listdir(DRAFT_STORAGE)
         if f.endswith(".json")
     ]
     return render_template("drafts_list.html", entries=entries)
@@ -1632,14 +1624,16 @@ def show_draft(name):
     if not session.get("logged_in"):
         abort(401)
     if request.method == "GET":
-        draft_location = f"drafts/{name}"
+        draft_location = os.path.join(DRAFT_STORAGE, name)
         entry = get_post_for_editing(draft_location)
         return render_template("edit_entry.html", entry=entry, type="draft")
 
     if request.method == "POST":
-        draft_file = f"drafts/{name}.json"
+        draft_file = os.path.join(DRAFT_STORAGE, f"{name}.json")
         if os.path.exists(draft_file):
             existing_data = file_parser_json(draft_file)
+        else:
+            abort(404)
 
         form_data = post_from_request(request)
 
@@ -1654,14 +1648,13 @@ def show_draft(name):
             location = create_json_entry(post, g=g.db, draft=False)
             os.remove(draft_file)
             return redirect(location)
+    abort(405)
 
-    return "", 405
 
-
+# TODO not sure if these specs still work
 @app.route("/ap_subscribe", methods=["POST"])
 def subscribe_request():
     if request.method == "POST":
-        #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
         social_name = request.form["handle"]
         user_name, social_domain = social_name.split("@")
         response = requests.get(
@@ -1684,7 +1677,6 @@ def follow_request():
     if not session.get("logged_in"):  # check permissions before deleting
         abort(401)
     if request.method == "POST":
-        #  curl -g https://mastodon.social/.well-known/webfinger/?resource=acct:kongaloosh@mastodon.social
         social_name = request.form["handle"]
         user_name, social_domain = social_name.split("@")
         url = "https://" + social_domain + "/@" + user_name
@@ -1693,7 +1685,7 @@ def follow_request():
         with open("followers.json", "w") as jsonf:
             jsonf.write(json.dumps(data))
 
-        r = requests.post(
+        requests.post(
             "https://fed.brid.gy/webmention",
             data={
                 "target": "https//fed.brigy.gy",
@@ -1708,6 +1700,9 @@ def notification():
     return jsonify({"message": "This feature is not implemented yet"}), 501
 
 
+# TODO: we're using brid.gy now, we can probably remove these
+
+
 @app.route("/followers", methods=["GET"])
 def follower_list():
     followers = json.load(open("followers.json"))
@@ -1719,7 +1714,6 @@ def follower_individual(account):
     followers = json.load(open("followers.json"))
     for actor in followers["following"]:
         if actor["actor"] == account:
-            # account =  followers['following'][int(account)]
             return render_template("follower.html", follower=actor)
 
     return redirect("/404")
@@ -1728,19 +1722,6 @@ def follower_individual(account):
 @app.route("/already_made", methods=["GET"])
 def post_already_exists():
     return render_template("already_exists.html")
-
-
-@app.route("/verify_url", methods=["POST"])
-def verify_url():
-    url = request.json.get("url")
-    if not url:
-        return jsonify({"valid": False, "error": "No URL provided"})
-
-    try:
-        response = requests.head(url, allow_redirects=True, timeout=5)
-        return jsonify({"valid": response.status_code < 400})
-    except requests.RequestException as e:
-        return jsonify({"valid": False, "error": str(e)})
 
 
 @app.after_request  # This decorator runs this function after every request
@@ -1799,45 +1780,6 @@ def add_security_headers(response: Union[Response, str]) -> Response:
 
 # Apply headers to all responses
 app.after_request(add_security_headers)
-
-
-@app.route("/delete_media", methods=["POST"])
-@require_auth
-def delete_media():
-    """Delete a media file from the server."""
-    if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 400
-
-    try:
-        assert request.json
-        media_path = request.json.get("media_path")
-        if not media_path:
-            return jsonify({"error": "No media path provided"}), 400
-
-        # Check if file exists in either permanent or bulk upload directory
-        file_path = None
-        if os.path.isfile(os.path.join(os.getcwd(), media_path)):
-            file_path = os.path.join(os.getcwd(), media_path)
-        elif os.path.isfile(
-            os.path.join(PERMANENT_PHOTOS_DIR, os.path.basename(media_path))
-        ):
-            file_path = os.path.join(PERMANENT_PHOTOS_DIR, os.path.basename(media_path))
-        elif os.path.isfile(
-            os.path.join(BULK_UPLOAD_DIR, os.path.basename(media_path))
-        ):
-            file_path = os.path.join(BULK_UPLOAD_DIR, os.path.basename(media_path))
-
-        if not file_path:
-            return jsonify({"error": "File not found"}), 404
-
-        # Delete the file
-        os.remove(file_path)
-        return jsonify({"message": "Media deleted successfully"}), 200
-
-    except Exception as e:
-        app.logger.error(f"Error deleting media: {str(e)}")
-        return jsonify({"error": "Failed to delete media"}), 500
-
 
 if __name__ == "__main__":
     app.run(debug=True)
