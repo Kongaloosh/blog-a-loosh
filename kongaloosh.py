@@ -1760,7 +1760,7 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "https://nominatim.openstreetmap.org "
         "https://brid.gy https://fed.brid.gy; "
         # img-src: Controls image sources
-        "img-src 'self' data: blob: https: https://www.google-analytics.com; "
+        "img-src 'self' data: blob: https: https://www.google-analytics.com https://brid.gy/ https://fed.brid.gy/; "
         # media-src: Controls video/audio
         "media-src 'self' blob: data:; "
     )
