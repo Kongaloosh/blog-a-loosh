@@ -234,34 +234,33 @@
                     <data class="p-rsvp" value="yes"></data>
                 </div>
                 {% endif %}
-
-                <div class="flex-row p-2 entry-footer clearfix align-items-end"> <!-- Footer -->
-                    <hr>
-                    <div class="row post-meta">
-                        <div class="col-md-8 pull-left">
-                            <p>
-                                <a class="u-url" href="{{entry.url}}">
-                                    <time class="dt-published">{{entry.published}}</time>
-                                </a>
-                                {% if entry.geo and entry.geo.name %} <!-- If there's a location -->
-                                in
-                                <a class="p-location" style="overflow:scroll;"> {{entry.geo.name | safe }} </a>
-                                {% endif %}
-                                By <a rel="author" class="p-author" href="http://kongaloosh.com">Alex Kearney</a>
-                            </p>
-                        </div> <!-- END POST DETAILS -->
-                        <div class="col-md-4 pull-right text-right">
-                            {% if entry.category %}
-                            <i class="fa fa-tags"></i>
-                            {% for c in entry.category %}
-                            <a class="p-category" href="/t/{{c}}">{{c}}</a>
-                            {% endfor %}
-                            {% endif %}
-                            <a class="u-url" href="{{entry.url}}"></a>
-                        </div> <!-- END PERMALINK -->
-                    </div> <!-- END AUTHORSHIP -->
-                </div><!-- END ENTRY DETAILS -->
             </div>
+            <div class="flex-row p-2 entry-footer clearfix align-items-end"> <!-- Footer -->
+                <hr>
+                <div class="row post-meta">
+                    <div class="col-md-8 pull-left">
+                        <p>
+                            <a class="u-url" href="{{entry.url}}">
+                                <time class="dt-published">{{entry.published}}</time>
+                            </a>
+                            {% if entry.geo and entry.geo.name %} <!-- If there's a location -->
+                            in
+                            <a class="p-location" style="overflow:scroll;"> {{entry.geo.name | safe }} </a>
+                            {% endif %}
+                            By <a rel="author" class="p-author" href="http://kongaloosh.com">Alex Kearney</a>
+                        </p>
+                    </div> <!-- END POST DETAILS -->
+                    <div class="col-md-4 pull-right text-right">
+                        {% if entry.category %}
+                        <i class="fa fa-tags"></i>
+                        {% for c in entry.category %}
+                        <a class="p-category" href="/t/{{c}}">{{c}}</a>
+                        {% endfor %}
+                        {% endif %}
+                        <a class="u-url" href="{{entry.url}}"></a>
+                    </div> <!-- END PERMALINK -->
+                </div> <!-- END AUTHORSHIP -->
+            </div><!-- END ENTRY DETAILS -->
         </div>
 
     </article>
