@@ -26,35 +26,6 @@ class Event(BaseModel):
     url: Optional[HttpUrl] = None
 
 
-class Trip(BaseModel):
-    location: str
-    location_name: Optional[str] = None
-    date: Optional[datetime] = None  # Single date per trip
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
-
-    def model_dump(self, **kwargs):
-        data = super().model_dump(**kwargs)
-        if kwargs.get("mode") == "json":
-            if self.date:
-                data["date"] = self.date.isoformat()
-        return data
-
-
-class Travel(BaseModel):
-    map_data: Optional[bytes] = None
-    map_path: Optional[str] = None
-    map_url: Optional[str] = None
-    trips: List[Trip] = Field(default_factory=list)
-
-    def model_dump(self, **kwargs):
-        data = super().model_dump(**kwargs)
-        if self.map_data:
-            data["map_data"] = base64.b64encode(self.map_data).decode("utf-8")
-        return data
-
-
 class ReplyTo(BaseModel):
     url: HttpUrl
 
@@ -79,6 +50,34 @@ class GeoLocation(BaseModel):
 
     class Config:
         json_encoders = {Tuple: lambda v: f"{v[0]},{v[1]}" if v else None}
+
+
+class Trip(BaseModel):
+    location: GeoLocation
+    date: Optional[datetime] = None  # Single date per trip
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+    def model_dump(self, **kwargs):
+        data = super().model_dump(**kwargs)
+        if kwargs.get("mode") == "json":
+            if self.date:
+                data["date"] = self.date.isoformat()
+        return data
+
+
+class Travel(BaseModel):
+    map_data: Optional[bytes] = None
+    map_path: Optional[str] = None
+    map_url: Optional[str] = None
+    trips: List[Trip] = Field(default_factory=list)
+
+    def model_dump(self, **kwargs):
+        data = super().model_dump(**kwargs)
+        if self.map_data:
+            data["map_data"] = base64.b64encode(self.map_data).decode("utf-8")
+        return data
 
 
 class DraftPost(BaseModel):
