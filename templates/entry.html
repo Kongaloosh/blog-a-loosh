@@ -207,8 +207,7 @@
                 <div class="flex-row p-2 text-center">
                     <p>
                         {%for destination in entry.travel.trips%}
-                        {{destination}}
-                        {{destination.name}}
+                        {{destination.location.name}}
                         {% if not loop.last %} &rarr;{% endif %}
                         {% endfor %}
                     </p>

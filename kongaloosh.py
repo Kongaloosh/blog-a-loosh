@@ -516,6 +516,11 @@ def handle_travel_data(request: Request) -> Travel:
     location = request.form.getlist("location[]")
     date = request.form.getlist("date[]")
 
+    def parse_geo(geo_i: str, location_i: str) -> GeoLocation:
+        geo_i = geo_i[len("geo:") :]
+        lat, lon = [float(x) for x in geo_i.split(",")]
+        return GeoLocation(coordinates=(lat, lon), name=location_i)
+
     # Validate that we have dates for all locations
     missing_dates = []
     for i, (geo_i, location_i, date_i) in enumerate(zip(geo, location, date), 1):
@@ -529,12 +534,22 @@ def handle_travel_data(request: Request) -> Travel:
 
     if len(geo) == len(location) == len(date):
         trips: list[Trip] = [
-            Trip(location=geo_i, location_name=location_i, date=parse(date_i))
+            Trip(
+                location=parse_geo(geo_i, location_i),
+                date=parse(date_i),
+            )
             for geo_i, location_i, date_i in zip(geo, location, date)
         ]
 
+        def marker_from_trip(trip: Trip) -> str:
+            assert trip.location.coordinates
+            x, y = trip.location.coordinates
+            return f"{x},{y}"
+
         if trips:
-            markers = "|".join([trip.location[len("geo:") :] for trip in trips])
+            markers = "|".join(
+                marker_from_trip(trip) for trip in trips if trip.location.coordinates
+            )
             map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"  # noqa: E501
 
             return Travel(
@@ -689,11 +704,19 @@ def add_entry(creation_request: Request, draft: bool = False) -> str:
 
     # Handle webmentions if needed
     syndicate_from_form(creation_request, post)
+
     requests.post(
         "https://fed.brid.gy/webmention",
         data={
             "source": "https://" + DOMAIN_NAME + data_dict["url"],
             "target": "https://fed.brid.gy",
+        },
+    )
+    requests.post(
+        "https://brid.gy/webmention",
+        data={
+            "source": "https://" + DOMAIN_NAME + data_dict["url"],
+            "target": "https://fed.brid.gy/publish/bluesky",
         },
     )
     return location
@@ -910,19 +933,24 @@ def map():
         """
     )
 
+    def coords_to_str(coords: tuple[float, float]) -> str:
+        x, y = coords
+        return f"{x},{y}"
+
     for (row,) in cur.fetchall():  # iterate over the results
         # if the file fetched exists, append the parsed details
         if os.path.exists(row + ".json"):
             entry = file_parser_json(row + ".json")
-            if entry.location:
-                geo_coords.append(entry.location[len("geo:") :].split(";")[0])
+            if entry.geo and entry.geo.coordinates:
+                geo_coords.append(coords_to_str(entry.geo.coordinates))
 
             if entry.travel:
                 trips = entry.travel.trips
-                if len(trips) > 0:  # if there's more than one location, make the map
-                    geo_coords += [
-                        destination.location[len("geo:") :] for destination in trips
-                    ]
+                geo_coords += [
+                    coords_to_str(destination.location.coordinates)
+                    for destination in trips
+                    if destination.location.coordinates
+                ]
 
     return render_template("map.html", geo_coords=geo_coords, key=GOOGLE_MAPS_KEY)
 
@@ -1747,7 +1775,8 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "http://www.google-analytics.com "
         "https://www.googletagmanager.com "
         "https://nominatim.openstreetmap.org "
-        "https://brid.gy https://fed.brid.gy; "
+        "https://brid.gy https://fed.brid.gy "
+        "https://maps.googleapis.com; "
         # style-src: Controls CSS sources
         "style-src 'self' 'unsafe-inline' "
         "https://maxcdn.bootstrapcdn.com "
@@ -1758,9 +1787,10 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         # connect-src: Controls AJAX, WebSocket, etc
         "connect-src 'self' https://webmention.io https://www.google-analytics.com "
         "https://nominatim.openstreetmap.org "
-        "https://brid.gy https://fed.brid.gy; "
+        "https://brid.gy https://fed.brid.gy "
+        "https://maps.googleapis.com; "
         # img-src: Controls image sources
-        "img-src 'self' data: blob: https: https://www.google-analytics.com https://brid.gy/ https://fed.brid.gy/; "
+        "img-src 'self' data: blob: https: https://www.google-analytics.com https://brid.gy/"
         # media-src: Controls video/audio
         "media-src 'self' blob: data:; "
     )
