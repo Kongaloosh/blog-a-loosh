@@ -172,22 +172,12 @@
                 </div>
                 {% endif%}
                 {% if entry.video %}
-                <div class="flex-row justify-content-center">
-                    {% if entry.video is iterable and entry.video is not string %}
+                <div class="d-flex justify-content-center flex-wrap">
                     {% for video in entry.video %}
-                    <div class="u-video">
-                        <video controls="controls" src="/{{video}}" class="h-x-video">
-                            <a class="p-name u-url" href="/{{video}}">Video</a>
-                        </video>
+                    <div class="media-preview video-preview u-videos m-2">
+                        <video controls src="/{{video}}" class="img-fluid rounded shadow"></video>
                     </div>
                     {% endfor %}
-                    {% else %}
-                    <div class="u-video">
-                        <video controls="controls" src="/{{entry.video}}" class="h-x-video">
-                            <a class="p-name u-url" href="/{{entry.video}}">Video</a>
-                        </video>
-                    </div>
-                    {% endif %}
                 </div>
                 {% endif %}
                 {% if entry.photo and entry.photo is iterable and entry.photo is not string %}

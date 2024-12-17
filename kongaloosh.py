@@ -1752,14 +1752,12 @@ def post_already_exists():
     return render_template("already_exists.html")
 
 
-@app.after_request  # This decorator runs this function after every request
+@app.after_request
 def add_security_headers(response: Union[Response, str]) -> Response:
     """Add security headers to the response"""
-    # Convert string responses to Response objects if needed
     if not isinstance(response, Response):
         response = Response(response)
 
-    # Content Security Policy (CSP) - The main security control
     response.headers["Content-Security-Policy"] = (
         # default-src: Fallback for other resource types
         "default-src 'self'; "
@@ -1790,7 +1788,7 @@ def add_security_headers(response: Union[Response, str]) -> Response:
         "https://brid.gy https://fed.brid.gy "
         "https://maps.googleapis.com; "
         # img-src: Controls image sources
-        "img-src 'self' data: blob: https: https://www.google-analytics.com https://brid.gy/"
+        "img-src 'self' data: blob: https: https://www.google-analytics.com https://brid.gy/; "
         # media-src: Controls video/audio
         "media-src 'self' blob: data:; "
     )
