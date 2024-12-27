@@ -183,16 +183,18 @@
                 {% if entry.photo and entry.photo is iterable and entry.photo is not string %}
                 <div class="row d-flex justify-content-center imagetiles">
                     {% for photo in entry.photo %}
-                    <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6">
+                    <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                         <img class="u-photo img-fluid img-responsive center-block img-thumbnail img-rounded"
                             style="image-orientation: from-image; max-height:600px" src="/{{photo}}">
                     </div>
                     {% endfor %}
                 </div>
                 {% endif %}
+		<div class="row d-flex" style="padding-left:25px">
                 {% if entry.content %}
                 {{entry.content | safe}}
                 {% endif %}
+		</div>
                 {% if entry.travel %}
                 <div class="flex-row p-2 text-center">
                     <p>
