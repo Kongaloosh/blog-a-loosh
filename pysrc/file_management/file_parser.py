@@ -398,40 +398,21 @@ def create_json_entry(
 
             data.photo = file_list
         if data.video:
-            extension = ".mp4"
             video_list = []
             for video_i in data.video:
-                app.logger.info(f"Processing video: {video_i}")
-                # if the video is already in the blog storage directory
-                # we don't need to move it. It's already where we want it.
-                if isinstance(video_i, str) and video_i.startswith(BLOG_STORAGE):
-                    video_list.append(video_i)
-                # if the video is in the bulk upload directory
-                # we need to move it to the blog storage directory.
-                elif isinstance(video_i, str) and video_i.startswith(BULK_UPLOAD_DIR):
-                    app.logger.info(f"Video is in bulk upload directory: {video_i}")
-                    i = 0
-                    while os.path.isfile(relative_post_path + "-" + str(i) + extension):
-                        i += 1
-
-                    from_location = video_i
-                    new_name = data.slug + "-" + str(i) + extension
-                    final_location = os.path.join(BLOG_STORAGE, date_location, new_name)
-
-                    # Convert video to MP4 if needed
-                    if not video_i.lower().endswith(".mp4"):
-                        converted_path = convert_video_to_mp4(
-                            from_location, final_location
+                if isinstance(video_i, str):
+                    if video_i.startswith(BLOG_STORAGE):
+                        video_list.append(video_i)
+                    elif video_i.startswith(BULK_UPLOAD_DIR):
+                        new_name = f"{data.slug}-{len(video_list)}.mp4"
+                        final_location = os.path.join(
+                            BLOG_STORAGE, date_location, new_name
                         )
-                        if converted_path:
-                            # Include BLOG_STORAGE in path
-                            video_list.append(
-                                os.path.join(BLOG_STORAGE, date_location, new_name)
-                            )
-                    else:
-                        # If already MP4, just copy
-                        shutil.copy2(from_location, final_location)
-                        # Include BLOG_STORAGE in path
+
+                        # Start conversion but don't wait for it
+                        convert_video_to_mp4(video_i, final_location)
+
+                        # Add the expected path to the list
                         video_list.append(
                             os.path.join(BLOG_STORAGE, date_location, new_name)
                         )
