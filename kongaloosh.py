@@ -1274,8 +1274,9 @@ def recent_uploads():
         # Define allowed image extensions
         IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
 
+        # Use config values to construct web paths
         file_list = [
-            os.path.join(BULK_UPLOAD_DIR, file)
+            f"{BULK_UPLOAD_DIR}/{file}"  # Use configured path instead of hardcoded
             for file in os.listdir(directory)
             if os.path.splitext(file.lower())[1] in IMAGE_EXTENSIONS
         ]
@@ -1286,10 +1287,10 @@ def recent_uploads():
             row = "".join(
                 [
                     f"""
-                <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
-                    <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:200px; width:auto;">
-                </a>
-                """
+                    <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
+                        <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:200px; width:auto;">
+                    </a>
+                    """
                     for j, image in enumerate(row_images, start=i)
                 ]
             )
