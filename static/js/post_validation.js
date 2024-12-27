@@ -21,18 +21,18 @@ function validatePost() {
     }
 
     // Photo Validation
-    if (photos && photos.length > 0) {
-        const allowedTypes = [
-            'image/jpeg', 'image/png', 'image/gif', 'image/webp', // Image types
-            'video/mp4', 'video/quicktime', 'video/x-m4v', 'video/x-msvideo', // Video types
-            'video/x-ms-wmv', 'video/x-flv', 'video/x-matroska'
-        ];
-        for (const photo of photos) {
-            if (!allowedTypes.includes(photo.type)) {
-                errors.push(`Invalid file type for ${photo.name}. Allowed types: JPEG, PNG, GIF, WEBP, MP4, MOV, M4V, AVI, WMV, FLV, MKV`);
-            }
-        }
-    }
+    //if (photos && photos.length > 0) {
+    //   const allowedTypes = [
+    //        'image/jpeg', 'image/png', 'image/gif', 'image/webp', // Image types
+    //        'video/mp4', 'video/quicktime', 'video/x-m4v', 'video/x-msvideo', // Video types
+    //        'video/x-ms-wmv', 'video/x-flv', 'video/x-matroska'
+    //    ];
+    //    for (const photo of photos) {
+    //        if (!allowedTypes.includes(photo.type)) {
+    //            errors.push(`Invalid file type for ${photo.name}. Allowed types: JPEG, PNG, GIF, WEBP, MP4, MOV, M4V, AVI, WMV, FLV, MKV`);
+    //        }
+    //    }
+    //}
 
     // Tags Validation
     if (tags) {
