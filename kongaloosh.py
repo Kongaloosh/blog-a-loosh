@@ -73,6 +73,7 @@ BLOG_STORAGE = config.get("PhotoLocations", "BlogStorage")
 BULK_UPLOAD_DIR = config.get("PhotoLocations", "BulkUploadLocation")
 PERMANENT_PHOTOS_DIR = config.get("PhotoLocations", "PermStorage")
 DRAFT_STORAGE = config.get("PhotoLocations", "DraftsStorage")
+TEMP_LOCATION = config.get("PhotoLocations", "TempLocation")
 
 # create our little application :)
 app = Flask(__name__)
@@ -101,8 +102,8 @@ photos = Blueprint(
 temp_photos = Blueprint(
     "temp_photos_data_storage",
     __name__,
-    static_url_path=f"/{BULK_UPLOAD_DIR}",
-    static_folder=os.path.join(os.getcwd(), BULK_UPLOAD_DIR),
+    static_url_path=f"/{TEMP_LOCATION}",
+    static_folder=BULK_UPLOAD_DIR,
 )
 
 high_res_storage = Blueprint(
@@ -716,7 +717,7 @@ def add_entry(creation_request: Request, draft: bool = False) -> str:
         "https://brid.gy/webmention",
         data={
             "source": "https://" + DOMAIN_NAME + data_dict["url"],
-            "target": "https://fed.brid.gy/publish/bluesky",
+            "target": "https://brid.gy/publish/bluesky",
         },
     )
     return location
@@ -1236,14 +1237,15 @@ def md_to_html():
 @app.route("/geonames/<query>", methods=["GET"])
 def geonames_wrapper(query):
     if request.method == "GET":
-        print(f"Received geonames search request for: {query}")
+        # print(f"Received geonames search request for: {query}")
+        app.logger.error(query)
         try:
             url = f"http://api.geonames.org/searchJSON?q={query}&maxRows=10&username={GEONAMES}"
-            print(f"Calling geonames API: {url}")
+            app.logger.error(f"Calling geonames API: {url}")
             resp = requests.get(url)
-            print(f"Geonames response status: {resp.status_code}")
+            app.logger.error(f"Geonames response status: {resp.status_code}")
             results = resp.json()
-            print(f"Geonames raw response: {results}")
+            app.logger.error(f"Geonames raw response: {results}")
 
             if "geonames" in results:
                 results["geonames"] = [
@@ -1254,7 +1256,7 @@ def geonames_wrapper(query):
                     }
                     for place in results["geonames"]
                 ]
-                print(f"Transformed response: {results}")
+                app.logger.error(f"Transformed response: {results}")
 
             response = jsonify(results)
             return response
@@ -1276,7 +1278,7 @@ def recent_uploads():
 
         # Use config values to construct web paths
         file_list = [
-            f"{BULK_UPLOAD_DIR}/{file}"  # Use configured path instead of hardcoded
+            f"/{TEMP_LOCATION}/{file}"  # Use configured path instead of hardcoded
             for file in os.listdir(directory)
             if os.path.splitext(file.lower())[1] in IMAGE_EXTENSIONS
         ]
@@ -1288,7 +1290,7 @@ def recent_uploads():
                 [
                     f"""
                     <a class="p-2 text-center" onclick="insertAtCaret('text_input','{insert_pattern % image}', 'img_{j}');return false;">
-                        <img src="/{image}" id="img_{j}" class="img-fluid" style="max-height:200px; width:auto;">
+                        <img src="{image}" id="img_{j}" class="img-fluid" style="max-height:200px; width:auto;">
                     </a>
                     """
                     for j, image in enumerate(row_images, start=i)
