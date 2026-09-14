@@ -6,6 +6,7 @@ import json
 from typing import List, Optional, Union, Tuple
 import markdown
 import os
+import shutil
 from pysrc.file_management.file_parser import run
 from pydantic import ValidationError
 import requests
@@ -30,11 +31,13 @@ from flask import (
     Blueprint,
     Response,
 )
+from flask import has_app_context
 from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost, GeoLocation
+from pysrc import video_converter
 from pysrc.python_webmention.mentioner import get_mentions
 from slugify import slugify
 from pysrc.file_management.file_parser import (
@@ -54,6 +57,24 @@ from pydantic import HttpUrl, AnyHttpUrl
 
 jinja_env = Environment()
 jinja_env.globals.update(now=datetime.now)
+
+# (connect, read) timeout for every outbound HTTP call. Without this, requests
+# waits forever: a hung remote pins a worker thread and leaks its socket, which
+# is what exhausted the workers' file descriptors and froze the site.
+HTTP_TIMEOUT = (5, 15)
+
+# Chunk size used when streaming uploaded video to disk.
+VIDEO_COPY_CHUNK = 1024 * 1024
+
+# Incoming ActivityPub/webmention payloads. The directory is not in version
+# control, so it can be absent on a fresh checkout or after a restore; every
+# access creates it rather than 500ing the route.
+INBOX_LOCATION = "inbox"
+
+
+def inbox_dir() -> str:
+    os.makedirs(INBOX_LOCATION, exist_ok=True)
+    return INBOX_LOCATION
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -80,6 +101,31 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.config["STATIC_FOLDER"] = os.getcwd()
 app.jinja_env.globals.update(now=datetime.now)
+
+
+def video_info(path: str) -> dict:
+    """Describe a post's video for the template.
+
+    Conversion happens out of process, so a freshly published post can name a
+    video whose file has not landed yet. Templates use `ready` to show a
+    placeholder instead of a broken player, and `poster` so the browser can
+    show a still without downloading the video.
+    """
+    relative = str(path).lstrip("/")
+    poster_rel = video_converter.poster_path_for(relative)
+    meta = video_converter.read_meta(relative) or {}
+    return {
+        "url": "/" + relative,
+        "ready": video_converter.video_is_ready(relative),
+        "poster": "/" + poster_rel if os.path.exists(poster_rel) else None,
+        # Intrinsic size lets the browser reserve the right box before the
+        # video loads, instead of reflowing the post around it.
+        "width": meta.get("width"),
+        "height": meta.get("height"),
+    }
+
+
+app.jinja_env.globals.update(video_info=video_info)
 
 # Initialize CSRF protection - move this here, right after app creation
 csrf = CSRFProtect(app)
@@ -165,6 +211,11 @@ def require_auth(f):
 @app.teardown_request
 def teardown_request(exception):
     """Close the database connection after each request."""
+    # Touching g without an application context raises RuntimeError, which
+    # getattr's default does not catch. Teardown can run after the context
+    # has gone, and an error here masks the real result of the request.
+    if not has_app_context():
+        return
     db = getattr(g, "db", None)
     if db is not None:
         db.close()
@@ -220,7 +271,7 @@ def resolve_placename(location: str) -> PlaceInfo:
         long = long.split(";")[0]  # Remove any additional parameters after semicolon
 
         url = f"http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat={lat}&lng={long}&username={GEONAMES}"
-        geo_results = requests.get(url).json()
+        geo_results = requests.get(url, timeout=HTTP_TIMEOUT).json()
 
         if not geo_results.get("geonames"):
             raise ValueError("No geonames api key found")
@@ -342,19 +393,15 @@ def handle_uploaded_files(request: Request) -> Tuple[List[str], List[str]]:
                     (".mp4", ".mov", ".qt", ".m4v", ".avi", ".wmv", ".flv", ".mkv")
                 ):
                     try:
-                        file_size_before = len(file.read())
+                        # Stream to disk in 1MB chunks. Reading the file into
+                        # memory (twice, as this used to) needs as much RAM as
+                        # the upload is large, which a large video will not fit.
                         file.stream.seek(0)
-                        app.logger.info(
-                            f"Video file size before save: {file_size_before}"
-                        )
-
                         with open(path, "wb") as f:
-                            content = file.read()
-                            f.write(content)
-                            app.logger.info(f"Wrote {len(content)} bytes to {path}")
+                            shutil.copyfileobj(file.stream, f, VIDEO_COPY_CHUNK)
 
                         final_size = os.path.getsize(path)
-                        app.logger.info(f"Final file size: {final_size}")
+                        app.logger.info(f"Wrote {final_size} bytes to {path}")
 
                         if final_size == 0:
                             app.logger.error(
@@ -434,6 +481,7 @@ def post_from_request(
             "event": handle_event_data(request),
         }
 
+        # If there's an existing post, make sure vital information is preserved.
         if existing_post:
             # Preserve existing data
             post_data.update(
@@ -451,6 +499,7 @@ def post_from_request(
                 )
 
             return type(existing_post)(**post_data)
+        # if we're simply saving; ready for saving
         elif "Save" in request.form:
             if publish_date := request.form.get("publish_date"):
                 date = parse(publish_date)
@@ -463,7 +512,7 @@ def post_from_request(
                         if form_data.title
                         else f"draft-{date.timestamp()}"
                     ),
-                    "url": f"/drafts/{date.strftime('%Y/%m/%d')}/untitled",
+                    "url": f"/drafts/{date.strftime('%Y/%m/%d')}/",
                     "published": date,
                     "u_uid": str(uuid.uuid4()),
                 }
@@ -477,8 +526,16 @@ def post_from_request(
 
             post_data.update(
                 {
-                    "slug": "",
-                    "url": "",
+                    "slug": (
+                        slugify(form_data.title)
+                        if form_data.title
+                        else (
+                            slugify(form_data.content[:10])
+                            if form_data.content
+                            else f"draft-{date.timestamp()}"
+                        )
+                    ),
+                    "url": f"/e/{date.strftime('%Y/%m/%d')}/",
                     "published": date,
                     "u_uid": str(uuid.uuid4()),
                 }
@@ -553,31 +610,49 @@ def handle_travel_data(request: Request) -> Travel:
             )
             map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"  # noqa: E501
 
-            return Travel(
-                trips=trips, map_data=requests.get(map_url).content, map_url=map_url
-            )
+            try:
+                map_data = requests.get(map_url, timeout=HTTP_TIMEOUT).content
+            except requests.RequestException as e:
+                # A slow or failing maps call must not take down the whole
+                # travel page; render it without the map instead.
+                app.logger.warning(f"Static map fetch failed: {e}")
+                map_data = None
+
+            # map_url is excluded from serialisation in the model: it embeds
+            # GOOGLE_MAPS_KEY and post JSON is served publicly.
+            return Travel(trips=trips, map_data=map_data, map_url=map_url)
 
     return Travel(trips=[])
 
 
 def handle_event_data(request: Request) -> Optional[Event]:
     """Process event data from the form request."""
-    app.logger.info(f"Event data: {request.form}")
-    event_name = request.form.get("event_name")
-    dt_start = request.form.get("dt_start")
-    dt_end = request.form.get("dt_end")
-    event_url = request.form.get("event_url")
-    app.logger.info(f"Event data: {event_name}, {dt_start}, {dt_end}, {event_url}")
-    if (
-        event_name and dt_start
-    ):  # Only create event if we have at least a name and start time
-        return Event(
-            event_name=event_name,
-            dt_start=parse(dt_start) if dt_start else None,
-            dt_end=parse(dt_end) if dt_end else None,
-            url=HttpUrl(event_url) if event_url else None,
-        )
-    return None
+    app.logger.debug(f"Event data: {request.form}")
+    # Form values arrive with whatever spacing was typed.
+    event_name = (request.form.get("event_name") or "").strip() or None
+    dt_start = (request.form.get("dt_start") or "").strip() or None
+    dt_end = (request.form.get("dt_end") or "").strip() or None
+    event_url = (request.form.get("event_url") or "").strip() or None
+
+    if not (event_name and dt_start):
+        # Needs at least a name and a start time to be an event at all.
+        return None
+
+    try:
+        start = parse(dt_start)
+        end = parse(dt_end) if dt_end else None
+    except (ValueError, OverflowError) as e:
+        # dateutil raises on anything it cannot read. A typo in a form field
+        # is not a server error.
+        app.logger.warning(f"Unparseable event date ({dt_start!r}/{dt_end!r}): {e}")
+        return None
+
+    return Event(
+        event_name=event_name,
+        dt_start=start,
+        dt_end=end,
+        url=HttpUrl(event_url) if event_url else None,
+    )
 
 
 def get_post_for_editing(file_path: str) -> Union[BlogPost, DraftPost]:
@@ -620,18 +695,22 @@ def syndicate_from_form(creation_request, data: BlogPost) -> None:
     # Check to see if the post is in reply to another post and send a mention
     if not data.in_reply_to:
         return
+    post_loc = "http://" + DOMAIN_NAME + data.url
     try:
-        post_loc = "http://" + DOMAIN_NAME + data.url
-        for reply in data.in_reply_to:
+        replies = list(data.in_reply_to)
+    except TypeError as e:
+        app.logger.error(f"Error mentioning {data.in_reply_to}. Error: {e}")
+        return
+    for reply in replies:
+        try:
             requests.post(
                 "https://fed.brid.gy/webmention",
-                data={
-                    "source": post_loc,
-                    "target": reply,
-                },
+                data={"source": post_loc, "target": reply},
+                timeout=HTTP_TIMEOUT,
             )
-    except TypeError as e:
-        app.logger.error("Error mentioning: {0}. Error: {1}".format(reply, e))
+        except requests.RequestException as e:
+            # One unreachable target should not stop the others, or fail the save.
+            app.logger.warning(f"Error mentioning: {reply}. Error: {e}")
 
 
 def update_entry(
@@ -644,7 +723,7 @@ def update_entry(
 ) -> str:
     """Update an existing blog post"""
     try:
-        file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        file_name = os.path.join(resolve_entry_dir(year, month, day), name)
         existing_entry = get_post_for_editing(file_name)
         updated_post = post_from_request(update_request, existing_entry)
 
@@ -706,21 +785,37 @@ def add_entry(creation_request: Request, draft: bool = False) -> str:
     # Handle webmentions if needed
     syndicate_from_form(creation_request, post)
 
-    requests.post(
-        "https://fed.brid.gy/webmention",
-        data={
-            "source": "https://" + DOMAIN_NAME + data_dict["url"],
-            "target": "https://fed.brid.gy",
-        },
-    )
-    requests.post(
-        "https://brid.gy/webmention",
-        data={
-            "source": "https://" + DOMAIN_NAME + data_dict["url"],
-            "target": "https://brid.gy/publish/bluesky",
-        },
-    )
+    # The entry is already on disk by this point, so a syndication failure must
+    # not propagate: it would surface as a 500 and make a successful save look
+    # like a failed one.
+    source = "https://" + DOMAIN_NAME + data_dict["url"] + data_dict["slug"]
+    announce_post(source, "https://fed.brid.gy")
+    announce_post(source, "https://brid.gy/publish/bluesky")
+
     return location
+
+
+def announce_post(source: str, target: str) -> None:
+    """Best-effort webmention send. Never raises: syndication is not worth
+    failing a save that already succeeded."""
+    endpoint = (
+        "https://fed.brid.gy/publish/webmention"
+        if target == "https://fed.brid.gy"
+        else "https://brid.gy/publish/webmention"
+    )
+    try:
+        response = requests.post(
+            endpoint,
+            data={"source": source, "target": target},
+            timeout=HTTP_TIMEOUT,
+        )
+    except requests.RequestException as e:
+        app.logger.warning(f"Webmention to {target} failed: {e}")
+        return
+    if response.status_code != 200:
+        app.logger.warning(
+            f"Webmention to {target} returned {response.status_code}: {response.text}"
+        )
 
 
 def action_stream_parser(filename):
@@ -902,12 +997,19 @@ def show_json():
     feed_items = []
 
     for entry in entries:
+        # file_parser_json returns a BlogPost, not a dict, so these are
+        # attributes rather than keys.
+        published = entry.published
         feed_item = {
-            "id": entry["url"],
-            "url": entry["url"],
-            "content_text": entry["summary"] if entry["summary"] else entry["content"],
-            "date_published": entry["published"],
-            "author": {"name": "Alex Kearney"},
+            "id": entry.url,
+            "url": entry.url,
+            "content_text": entry.summary or entry.content,
+            "date_published": (
+                published.isoformat()
+                if hasattr(published, "isoformat")
+                else str(published)
+            ),
+            "author": {"name": FULLNAME},
         }
         feed_items.append(feed_item)
 
@@ -1048,13 +1150,42 @@ def stream():
     return "", 501
 
 
+def canonical_date_path(year, month, day):
+    """Zero-padded YYYY/MM/DD, the canonical form for post paths and URLs.
+
+    Entries created before this was standardised live under unpadded
+    directories (data/2019/2/6/), and links to them exist in feeds, in
+    webmentions and on other people's sites, so both spellings have to keep
+    resolving even though only the padded one is canonical.
+    """
+    return f"{int(year):04d}/{int(month):02d}/{int(day):02d}"
+
+
+def resolve_entry_dir(year, month, day):
+    """Where this date's entries actually live, padded or not."""
+    padded = os.path.join(BLOG_STORAGE, canonical_date_path(year, month, day))
+    if os.path.isdir(padded):
+        return padded
+    legacy = os.path.join(BLOG_STORAGE, f"{int(year)}/{int(month)}/{int(day)}")
+    if os.path.isdir(legacy):
+        return legacy
+    return padded
+
+
+def is_canonical_date(year, month, day):
+    try:
+        return canonical_date_path(year, month, day) == f"{year}/{month}/{day}"
+    except (TypeError, ValueError):
+        return False
+
+
 @app.route("/delete_entry/e/<year>/<month>/<day>/<name>", methods=["POST", "GET"])
 def delete_entry(year, month, day, name):
     if not session.get("logged_in"):
         abort(401)
     else:
         app.logger.info(f"Deleting entry {year}/{month}/{day}/{name}")
-        totalpath = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        totalpath = os.path.join(resolve_entry_dir(year, month, day), name)
         if not os.path.isfile(totalpath + ".json"):
             return redirect("/")
         entry = file_parser_json(totalpath + ".json")
@@ -1238,14 +1369,13 @@ def md_to_html():
 def geonames_wrapper(query):
     if request.method == "GET":
         # print(f"Received geonames search request for: {query}")
-        app.logger.error(query)
+        app.logger.debug(f"Geonames search: {query}")
         try:
             url = f"http://api.geonames.org/searchJSON?q={query}&maxRows=10&username={GEONAMES}"
-            app.logger.error(f"Calling geonames API: {url}")
-            resp = requests.get(url)
-            app.logger.error(f"Geonames response status: {resp.status_code}")
+            # The URL carries GEONAMES as a query param, so it is never logged.
+            resp = requests.get(url, timeout=HTTP_TIMEOUT)
+            app.logger.debug(f"Geonames response status: {resp.status_code}")
             results = resp.json()
-            app.logger.error(f"Geonames raw response: {results}")
 
             if "geonames" in results:
                 results["geonames"] = [
@@ -1322,7 +1452,7 @@ def recent_uploads():
 def edit(year, month, day, name):
     """The form for user-submission"""
     if request.method == "GET":
-        file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        file_name = os.path.join(resolve_entry_dir(year, month, day), name)
         entry = get_post_for_editing(file_name)
         return render_template("edit_entry.html", type="edit", entry=entry)
     elif request.method == "POST":
@@ -1342,19 +1472,27 @@ def edit(year, month, day, name):
 def profile(year, month, day, name):
     """Get a specific article"""
 
-    file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+    file_name = os.path.join(resolve_entry_dir(year, month, day), name)
+
+    # Send unpadded links to the canonical URL so there is one address per
+    # entry, but only once the entry is known to exist.
+    if not is_canonical_date(year, month, day) and os.path.isfile(
+        file_name + ".json"
+    ):
+        return redirect(
+            f"/e/{canonical_date_path(year, month, day)}/{name}", code=301
+        )
+
     # if someone else is consuming
     if request.headers.get("Accept") == "application/json":
-        return jsonify(file_parser_json(file_name + ".json"))
+        return jsonify(file_parser_json(file_name + ".json").model_dump(mode="json"))
 
     entry = file_parser_json(file_name + ".json")
 
     mentions, likes, reposts = get_mentions(
         "https://"
         + DOMAIN_NAME
-        + "/e/{year}/{month}/{day}/{name}".format(
-            year=year, month=month, day=day, name=name
-        )
+        + f"/e/{canonical_date_path(year, month, day)}/{name}"
     )
 
     return render_template(
@@ -1546,18 +1684,22 @@ def handle_micropub():
 
 @app.route("/list_mentions")
 def print_mentions():
-    r = requests.get(
-        f"https://webmention.io/api/mentions?target={DOMAIN_NAME}",
-        headers={"Accept": "application/json"},
-    ).json()["links"]
+    try:
+        r = requests.get(
+            f"https://webmention.io/api/mentions?target={DOMAIN_NAME}",
+            headers={"Accept": "application/json"},
+            timeout=HTTP_TIMEOUT,
+        ).json()["links"]
+    except (requests.RequestException, ValueError, KeyError) as e:
+        app.logger.warning(f"Could not fetch mentions: {e}")
+        r = []
     return render_template("mentions.html", mentions=r)
 
 
 @app.route("/inbox", methods=["GET", "POST", "OPTIONS"])
 def handle_inbox():
     if request.method == "GET":
-        inbox_location = "inbox/"
-        entries = [f for f in os.listdir(inbox_location) if f.endswith(".json")]
+        entries = [f for f in os.listdir(inbox_dir()) if f.endswith(".json")]
         for_approval = [e for e in entries if e.startswith("approval_")]
         entries = [e for e in entries if not e.startswith("approval_")]
 
@@ -1587,15 +1729,18 @@ def handle_inbox():
         )
 
         if sender in ["https://rhiaro.co.uk", "https://rhiaro.co.uk/#me"]:
-            location = f"inbox/{slugify.slugify(str(datetime.now()))}.json"
+            location = os.path.join(
+                inbox_dir(), f"{slugify.slugify(str(datetime.now()))}.json"
+            )
             with open(location, "w") as f:
                 json.dump(data, f)
             return "", 201, {"Location": location}
         else:
             try:
                 if data and "context" in data:
-                    location = (
-                        f"inbox/approval_{slugify.slugify(str(datetime.now()))}.json"
+                    location = os.path.join(
+                        inbox_dir(),
+                        f"approval_{slugify.slugify(str(datetime.now()))}.json",
                     )
                     with open(location, "w") as f:
                         json.dump(data, f)
@@ -1619,7 +1764,17 @@ def notifier():
 # TODO: verify this still works
 @app.route("/inbox/<name>", methods=["GET"])
 def show_inbox_item(name):
-    entry = json.loads(open("inbox/" + name).read())
+    # name comes straight from the URL, so keep it to a bare filename inside
+    # the inbox rather than letting it steer the path.
+    safe_name = secure_filename(name)
+    path = os.path.join(inbox_dir(), safe_name)
+    if not safe_name or not os.path.isfile(path):
+        abort(404)
+    try:
+        with open(path, encoding="utf-8") as fh:
+            entry = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        abort(404)
 
     if request.headers.get("Accept") == "application/ld+json":
         return jsonify(entry), 200
@@ -1688,13 +1843,18 @@ def subscribe_request():
     if request.method == "POST":
         social_name = request.form["handle"]
         user_name, social_domain = social_name.split("@")
-        response = requests.get(
-            "https://"
-            + social_domain
-            + "/.well-known/webfinger/?resource=acct:"
-            + social_name
-        )
-        links = response.json()["links"]
+        try:
+            response = requests.get(
+                "https://"
+                + social_domain
+                + "/.well-known/webfinger/?resource=acct:"
+                + social_name,
+                timeout=HTTP_TIMEOUT,
+            )
+            links = response.json()["links"]
+        except (requests.RequestException, ValueError, KeyError) as e:
+            app.logger.warning(f"Webfinger lookup for {social_name} failed: {e}")
+            return "", 502
         for link in links:
             if link["rel"] == "http://ostatus.org/schema/1.0/subscribe":
                 return redirect(
@@ -1716,13 +1876,17 @@ def follow_request():
         with open("followers.json", "w") as jsonf:
             jsonf.write(json.dumps(data))
 
-        requests.post(
-            "https://fed.brid.gy/webmention",
-            data={
-                "target": "https//fed.brigy.gy",
-                "source": "https://kongaloosh.com/following/" + social_name,
-            },
-        )
+        try:
+            requests.post(
+                "https://fed.brid.gy/webmention",
+                data={
+                    "target": "https//fed.brigy.gy",
+                    "source": "https://kongaloosh.com/following/" + social_name,
+                },
+                timeout=HTTP_TIMEOUT,
+            )
+        except requests.RequestException as e:
+            app.logger.warning(f"Follow webmention failed: {e}")
     return redirect("/following/" + social_name)
 
 

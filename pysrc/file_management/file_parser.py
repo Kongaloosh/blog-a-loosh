@@ -17,7 +17,7 @@ from typing import Any, Union
 from pysrc.markdown_albums.markdown_album_extension import album_regexp
 from pysrc.database.queries import EntryQueries, CategoryQueries
 import shutil
-from pysrc.video_converter import convert_video_to_mp4
+from pysrc.video_converter import enqueue as enqueue_video
 from pysrc.post import GeoLocation
 
 ALBUM_GROUP_RE = re.compile(album_regexp)
@@ -257,7 +257,7 @@ def save_map_file(map_data: bytes, file_path: str) -> str:
 
 
 def create_post_from_data(
-    data: BlogPost | DraftPost | dict[str, Any]
+    data: BlogPost | DraftPost | dict[str, Any],
 ) -> Union[BlogPost, DraftPost]:
     # Convert Pydantic models to dict first
     if isinstance(data, (BlogPost, DraftPost)):
@@ -331,10 +331,6 @@ def create_post_from_data(
 def create_json_entry(
     data: Union[BlogPost, DraftPost], g, draft: bool = False, update: bool = False
 ) -> str:
-    """
-    creates a json entry based on recieved dictionary
-    """
-
     data = create_post_from_data(data)
 
     if draft:  # whether or not this is a draft changes the location saved
@@ -343,22 +339,19 @@ def create_json_entry(
 
     else:  # if it's not a draft we need to prep for saving
         assert isinstance(data, BlogPost)
-        date_location = "{year}/{month}/{day}/".format(
-            year=str(data.published.year),
-            month=str(data.published.month),
-            day=str(data.published.day),
-        )  # turn date into file-path
+        date_location = data.published.strftime("%Y/%m/%d/")
         directory_of_post = os.path.join(
             BLOG_STORAGE, date_location
         )  # where we'll save the new entry
         data.url = "/e/" + date_location + data.slug
         data.content = run(
             data.content,
-            target_dir=f"{data.published.year}/{data.published.month}/{data.published.day}/",
+            target_dir=date_location,
         )
 
     if not os.path.exists(directory_of_post):  # if the path doesn't exist, make it
-        os.makedirs(os.path.dirname(directory_of_post))
+        app.logger.info(f"Making directory: {directory_of_post}")
+        os.makedirs(directory_of_post, exist_ok=True)
 
     relative_post_path = os.path.join(directory_of_post, data.slug)
 
@@ -409,8 +402,10 @@ def create_json_entry(
                             BLOG_STORAGE, date_location, new_name
                         )
 
-                        # Start conversion but don't wait for it
-                        convert_video_to_mp4(video_i, final_location)
+                        # Queue the conversion for the out-of-process worker.
+                        # It writes the finished file into place atomically, so
+                        # this path is either absent or a complete video.
+                        enqueue_video(video_i, final_location)
 
                         # Add the expected path to the list
                         video_list.append(

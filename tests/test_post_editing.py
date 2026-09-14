@@ -100,7 +100,9 @@ def test_handle_invalid_dates(temp_post_file):
     result = get_post_for_editing(file_path)
 
     assert isinstance(result, BlogPost)
-    assert result.dt_start is None
+    # Event fields live under .event; an unparseable stray dt_start at the
+    # top level is dropped rather than raising.
+    assert result.event is None
 
 
 def test_file_not_found():

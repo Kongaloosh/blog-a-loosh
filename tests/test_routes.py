@@ -58,14 +58,18 @@ def mock_db(test_json_file):
 
 @pytest.fixture
 def client(mock_db):
-    """Create a test client with mocked db"""
+    """Create a test client with mocked db.
+
+    The application context wraps the client: leaving the client runs
+    teardown_request, which needs the context to still be alive.
+    """
     app.config["TESTING"] = True
     app.config["WTF_CSRF_ENABLED"] = False
     app.config["SECRET_KEY"] = "test_key"
 
     with patch("kongaloosh.connect_db", return_value=mock_db):
-        with app.test_client() as client:
-            with app.app_context():
+        with app.app_context():
+            with app.test_client() as client:
                 yield client
 
 
@@ -89,32 +93,43 @@ def test_unauthorized_post_returns_401(client):
     assert response.status_code == 401
 
 
-def test_draft_save_redirects_correctly(client):
-    """Test draft saving workflow"""
+def test_draft_save_redirects_correctly(client, tmp_path, monkeypatch):
+    """Saving from /add writes a draft file and lands on its edit page.
+
+    Drafts are files, not database rows - create_json_entry only inserts
+    into entries for published posts - so the old database assertion could
+    never hold. Storage is redirected to a temp dir so the test never
+    writes into the real drafts folder. The draft path doubles as the
+    redirect URL, so it has to stay relative: hence chdir rather than an
+    absolute path.
+    """
+    import kongaloosh
+    from pysrc.file_management import file_parser
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "drafts").mkdir()
+    monkeypatch.setattr(kongaloosh, "DRAFT_STORAGE", "drafts")
+    monkeypatch.setattr(file_parser, "DRAFTS_STORAGE", "drafts")
+
     with client.session_transaction() as sess:
         sess["logged_in"] = True
 
-    with app.app_context():
-        response = client.post(
-            "/add",
-            data={
-                "content": "Test draft content",
-                "title": "Test Draft",
-                "Save": "true",
-            },
-            follow_redirects=True,  # Follow redirects automatically
-        )
+    response = client.post(
+        "/add",
+        data={
+            "content": "Test draft content",
+            "title": "Test Draft",
+            "Save": "true",
+        },
+        follow_redirects=True,
+    )
 
-        # Check that the response contains expected content
-        assert response.status_code == 200
-        assert b"Test Draft" in response.data or b"Test draft content" in response.data
+    assert response.status_code == 200
+    assert b"Test Draft" in response.data or b"Test draft content" in response.data
 
-        # Optionally verify in database
-        db = mock_db
-        result = db.execute(
-            "SELECT * FROM entries WHERE slug LIKE ?", ("%test-draft%",)
-        ).fetchone()
-        assert result is not None
+    saved = list((tmp_path / "drafts").glob("*.json"))
+    assert len(saved) == 1, saved
+    assert "test-draft" in saved[0].name
 
 
 def test_atom_feed_content_type(client):

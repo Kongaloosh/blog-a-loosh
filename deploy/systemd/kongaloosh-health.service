@@ -1,0 +1,7 @@
+[Unit]
+Description=Restart kongaloosh if it stops answering requests
+After=kongaloosh.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/deploy/kongaloosh/scripts/kongaloosh_health.sh

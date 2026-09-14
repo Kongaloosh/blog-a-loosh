@@ -70,7 +70,9 @@ class Trip(BaseModel):
 class Travel(BaseModel):
     map_data: Optional[bytes] = None
     map_path: Optional[str] = None
-    map_url: Optional[str] = None
+    # Excluded from serialisation: the URL embeds GOOGLE_MAPS_KEY, and this
+    # model is written to post JSON that is served publicly.
+    map_url: Optional[str] = Field(default=None, exclude=True)
     trips: List[Trip] = Field(default_factory=list)
 
     def model_dump(self, **kwargs):
