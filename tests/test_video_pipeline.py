@@ -306,3 +306,15 @@ def test_entry_template_omits_player_until_video_is_ready(tmp_path, monkeypatch)
     assert 'preload="none"' in source, "several players must not all preload"
     assert "v.ready" in source
     assert "v.width" in source, "intrinsic size prevents layout shift"
+
+
+def test_player_height_is_capped_in_css():
+    """The post page has no column around its content, so without a height cap
+    a 1080p video fills ~97% of a desktop viewport and a portrait clip is
+    taller than the screen. video.css must constrain video.u-video's height."""
+    with open("static/css/video.css", encoding="utf-8") as fh:
+        css = fh.read()
+    rule = css[css.index("video.u-video {"):]
+    rule = rule[: rule.index("}")]
+    assert "max-height" in rule and "vh" in rule, "player must be bounded by the viewport"
+    assert "max-width: 100%" in rule

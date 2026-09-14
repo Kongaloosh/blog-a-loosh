@@ -26,3 +26,17 @@
     border: 1px dashed #4a5054;
     border-radius: .25rem;
 }
+
+/* Keep the player inside the viewport. The post page has no column around
+   its content, so the only limit on the player used to be img-fluid's
+   max-width: a 1080p clip rendered at ~97% of the screen height on a
+   1920px display, and a portrait phone clip taller than the screen. The
+   aspect ratio is preserved: whichever of width or height binds first wins. */
+video.u-video {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: min(70vh, 720px);
+    margin: 0 auto;
+}
