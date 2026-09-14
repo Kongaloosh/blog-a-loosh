@@ -176,18 +176,19 @@
                 <div class="d-flex justify-content-center flex-wrap">
                     {% for video in entry.video %}
                     {% set v = video_info(video) %}
-                    <div class="media-preview video-preview u-videos m-2">
+                    <div class="media-preview video-preview m-2">
                         {% if v.ready %}
                         {# preload="none" so a post with several videos does not
                            open a connection per player before anyone presses play. #}
                         <video controls preload="none" playsinline
                                {% if v.poster %}poster="{{ v.poster }}"{% endif %}
                                {% if v.width and v.height %}width="{{ v.width }}" height="{{ v.height }}"{% endif %}
-                               src="{{ v.url }}" class="img-fluid rounded shadow"></video>
+                               src="{{ v.url }}" class="u-video img-fluid rounded shadow"></video>
                         {% else %}
-                        <p class="video-processing text-muted small m-0">
-                            This video is still being processed.
-                        </p>
+                        {# No text here on purpose: this sits inside e-content, and Bridgy syndicated
+   "This video is still being processed." as a post body once. The hint is
+   CSS-generated (video.css) so parsers never see it. #}
+<div class="video-processing" role="status" aria-label="Video is still being processed"></div>
                         {% endif %}
                     </div>
                     {% endfor %}

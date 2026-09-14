@@ -38,7 +38,7 @@ from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost, GeoLocation
 from pysrc import video_converter
-from pysrc.python_webmention.mentioner import get_mentions
+from pysrc.python_webmention.mentioner import announce_to_bridgy, get_mentions
 from slugify import slugify
 from pysrc.file_management.file_parser import (
     create_json_entry,
@@ -788,34 +788,38 @@ def add_entry(creation_request: Request, draft: bool = False) -> str:
     # The entry is already on disk by this point, so a syndication failure must
     # not propagate: it would surface as a 500 and make a successful save look
     # like a failed one.
-    source = "https://" + DOMAIN_NAME + data_dict["url"] + data_dict["slug"]
-    announce_post(source, "https://fed.brid.gy")
-    announce_post(source, "https://brid.gy/publish/bluesky")
+    announce_or_defer(location)
 
     return location
 
 
-def announce_post(source: str, target: str) -> None:
-    """Best-effort webmention send. Never raises: syndication is not worth
-    failing a save that already succeeded."""
-    endpoint = (
-        "https://fed.brid.gy/publish/webmention"
-        if target == "https://fed.brid.gy"
-        else "https://brid.gy/publish/webmention"
-    )
-    try:
-        response = requests.post(
-            endpoint,
-            data={"source": source, "target": target},
-            timeout=HTTP_TIMEOUT,
-        )
-    except requests.RequestException as e:
-        app.logger.warning(f"Webmention to {target} failed: {e}")
+def announce_post(source: str) -> dict:
+    """Syndicate a published entry through Bridgy. Never raises: the entry is
+    already on disk, and a syndication failure must not read as a failed save."""
+    results = announce_to_bridgy(source)
+    for destination, (status, body) in results.items():
+        if status is None or status >= 300:
+            app.logger.warning(f"Bridgy {destination}: {status} {body}")
+    return results
+
+
+def announce_or_defer(location: str) -> None:
+    """Send the Bridgy webmentions for a freshly published entry - unless one
+    of its videos is still converting, in which case the worker sends them
+    when the last one lands (see video_converter.maybe_announce).
+
+    Bridgy fetches the post the instant it hears about it. Announcing before
+    the video exists syndicates the page without it, and once put the
+    "still being processed" placeholder into a Bluesky post as its text.
+    """
+    if not location.startswith("/e/"):
+        return  # "/already_made" and friends are not new entries
+    entry_json = os.path.join(BLOG_STORAGE, location[len("/e/"):] + ".json")
+    source = "https://" + DOMAIN_NAME + location
+    if video_converter.pending_videos(entry_json):
+        app.logger.info(f"syndication of {source} deferred until its video is ready")
         return
-    if response.status_code != 200:
-        app.logger.warning(
-            f"Webmention to {target} returned {response.status_code}: {response.text}"
-        )
+    announce_post(source)
 
 
 def action_stream_parser(filename):
@@ -1483,6 +1487,11 @@ def profile(year, month, day, name):
             f"/e/{canonical_date_path(year, month, day)}/{name}", code=301
         )
 
+    # Crawlers arrive with mangled URLs (a trailing ")" scraped from a Bluesky
+    # post, for one); a missing entry is a 404, not a traceback.
+    if not os.path.isfile(file_name + ".json"):
+        abort(404)
+
     # if someone else is consuming
     if request.headers.get("Accept") == "application/json":
         return jsonify(file_parser_json(file_name + ".json").model_dump(mode="json"))
@@ -1833,6 +1842,8 @@ def show_draft(name):
             post = BlogPost(**merged_data)
             location = create_json_entry(post, g=g.db, draft=False)
             os.remove(draft_file)
+            # Publishing from a draft never syndicated before; treat it like /add.
+            announce_or_defer(location)
             return redirect(location)
     abort(405)
 

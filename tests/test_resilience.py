@@ -104,15 +104,18 @@ def test_announce_post_swallows_network_errors():
     """Syndication runs after the entry is saved, so it must never raise."""
     with app.test_request_context():
         with patch("requests.post", side_effect=requests.exceptions.Timeout()):
-            announce_post("https://example.com/e/x", "https://fed.brid.gy")
+            result = announce_post("https://example.com/e/x")
+    assert set(result) == {"fediverse", "bluesky"}
+    assert all(status is None for status, _ in result.values())
 
 
 def test_announce_post_swallows_error_status():
     with app.test_request_context():
         with patch("requests.post") as mock_post:
             mock_post.return_value = Mock(status_code=503, text="unavailable")
-            announce_post("https://example.com/e/x", "https://fed.brid.gy")
+            result = announce_post("https://example.com/e/x")
         assert mock_post.call_args.kwargs.get("timeout") == HTTP_TIMEOUT
+    assert result["fediverse"][0] == 503
 
 
 def test_syndicate_continues_after_one_bad_target():

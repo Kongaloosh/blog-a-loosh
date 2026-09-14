@@ -404,8 +404,14 @@ def create_json_entry(
 
                         # Queue the conversion for the out-of-process worker.
                         # It writes the finished file into place atomically, so
-                        # this path is either absent or a complete video.
-                        enqueue_video(video_i, final_location)
+                        # this path is either absent or a complete video. The
+                        # worker syndicates the post once its videos are ready.
+                        enqueue_video(
+                            video_i,
+                            final_location,
+                            post_url=None if draft else data.url,
+                            post_file=None if draft else relative_post_path + ".json",
+                        )
 
                         # Add the expected path to the list
                         video_list.append(

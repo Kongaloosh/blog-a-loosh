@@ -31,6 +31,7 @@ VIDEO_STORAGE = config.get(
 JOB_QUEUE = config.get(
     "VideoStorage", "jobqueue", fallback="/mnt/volume-nyc1-01/video-jobs/"
 )
+DOMAIN_NAME = config.get("Global", "DomainName", fallback="kongaloosh.com")
 
 # Above this bitrate a re-encode is worth the CPU: the viewer needs to sustain
 # it to play without stalling. Below it, remux and keep the original quality.
@@ -138,12 +139,22 @@ def poster_command(src: str, dest: str, duration: Optional[float] = None) -> lis
     ]
 
 
-def enqueue(source_path: str, final_path: str) -> str:
+def enqueue(
+    source_path: str,
+    final_path: str,
+    post_url: Optional[str] = None,
+    post_file: Optional[str] = None,
+) -> str:
     """Queue a conversion and return the job id.
 
     final_path is where the finished .mp4 should end up. The worker writes to
     a temporary file and renames it into place, so the destination either does
     not exist or is a complete, playable file - never a truncated one.
+
+    post_url/post_file name the published entry this video belongs to. When
+    they are set, the worker sends the Bridgy webmentions once every video of
+    that entry is ready - Bridgy fetches a post the moment it hears about it,
+    and a page whose video has not landed yet syndicates without it.
     """
     os.makedirs(JOB_QUEUE, exist_ok=True)
     job_id = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
@@ -154,6 +165,8 @@ def enqueue(source_path: str, final_path: str) -> str:
         "state": "queued",
         "created": time.time(),
         "attempts": 0,
+        "post_url": post_url,
+        "post_file": os.path.abspath(post_file) if post_file else None,
     }
     # Write then rename so the worker never reads a half-written job file.
     tmp = os.path.join(JOB_QUEUE, f".{job_id}.tmp")
@@ -220,3 +233,33 @@ def video_is_ready(path: str) -> bool:
     except OSError:
         return False
     return read_meta(path) is not None
+
+
+def pending_videos(entry_json_path: str) -> list:
+    """Videos listed by an entry whose converted file has not landed yet."""
+    try:
+        with open(entry_json_path, encoding="utf-8") as fh:
+            videos = json.load(fh).get("video") or []
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return []
+    return [v for v in videos if not video_is_ready(str(v).lstrip("/"))]
+
+
+def maybe_announce(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """After a conversion, syndicate the post if it is now complete.
+
+    Returns the Bridgy results, a {"skipped": reason} dict, or None when the
+    job does not belong to a published post (drafts, backfills).
+    """
+    post_url, post_file = job.get("post_url"), job.get("post_file")
+    if not post_url or not post_file:
+        return None
+    if not os.path.exists(post_file):
+        return {"skipped": "post file missing"}
+    still = pending_videos(post_file)
+    if still:
+        return {"skipped": f"{len(still)} video(s) still converting"}
+    from pysrc.python_webmention.mentioner import announce_to_bridgy
+
+    source = post_url if post_url.startswith("http") else f"https://{DOMAIN_NAME}{post_url}"
+    return announce_to_bridgy(source)
