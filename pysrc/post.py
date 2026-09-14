@@ -99,6 +99,9 @@ class DraftPost(BaseModel):
     # Media
     photo: Optional[List[str]] = None
     video: Optional[List[str]] = None
+    # True while a video is still converting: the entry exists on disk but is
+    # not indexed, not public and not syndicated. The worker clears it.
+    pending_media: bool = False
 
     # Location
     geo: Optional[GeoLocation] = None

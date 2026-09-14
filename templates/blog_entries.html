@@ -93,7 +93,7 @@
                 {# No text here on purpose: this sits inside e-content, and Bridgy syndicated
    "This video is still being processed." as a post body once. The hint is
    CSS-generated (video.css) so parsers never see it. #}
-<div class="video-processing" role="status" aria-label="Video is still being processed"></div>
+{% if session.logged_in %}<div class="video-processing" role="status" aria-label="Video is still being processed"></div>{% endif %}
                 {% endif %}
             </div>
             {% endfor %}

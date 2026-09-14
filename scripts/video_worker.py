@@ -25,7 +25,7 @@ from pysrc.video_converter import (  # noqa: E402
     JOB_QUEUE,
     VIDEO_STORAGE,
     ffmpeg_command,
-    maybe_announce,
+    finish_post,
     meta_path_for,
     plan_for,
     poster_command,
@@ -176,15 +176,15 @@ def process(path):
     except (subprocess.TimeoutExpired, OSError) as e:
         log.warning("job %s: poster failed: %s", job["id"], e)
 
-    # The post is complete once its last video lands: this is the moment to
-    # tell Bridgy, not publish time.
+    # The post is complete once its last video lands: this is the moment it
+    # becomes public - indexed, then announced - not publish time.
     try:
-        announced = maybe_announce(job)
-    except Exception as e:  # syndication must never fail the conversion
-        log.exception("job %s: announce failed: %s", job["id"], e)
+        announced = finish_post(job)
+    except Exception as e:  # publication must never fail the conversion
+        log.exception("job %s: publication failed: %s", job["id"], e)
         announced = {"error": str(e)[:200]}
     if announced:
-        log.info("job %s: syndication: %s", job["id"], announced)
+        log.info("job %s: publication: %s", job["id"], announced)
 
     job.update(
         state="done", finished=time.time(),

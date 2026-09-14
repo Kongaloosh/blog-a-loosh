@@ -27,6 +27,17 @@
     border-radius: .25rem;
 }
 
+/* Author-only notice on a post whose video is still converting. */
+.pending-notice {
+    padding: .75rem 1rem;
+    margin: 0 0 1rem;
+    color: #d7dde2;
+    background: #2c2f30;
+    border-left: 4px solid #33a37e;
+    border-radius: .25rem;
+    font-size: .9rem;
+}
+
 /* Keep the player inside the viewport. The post page has no column around
    its content, so the only limit on the player used to be img-fluid's
    max-width: a 1080p clip rendered at ~97% of the screen height on a

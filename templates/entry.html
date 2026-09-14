@@ -172,6 +172,9 @@
                     </p>
                 </div>
                 {% endif%}
+                {% if entry.pending_media and session.logged_in %}
+                <p class="pending-notice">Not public yet: the video is still being processed. This post will be indexed and syndicated automatically when it is ready; until then only you can open it.</p>
+                {% endif %}
                 {% if entry.video %}
                 <div class="d-flex justify-content-center flex-wrap">
                     {% for video in entry.video %}
@@ -188,7 +191,7 @@
                         {# No text here on purpose: this sits inside e-content, and Bridgy syndicated
    "This video is still being processed." as a post body once. The hint is
    CSS-generated (video.css) so parsers never see it. #}
-<div class="video-processing" role="status" aria-label="Video is still being processed"></div>
+{% if session.logged_in %}<div class="video-processing" role="status" aria-label="Video is still being processed"></div>{% endif %}
                         {% endif %}
                     </div>
                     {% endfor %}

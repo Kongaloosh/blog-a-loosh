@@ -45,6 +45,9 @@ def main(old, new, apply=False, announce=False):
 
     with open(old_json, encoding="utf-8") as fh:
         data = json.load(fh)
+    if data.get("pending_media"):
+        sys.exit("this entry is still waiting for its video: the worker holds its current "
+                 "path and would lose track of it if renamed now. Wait until it is public.")
     old_url = data.get("url") or ""
     new_url = old_url.rsplit("/", 1)[0] + "/" + new if old_url else "/e/" + directory.split("/", 1)[1] + "/" + new
     categories = db.execute("SELECT id FROM categories WHERE slug = ?", (old,)).fetchall()

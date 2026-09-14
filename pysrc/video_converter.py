@@ -15,9 +15,11 @@ import configparser
 import json
 import logging
 import os
+import sqlite3
 import subprocess
 import time
 import uuid
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -32,6 +34,7 @@ JOB_QUEUE = config.get(
     "VideoStorage", "jobqueue", fallback="/mnt/volume-nyc1-01/video-jobs/"
 )
 DOMAIN_NAME = config.get("Global", "DomainName", fallback="kongaloosh.com")
+DATABASE = config.get("Global", "database", fallback="kongaloosh.db")
 
 # Above this bitrate a re-encode is worth the CPU: the viewer needs to sustain
 # it to play without stalling. Below it, remux and keep the original quality.
@@ -245,11 +248,49 @@ def pending_videos(entry_json_path: str) -> list:
     return [v for v in videos if not video_is_ready(str(v).lstrip("/"))]
 
 
-def maybe_announce(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """After a conversion, syndicate the post if it is now complete.
+def _sql_datetime(value):
+    """Match the 'YYYY-MM-DD HH:MM:SS' the request path stores in the database."""
+    try:
+        return datetime.fromisoformat(str(value)).strftime("%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError):
+        return str(value) if value else None
 
-    Returns the Bridgy results, a {"skipped": reason} dict, or None when the
-    job does not belong to a published post (drafts, backfills).
+
+def index_entry(entry: Dict[str, Any], post_file: str) -> bool:
+    """Insert the entries and categories rows for an entry, if absent.
+
+    The index is what the site lists from - homepage, tags, feeds, outbox -
+    so this is the moment a post becomes public. Returns True if it inserted.
+    """
+    from pysrc.database.queries import CategoryQueries, EntryQueries
+
+    location = os.path.splitext(os.path.relpath(post_file))[0]
+    slug = entry.get("slug") or os.path.basename(location)
+    published = _sql_datetime(entry.get("published"))
+    db = sqlite3.connect(DATABASE)
+    try:
+        if db.execute("SELECT 1 FROM entries WHERE location = ?", (location,)).fetchone():
+            return False
+        db.execute(EntryQueries.INSERT, [slug, published, location])
+        for category in entry.get("category") or []:
+            db.execute(CategoryQueries.INSERT_OR_REPLACE, [slug, published, category])
+        db.commit()
+        return True
+    finally:
+        db.close()
+
+
+def finish_post(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """After a conversion, publish the job's post if every video is now ready.
+
+    Publishing is three steps in a fixed order: clear pending_media in the
+    entry file, index the entry so it appears on the site, then announce it
+    to Bridgy - which fetches the post the instant it hears, so the page must
+    already be public and complete. A post that is already public is left
+    alone, so retries and multi-video posts never announce twice.
+
+    Returns what changed, {"skipped": reason}, or None when the job does not
+    belong to a published post (drafts, backfills).
     """
     post_url, post_file = job.get("post_url"), job.get("post_file")
     if not post_url or not post_file:
@@ -259,7 +300,24 @@ def maybe_announce(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     still = pending_videos(post_file)
     if still:
         return {"skipped": f"{len(still)} video(s) still converting"}
+
+    with open(post_file, encoding="utf-8") as fh:
+        entry = json.load(fh)
+    changed: Dict[str, Any] = {}
+    if entry.get("pending_media"):
+        entry["pending_media"] = False
+        tmp = post_file + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(entry, fh, indent=2, ensure_ascii=False, default=str)
+        os.replace(tmp, post_file)
+        changed["published"] = True
+    if index_entry(entry, post_file):
+        changed["indexed"] = True
+    if not changed:
+        return {"skipped": "already public"}
+
     from pysrc.python_webmention.mentioner import announce_to_bridgy
 
     source = post_url if post_url.startswith("http") else f"https://{DOMAIN_NAME}{post_url}"
-    return announce_to_bridgy(source)
+    changed["announced"] = announce_to_bridgy(source)
+    return changed

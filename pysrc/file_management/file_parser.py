@@ -354,6 +354,7 @@ def create_json_entry(
         os.makedirs(directory_of_post, exist_ok=True)
 
     relative_post_path = os.path.join(directory_of_post, data.slug)
+    queued_video = False  # set when a video is handed to the worker
 
     # check to make sure that the .json and human-readable versions do not exist currently
     if not os.path.isfile(relative_post_path + ".json") or update:
@@ -412,6 +413,7 @@ def create_json_entry(
                             post_url=None if draft else data.url,
                             post_file=None if draft else relative_post_path + ".json",
                         )
+                        queued_video = True
 
                         # Add the expected path to the list
                         video_list.append(
@@ -428,12 +430,17 @@ def create_json_entry(
         except (KeyError, AttributeError) as e:
             logger.error(f"Error saving map file: {e}")
 
+        # A post whose video is still converting is written to disk but not
+        # indexed: the worker publishes (indexes and announces) it once the
+        # last video is ready. Until then only the author can open its URL.
+        data.pending_media = bool(queued_video) and not draft
+
         json_data = data.model_dump(mode="json")
 
         with open(relative_post_path + ".json", "w") as file_writer:
             json.dump(json_data, file_writer)
 
-        if not draft and not update and g:  # if this isn't a draft, put it in the dbms
+        if not draft and not update and g and not data.pending_media:  # index only once its media is ready
             assert isinstance(data, BlogPost)
             g.execute(
                 EntryQueries.INSERT, [data.slug, data.published, relative_post_path]

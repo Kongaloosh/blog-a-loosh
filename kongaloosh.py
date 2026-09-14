@@ -806,7 +806,7 @@ def announce_post(source: str) -> dict:
 def announce_or_defer(location: str) -> None:
     """Send the Bridgy webmentions for a freshly published entry - unless one
     of its videos is still converting, in which case the worker sends them
-    when the last one lands (see video_converter.maybe_announce).
+    when the last one lands (see video_converter.finish_post).
 
     Bridgy fetches the post the instant it hears about it. Announcing before
     the video exists syndicates the page without it, and once put the
@@ -816,8 +816,13 @@ def announce_or_defer(location: str) -> None:
         return  # "/already_made" and friends are not new entries
     entry_json = os.path.join(BLOG_STORAGE, location[len("/e/"):] + ".json")
     source = "https://" + DOMAIN_NAME + location
-    if video_converter.pending_videos(entry_json):
-        app.logger.info(f"syndication of {source} deferred until its video is ready")
+    try:
+        with open(entry_json, encoding="utf-8") as fh:
+            pending = bool(json.load(fh).get("pending_media"))
+    except (OSError, json.JSONDecodeError):
+        pending = False
+    if pending:
+        app.logger.info(f"{source} is waiting for its video; the worker will publish and announce it")
         return
     announce_post(source)
 
@@ -1492,11 +1497,16 @@ def profile(year, month, day, name):
     if not os.path.isfile(file_name + ".json"):
         abort(404)
 
+    entry = file_parser_json(file_name + ".json")
+
+    # While a video is still converting the entry is not public: it is not in
+    # the index, and its URL answers only for the author.
+    if getattr(entry, "pending_media", False) and not session.get("logged_in"):
+        abort(404)
+
     # if someone else is consuming
     if request.headers.get("Accept") == "application/json":
-        return jsonify(file_parser_json(file_name + ".json").model_dump(mode="json"))
-
-    entry = file_parser_json(file_name + ".json")
+        return jsonify(entry.model_dump(mode="json"))
 
     mentions, likes, reposts = get_mentions(
         "https://"
