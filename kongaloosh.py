@@ -36,6 +36,7 @@ from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost, GeoLocation
+from pysrc import video_converter
 from pysrc.python_webmention.mentioner import get_mentions
 from slugify import slugify
 from pysrc.file_management.file_parser import (
@@ -89,6 +90,26 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.config["STATIC_FOLDER"] = os.getcwd()
 app.jinja_env.globals.update(now=datetime.now)
+
+
+def video_info(path: str) -> dict:
+    """Describe a post's video for the template.
+
+    Conversion happens out of process, so a freshly published post can name a
+    video whose file has not landed yet. Templates use `ready` to show a
+    placeholder instead of a broken player, and `poster` so the browser can
+    show a still without downloading the video.
+    """
+    relative = str(path).lstrip("/")
+    poster_rel = os.path.splitext(relative)[0] + ".poster.jpg"
+    return {
+        "url": "/" + relative,
+        "ready": video_converter.video_is_ready(relative),
+        "poster": "/" + poster_rel if os.path.exists(poster_rel) else None,
+    }
+
+
+app.jinja_env.globals.update(video_info=video_info)
 
 # Initialize CSRF protection - move this here, right after app creation
 csrf = CSRFProtect(app)
