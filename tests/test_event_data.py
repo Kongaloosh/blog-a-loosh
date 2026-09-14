@@ -32,8 +32,8 @@ def test_valid_event_data(make_request):
 
         assert isinstance(result, Event)
         assert result.event_name == "Test Event"
-        assert result.dt_start == datetime.strptime("2024-03-01", "%Y-%m-%d").date()
-        assert result.dt_end == datetime.strptime("2024-03-02", "%Y-%m-%d").date()
+        assert result.dt_start == datetime(2024, 3, 1)
+        assert result.dt_end == datetime(2024, 3, 2)
 
 
 def test_missing_fields(make_request):
@@ -48,10 +48,8 @@ def test_missing_fields(make_request):
 
         result = handle_event_data(request)
 
-        assert isinstance(result, Event)
-        assert result.event_name is None
-        assert result.dt_start is None
-        assert result.dt_end is None
+        # An event needs at least a name and a start time.
+        assert result is None
 
 
 def test_empty_event_data(make_request):
@@ -61,10 +59,7 @@ def test_empty_event_data(make_request):
 
         result = handle_event_data(request)
 
-        assert isinstance(result, Event)
-        assert result.event_name is None
-        assert result.dt_start is None
-        assert result.dt_end is None
+        assert result is None
 
 
 def test_invalid_date_format(make_request):
@@ -78,12 +73,10 @@ def test_invalid_date_format(make_request):
             }
         )
 
+        # A typo in a form field must not surface as a 500.
         result = handle_event_data(request)
 
-        assert isinstance(result, Event)
-        assert result.event_name is None
-        assert result.dt_start is None
-        assert result.dt_end is None
+        assert result is None
 
 
 def test_partial_event_data(make_request):
@@ -100,8 +93,8 @@ def test_partial_event_data(make_request):
         result = handle_event_data(request)
 
         assert isinstance(result, Event)
-        assert result.event_name is None
-        assert result.dt_start is None
+        assert result.event_name == "Test Event"
+        assert result.dt_start == datetime(2024, 3, 1)
         assert result.dt_end is None
 
 

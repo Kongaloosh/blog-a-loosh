@@ -1,48 +1,56 @@
-import pytest
-from kongaloosh import app
-from flask_wtf.csrf import generate_csrf
+"""Security behaviour of the write routes.
+
+These tests never reach a view body: every request here is refused by CSRF
+or by the auth check first. That is deliberate - this file has no database
+fixture, so a POST that got through to /add would write a real entry.
+"""
+
 from io import BytesIO
+
+import pytest
+
+from kongaloosh import app
 
 
 @pytest.fixture
 def client():
+    """A logged-in client with CSRF enforcement on, as in production."""
     app.config["TESTING"] = True
     app.config["WTF_CSRF_ENABLED"] = True
     app.config["SECRET_KEY"] = "test_key"
 
-    with app.test_client() as client:
-        with app.app_context():
-            with client.request_context("/"):  # Add request context
-                with client.session_transaction() as sess:
-                    sess["logged_in"] = True
-                    csrf_token = generate_csrf()
-                    sess["csrf_token"] = csrf_token
-                yield client
+    with app.app_context():
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess["logged_in"] = True
+            yield client
 
 
 def test_unauthorized_access(client):
-    """Test that unauthenticated requests are properly handled"""
-    response = client.post(
-        "/add", data={"content": "Test content", "title": "Test Title"}
-    )
-    assert response.status_code == 401  # Unauthorized, not 302
+    """A POST with no session is refused by the auth check."""
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    # CSRF is checked before the view and would answer 400 first. Turn it
+    # off for this one request so the auth check is what responds; the CSRF
+    # path has its own test below.
+    app.config["WTF_CSRF_ENABLED"] = False
+    try:
+        response = client.post(
+            "/add", data={"content": "Test content", "title": "Test Title"}
+        )
+    finally:
+        app.config["WTF_CSRF_ENABLED"] = True
+
+    assert response.status_code == 401
 
 
 def test_csrf_protection(client):
-    """Test that POST requests require CSRF token"""
-    with client.session_transaction() as sess:
-        csrf_token = sess["csrf_token"]
-
-    # Test with token
+    """A POST without a CSRF token is rejected even when logged in."""
     response = client.post(
-        "/add",
-        data={
-            "content": "Test content",
-            "title": "Test Title",
-            "csrf_token": csrf_token,
-        },
+        "/add", data={"content": "Test content", "title": "Test Title"}
     )
-    assert response.status_code in [200, 302]
+    assert response.status_code == 400
 
 
 @pytest.mark.skip(reason="XSS protection needs to be implemented")
@@ -64,18 +72,10 @@ def test_rate_limiting(client):
 
 
 def test_file_upload_restrictions(client):
-    """Test that file uploads are properly restricted"""
-    with client.session_transaction() as sess:
-        sess["logged_in"] = True
-
-    with app.app_context():
-        csrf_token = generate_csrf()
-        data = {
-            "file": (BytesIO(b'<?php echo "hack"; ?>'), "malicious.php"),
-            "csrf_token": csrf_token,
-        }
-        response = client.post("/upload", data=data)
-        assert response.status_code in [400, 404]  # Either reject or not found
+    """An unexpected file post is refused or unrouted, never processed."""
+    data = {"file": (BytesIO(b'<?php echo "hack"; ?>'), "malicious.php")}
+    response = client.post("/upload", data=data)
+    assert response.status_code in [400, 404]
 
 
 @pytest.mark.skip(reason="JSON endpoint protection needs to be implemented")
@@ -90,12 +90,9 @@ def test_secure_headers(client):
 
 
 def test_auth_token_expiry(client):
-    """Test that authentication tokens expire properly"""
+    """Once the session is gone, protected pages are refused."""
     with client.session_transaction() as sess:
-        sess["logged_in"] = True
+        sess.clear()
 
     response = client.get("/add")
-    assert response.status_code in [
-        401,
-        302,
-    ]  # Either unauthorized or redirect to login
+    assert response.status_code in [401, 302]

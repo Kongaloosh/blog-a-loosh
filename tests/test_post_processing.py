@@ -110,19 +110,26 @@ def test_update_existing_post(make_request):
 
 def test_post_with_photos(make_request, create_test_image, tmp_path):
     """Test creating a post with photos"""
+    import kongaloosh
+
     with app.test_request_context():
         test_image = create_test_image()
+        # The edit form posts kept photos as existing_photos and new uploads
+        # as media_file[] (templates/edit_entry.html); the old field names
+        # here were never what the form sent.
         request = make_request(
             form_data={
                 "title": "Photo Post",
                 "content": "Post with Photos",
-                "photo": "existing1.jpg, existing2.jpg",
+                "existing_photos": "existing1.jpg,existing2.jpg",
             },
-            files={"photo_file[]": [(test_image, "new_photo.jpg")]},
+            files={"media_file[]": [(test_image, "new_photo.jpg")]},
         )
 
+        # BULK_UPLOAD_DIR is absolute, so patching os.getcwd never redirected
+        # the write; point the upload dir itself at the temp directory.
         with pytest.MonkeyPatch.context() as m:
-            m.setattr("os.getcwd", lambda: str(tmp_path))
+            m.setattr(kongaloosh, "BULK_UPLOAD_DIR", str(tmp_path))
             result = post_from_request(request)
 
         assert isinstance(result, BlogPost)
@@ -149,8 +156,8 @@ def test_post_with_travel_data(make_request):
         assert isinstance(result, BlogPost)
         assert isinstance(result.travel, Travel)
         assert len(result.travel.trips) == 1
-        assert result.travel.trips[0].location == "geo:45.5231,-122.6765"
-        assert result.travel.trips[0].location_name == "Portland, OR"
+        assert result.travel.trips[0].location.coordinates == (45.5231, -122.6765)
+        assert result.travel.trips[0].location.name == "Portland, OR"
 
 
 def test_invalid_post_data(make_request):

@@ -41,8 +41,8 @@ def test_valid_single_location(make_request):
 
         assert isinstance(result, Travel)
         assert len(result.trips) == 1
-        assert result.trips[0].location == "geo:45.5231,-122.6765"
-        assert result.trips[0].location_name == "Portland, OR"
+        assert result.trips[0].location.coordinates == (45.5231, -122.6765)
+        assert result.trips[0].location.name == "Portland, OR"
         assert result.trips[0].date == datetime(2024, 3, 1)
         assert result.map_data == b"fake_map_data"
         assert GOOGLE_MAPS_KEY in result.map_url
@@ -65,8 +65,8 @@ def test_multiple_locations(make_request):
             result = handle_travel_data(request)
 
         assert len(result.trips) == 2
-        assert result.trips[0].location_name == "Portland, OR"
-        assert result.trips[1].location_name == "Seattle, WA"
+        assert result.trips[0].location.name == "Portland, OR"
+        assert result.trips[1].location.name == "Seattle, WA"
         assert "45.5231,-122.6765" in result.map_url
         assert "47.6062,-122.3321" in result.map_url
 

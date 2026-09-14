@@ -31,6 +31,7 @@ from flask import (
     Blueprint,
     Response,
 )
+from flask import has_app_context
 from werkzeug.datastructures import FileStorage
 from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
@@ -64,6 +65,16 @@ HTTP_TIMEOUT = (5, 15)
 
 # Chunk size used when streaming uploaded video to disk.
 VIDEO_COPY_CHUNK = 1024 * 1024
+
+# Incoming ActivityPub/webmention payloads. The directory is not in version
+# control, so it can be absent on a fresh checkout or after a restore; every
+# access creates it rather than 500ing the route.
+INBOX_LOCATION = "inbox"
+
+
+def inbox_dir() -> str:
+    os.makedirs(INBOX_LOCATION, exist_ok=True)
+    return INBOX_LOCATION
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -200,6 +211,11 @@ def require_auth(f):
 @app.teardown_request
 def teardown_request(exception):
     """Close the database connection after each request."""
+    # Touching g without an application context raises RuntimeError, which
+    # getattr's default does not catch. Teardown can run after the context
+    # has gone, and an error here masks the real result of the request.
+    if not has_app_context():
+        return
     db = getattr(g, "db", None)
     if db is not None:
         db.close()
@@ -611,22 +627,32 @@ def handle_travel_data(request: Request) -> Travel:
 
 def handle_event_data(request: Request) -> Optional[Event]:
     """Process event data from the form request."""
-    app.logger.info(f"Event data: {request.form}")
-    event_name = request.form.get("event_name")
-    dt_start = request.form.get("dt_start")
-    dt_end = request.form.get("dt_end")
-    event_url = request.form.get("event_url")
-    app.logger.info(f"Event data: {event_name}, {dt_start}, {dt_end}, {event_url}")
-    if (
-        event_name and dt_start
-    ):  # Only create event if we have at least a name and start time
-        return Event(
-            event_name=event_name,
-            dt_start=parse(dt_start) if dt_start else None,
-            dt_end=parse(dt_end) if dt_end else None,
-            url=HttpUrl(event_url) if event_url else None,
-        )
-    return None
+    app.logger.debug(f"Event data: {request.form}")
+    # Form values arrive with whatever spacing was typed.
+    event_name = (request.form.get("event_name") or "").strip() or None
+    dt_start = (request.form.get("dt_start") or "").strip() or None
+    dt_end = (request.form.get("dt_end") or "").strip() or None
+    event_url = (request.form.get("event_url") or "").strip() or None
+
+    if not (event_name and dt_start):
+        # Needs at least a name and a start time to be an event at all.
+        return None
+
+    try:
+        start = parse(dt_start)
+        end = parse(dt_end) if dt_end else None
+    except (ValueError, OverflowError) as e:
+        # dateutil raises on anything it cannot read. A typo in a form field
+        # is not a server error.
+        app.logger.warning(f"Unparseable event date ({dt_start!r}/{dt_end!r}): {e}")
+        return None
+
+    return Event(
+        event_name=event_name,
+        dt_start=start,
+        dt_end=end,
+        url=HttpUrl(event_url) if event_url else None,
+    )
 
 
 def get_post_for_editing(file_path: str) -> Union[BlogPost, DraftPost]:
@@ -697,7 +723,7 @@ def update_entry(
 ) -> str:
     """Update an existing blog post"""
     try:
-        file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        file_name = os.path.join(resolve_entry_dir(year, month, day), name)
         existing_entry = get_post_for_editing(file_name)
         updated_post = post_from_request(update_request, existing_entry)
 
@@ -971,12 +997,19 @@ def show_json():
     feed_items = []
 
     for entry in entries:
+        # file_parser_json returns a BlogPost, not a dict, so these are
+        # attributes rather than keys.
+        published = entry.published
         feed_item = {
-            "id": entry["url"],
-            "url": entry["url"],
-            "content_text": entry["summary"] if entry["summary"] else entry["content"],
-            "date_published": entry["published"],
-            "author": {"name": "Alex Kearney"},
+            "id": entry.url,
+            "url": entry.url,
+            "content_text": entry.summary or entry.content,
+            "date_published": (
+                published.isoformat()
+                if hasattr(published, "isoformat")
+                else str(published)
+            ),
+            "author": {"name": FULLNAME},
         }
         feed_items.append(feed_item)
 
@@ -1117,13 +1150,42 @@ def stream():
     return "", 501
 
 
+def canonical_date_path(year, month, day):
+    """Zero-padded YYYY/MM/DD, the canonical form for post paths and URLs.
+
+    Entries created before this was standardised live under unpadded
+    directories (data/2019/2/6/), and links to them exist in feeds, in
+    webmentions and on other people's sites, so both spellings have to keep
+    resolving even though only the padded one is canonical.
+    """
+    return f"{int(year):04d}/{int(month):02d}/{int(day):02d}"
+
+
+def resolve_entry_dir(year, month, day):
+    """Where this date's entries actually live, padded or not."""
+    padded = os.path.join(BLOG_STORAGE, canonical_date_path(year, month, day))
+    if os.path.isdir(padded):
+        return padded
+    legacy = os.path.join(BLOG_STORAGE, f"{int(year)}/{int(month)}/{int(day)}")
+    if os.path.isdir(legacy):
+        return legacy
+    return padded
+
+
+def is_canonical_date(year, month, day):
+    try:
+        return canonical_date_path(year, month, day) == f"{year}/{month}/{day}"
+    except (TypeError, ValueError):
+        return False
+
+
 @app.route("/delete_entry/e/<year>/<month>/<day>/<name>", methods=["POST", "GET"])
 def delete_entry(year, month, day, name):
     if not session.get("logged_in"):
         abort(401)
     else:
         app.logger.info(f"Deleting entry {year}/{month}/{day}/{name}")
-        totalpath = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        totalpath = os.path.join(resolve_entry_dir(year, month, day), name)
         if not os.path.isfile(totalpath + ".json"):
             return redirect("/")
         entry = file_parser_json(totalpath + ".json")
@@ -1390,7 +1452,7 @@ def recent_uploads():
 def edit(year, month, day, name):
     """The form for user-submission"""
     if request.method == "GET":
-        file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+        file_name = os.path.join(resolve_entry_dir(year, month, day), name)
         entry = get_post_for_editing(file_name)
         return render_template("edit_entry.html", type="edit", entry=entry)
     elif request.method == "POST":
@@ -1410,7 +1472,17 @@ def edit(year, month, day, name):
 def profile(year, month, day, name):
     """Get a specific article"""
 
-    file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
+    file_name = os.path.join(resolve_entry_dir(year, month, day), name)
+
+    # Send unpadded links to the canonical URL so there is one address per
+    # entry, but only once the entry is known to exist.
+    if not is_canonical_date(year, month, day) and os.path.isfile(
+        file_name + ".json"
+    ):
+        return redirect(
+            f"/e/{canonical_date_path(year, month, day)}/{name}", code=301
+        )
+
     # if someone else is consuming
     if request.headers.get("Accept") == "application/json":
         return jsonify(file_parser_json(file_name + ".json").model_dump(mode="json"))
@@ -1420,9 +1492,7 @@ def profile(year, month, day, name):
     mentions, likes, reposts = get_mentions(
         "https://"
         + DOMAIN_NAME
-        + "/e/{year}/{month}/{day}/{name}".format(
-            year=year, month=month, day=day, name=name
-        )
+        + f"/e/{canonical_date_path(year, month, day)}/{name}"
     )
 
     return render_template(
@@ -1629,8 +1699,7 @@ def print_mentions():
 @app.route("/inbox", methods=["GET", "POST", "OPTIONS"])
 def handle_inbox():
     if request.method == "GET":
-        inbox_location = "inbox/"
-        entries = [f for f in os.listdir(inbox_location) if f.endswith(".json")]
+        entries = [f for f in os.listdir(inbox_dir()) if f.endswith(".json")]
         for_approval = [e for e in entries if e.startswith("approval_")]
         entries = [e for e in entries if not e.startswith("approval_")]
 
@@ -1660,15 +1729,18 @@ def handle_inbox():
         )
 
         if sender in ["https://rhiaro.co.uk", "https://rhiaro.co.uk/#me"]:
-            location = f"inbox/{slugify.slugify(str(datetime.now()))}.json"
+            location = os.path.join(
+                inbox_dir(), f"{slugify.slugify(str(datetime.now()))}.json"
+            )
             with open(location, "w") as f:
                 json.dump(data, f)
             return "", 201, {"Location": location}
         else:
             try:
                 if data and "context" in data:
-                    location = (
-                        f"inbox/approval_{slugify.slugify(str(datetime.now()))}.json"
+                    location = os.path.join(
+                        inbox_dir(),
+                        f"approval_{slugify.slugify(str(datetime.now()))}.json",
                     )
                     with open(location, "w") as f:
                         json.dump(data, f)
@@ -1692,7 +1764,17 @@ def notifier():
 # TODO: verify this still works
 @app.route("/inbox/<name>", methods=["GET"])
 def show_inbox_item(name):
-    entry = json.loads(open("inbox/" + name).read())
+    # name comes straight from the URL, so keep it to a bare filename inside
+    # the inbox rather than letting it steer the path.
+    safe_name = secure_filename(name)
+    path = os.path.join(inbox_dir(), safe_name)
+    if not safe_name or not os.path.isfile(path):
+        abort(404)
+    try:
+        with open(path, encoding="utf-8") as fh:
+            entry = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        abort(404)
 
     if request.headers.get("Accept") == "application/ld+json":
         return jsonify(entry), 200

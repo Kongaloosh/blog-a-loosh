@@ -30,11 +30,16 @@ def db():
 
 @pytest.fixture
 def client(app, db):
-    """Create a test client with mocked db"""
+    """Create a test client with mocked db.
+
+    The application context has to wrap the test client, not sit inside it:
+    leaving the client pops the request context and runs teardown_request,
+    which needs the app context to still be alive.
+    """
     with patch("kongaloosh.connect_db", return_value=db):
-        with app.test_client() as client:
-            with app.app_context():
-                g.db = db
+        with app.app_context():
+            g.db = db
+            with app.test_client() as client:
                 yield client
 
 
