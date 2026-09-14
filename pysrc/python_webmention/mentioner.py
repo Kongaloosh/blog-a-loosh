@@ -12,6 +12,9 @@ import markdown
 
 __author__ = "kongaloosh"
 
+# (connect, read) timeout for outbound calls; requests waits forever without it.
+HTTP_TIMEOUT = (5, 15)
+
 
 def find_end_point(source_website):
     """Uses regular expressions to find a site's webmention endpoint
@@ -26,7 +29,7 @@ def find_end_point(source_website):
 
     try:
         #  get the source website
-        r = requests.get(source_website)
+        r = requests.get(source_website, timeout=HTTP_TIMEOUT)
     except MissingSchema:
         raise MissingSchema(
             "Source website was malformed; could not complete request: {0}".format(
@@ -71,7 +74,7 @@ def send_mention(source, target, endpoint=None):
 
     payload = {"source": source, "target": target}
     headers = {"Accept": "text/html, application/json"}
-    r = requests.post(endpoint, data=payload, headers=headers)
+    r = requests.post(endpoint, data=payload, headers=headers, timeout=HTTP_TIMEOUT)
     return r
 
 
@@ -94,7 +97,9 @@ def get_mentions(url):
     reposts = 0
     likes = 0
 
-    r = requests.get("https://webmention.io/api/mentions?target=" + url)
+    r = requests.get(
+        "https://webmention.io/api/mentions?target=" + url, timeout=HTTP_TIMEOUT
+    )
     p = r.json()
 
     for link in p["links"]:
@@ -109,7 +114,7 @@ def get_mentions(url):
 
 def get_entry_content(url):
     print("requesting " + str(url))
-    r = requests.get(url)
+    r = requests.get(url, timeout=HTTP_TIMEOUT)
     soup = BeautifulSoup(r.text, "html.parser")
     entry = {}
     try:

@@ -6,6 +6,7 @@ import json
 from typing import List, Optional, Union, Tuple
 import markdown
 import os
+import shutil
 from pysrc.file_management.file_parser import run
 from pydantic import ValidationError
 import requests
@@ -54,6 +55,14 @@ from pydantic import HttpUrl, AnyHttpUrl
 
 jinja_env = Environment()
 jinja_env.globals.update(now=datetime.now)
+
+# (connect, read) timeout for every outbound HTTP call. Without this, requests
+# waits forever: a hung remote pins a worker thread and leaks its socket, which
+# is what exhausted the workers' file descriptors and froze the site.
+HTTP_TIMEOUT = (5, 15)
+
+# Chunk size used when streaming uploaded video to disk.
+VIDEO_COPY_CHUNK = 1024 * 1024
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -220,7 +229,7 @@ def resolve_placename(location: str) -> PlaceInfo:
         long = long.split(";")[0]  # Remove any additional parameters after semicolon
 
         url = f"http://api.geonames.org/findNearbyPlaceNameJSON?style=Full&radius=5&lat={lat}&lng={long}&username={GEONAMES}"
-        geo_results = requests.get(url).json()
+        geo_results = requests.get(url, timeout=HTTP_TIMEOUT).json()
 
         if not geo_results.get("geonames"):
             raise ValueError("No geonames api key found")
@@ -342,19 +351,15 @@ def handle_uploaded_files(request: Request) -> Tuple[List[str], List[str]]:
                     (".mp4", ".mov", ".qt", ".m4v", ".avi", ".wmv", ".flv", ".mkv")
                 ):
                     try:
-                        file_size_before = len(file.read())
+                        # Stream to disk in 1MB chunks. Reading the file into
+                        # memory (twice, as this used to) needs as much RAM as
+                        # the upload is large, which a large video will not fit.
                         file.stream.seek(0)
-                        app.logger.info(
-                            f"Video file size before save: {file_size_before}"
-                        )
-
                         with open(path, "wb") as f:
-                            content = file.read()
-                            f.write(content)
-                            app.logger.info(f"Wrote {len(content)} bytes to {path}")
+                            shutil.copyfileobj(file.stream, f, VIDEO_COPY_CHUNK)
 
                         final_size = os.path.getsize(path)
-                        app.logger.info(f"Final file size: {final_size}")
+                        app.logger.info(f"Wrote {final_size} bytes to {path}")
 
                         if final_size == 0:
                             app.logger.error(
@@ -434,6 +439,7 @@ def post_from_request(
             "event": handle_event_data(request),
         }
 
+        # If there's an existing post, make sure vital information is preserved.
         if existing_post:
             # Preserve existing data
             post_data.update(
@@ -451,6 +457,7 @@ def post_from_request(
                 )
 
             return type(existing_post)(**post_data)
+        # if we're simply saving; ready for saving
         elif "Save" in request.form:
             if publish_date := request.form.get("publish_date"):
                 date = parse(publish_date)
@@ -463,7 +470,7 @@ def post_from_request(
                         if form_data.title
                         else f"draft-{date.timestamp()}"
                     ),
-                    "url": f"/drafts/{date.strftime('%Y/%m/%d')}/untitled",
+                    "url": f"/drafts/{date.strftime('%Y/%m/%d')}/",
                     "published": date,
                     "u_uid": str(uuid.uuid4()),
                 }
@@ -477,8 +484,16 @@ def post_from_request(
 
             post_data.update(
                 {
-                    "slug": "",
-                    "url": "",
+                    "slug": (
+                        slugify(form_data.title)
+                        if form_data.title
+                        else (
+                            slugify(form_data.content[:10])
+                            if form_data.content
+                            else f"draft-{date.timestamp()}"
+                        )
+                    ),
+                    "url": f"/e/{date.strftime('%Y/%m/%d')}/",
                     "published": date,
                     "u_uid": str(uuid.uuid4()),
                 }
@@ -553,9 +568,17 @@ def handle_travel_data(request: Request) -> Travel:
             )
             map_url = f"https://maps.googleapis.com/maps/api/staticmap?&maptype=roadmap&size=500x500&markers=color:green|{markers}&path=color:green|weight:5|{markers}&key={GOOGLE_MAPS_KEY}"  # noqa: E501
 
-            return Travel(
-                trips=trips, map_data=requests.get(map_url).content, map_url=map_url
-            )
+            try:
+                map_data = requests.get(map_url, timeout=HTTP_TIMEOUT).content
+            except requests.RequestException as e:
+                # A slow or failing maps call must not take down the whole
+                # travel page; render it without the map instead.
+                app.logger.warning(f"Static map fetch failed: {e}")
+                map_data = None
+
+            # map_url is excluded from serialisation in the model: it embeds
+            # GOOGLE_MAPS_KEY and post JSON is served publicly.
+            return Travel(trips=trips, map_data=map_data, map_url=map_url)
 
     return Travel(trips=[])
 
@@ -620,18 +643,22 @@ def syndicate_from_form(creation_request, data: BlogPost) -> None:
     # Check to see if the post is in reply to another post and send a mention
     if not data.in_reply_to:
         return
+    post_loc = "http://" + DOMAIN_NAME + data.url
     try:
-        post_loc = "http://" + DOMAIN_NAME + data.url
-        for reply in data.in_reply_to:
+        replies = list(data.in_reply_to)
+    except TypeError as e:
+        app.logger.error(f"Error mentioning {data.in_reply_to}. Error: {e}")
+        return
+    for reply in replies:
+        try:
             requests.post(
                 "https://fed.brid.gy/webmention",
-                data={
-                    "source": post_loc,
-                    "target": reply,
-                },
+                data={"source": post_loc, "target": reply},
+                timeout=HTTP_TIMEOUT,
             )
-    except TypeError as e:
-        app.logger.error("Error mentioning: {0}. Error: {1}".format(reply, e))
+        except requests.RequestException as e:
+            # One unreachable target should not stop the others, or fail the save.
+            app.logger.warning(f"Error mentioning: {reply}. Error: {e}")
 
 
 def update_entry(
@@ -706,21 +733,37 @@ def add_entry(creation_request: Request, draft: bool = False) -> str:
     # Handle webmentions if needed
     syndicate_from_form(creation_request, post)
 
-    requests.post(
-        "https://fed.brid.gy/webmention",
-        data={
-            "source": "https://" + DOMAIN_NAME + data_dict["url"],
-            "target": "https://fed.brid.gy",
-        },
-    )
-    requests.post(
-        "https://brid.gy/webmention",
-        data={
-            "source": "https://" + DOMAIN_NAME + data_dict["url"],
-            "target": "https://brid.gy/publish/bluesky",
-        },
-    )
+    # The entry is already on disk by this point, so a syndication failure must
+    # not propagate: it would surface as a 500 and make a successful save look
+    # like a failed one.
+    source = "https://" + DOMAIN_NAME + data_dict["url"] + data_dict["slug"]
+    announce_post(source, "https://fed.brid.gy")
+    announce_post(source, "https://brid.gy/publish/bluesky")
+
     return location
+
+
+def announce_post(source: str, target: str) -> None:
+    """Best-effort webmention send. Never raises: syndication is not worth
+    failing a save that already succeeded."""
+    endpoint = (
+        "https://fed.brid.gy/publish/webmention"
+        if target == "https://fed.brid.gy"
+        else "https://brid.gy/publish/webmention"
+    )
+    try:
+        response = requests.post(
+            endpoint,
+            data={"source": source, "target": target},
+            timeout=HTTP_TIMEOUT,
+        )
+    except requests.RequestException as e:
+        app.logger.warning(f"Webmention to {target} failed: {e}")
+        return
+    if response.status_code != 200:
+        app.logger.warning(
+            f"Webmention to {target} returned {response.status_code}: {response.text}"
+        )
 
 
 def action_stream_parser(filename):
@@ -1238,14 +1281,13 @@ def md_to_html():
 def geonames_wrapper(query):
     if request.method == "GET":
         # print(f"Received geonames search request for: {query}")
-        app.logger.error(query)
+        app.logger.debug(f"Geonames search: {query}")
         try:
             url = f"http://api.geonames.org/searchJSON?q={query}&maxRows=10&username={GEONAMES}"
-            app.logger.error(f"Calling geonames API: {url}")
-            resp = requests.get(url)
-            app.logger.error(f"Geonames response status: {resp.status_code}")
+            # The URL carries GEONAMES as a query param, so it is never logged.
+            resp = requests.get(url, timeout=HTTP_TIMEOUT)
+            app.logger.debug(f"Geonames response status: {resp.status_code}")
             results = resp.json()
-            app.logger.error(f"Geonames raw response: {results}")
 
             if "geonames" in results:
                 results["geonames"] = [
@@ -1345,7 +1387,7 @@ def profile(year, month, day, name):
     file_name = f"{BLOG_STORAGE}/{year}/{month}/{day}/{name}"
     # if someone else is consuming
     if request.headers.get("Accept") == "application/json":
-        return jsonify(file_parser_json(file_name + ".json"))
+        return jsonify(file_parser_json(file_name + ".json").model_dump(mode="json"))
 
     entry = file_parser_json(file_name + ".json")
 
@@ -1546,10 +1588,15 @@ def handle_micropub():
 
 @app.route("/list_mentions")
 def print_mentions():
-    r = requests.get(
-        f"https://webmention.io/api/mentions?target={DOMAIN_NAME}",
-        headers={"Accept": "application/json"},
-    ).json()["links"]
+    try:
+        r = requests.get(
+            f"https://webmention.io/api/mentions?target={DOMAIN_NAME}",
+            headers={"Accept": "application/json"},
+            timeout=HTTP_TIMEOUT,
+        ).json()["links"]
+    except (requests.RequestException, ValueError, KeyError) as e:
+        app.logger.warning(f"Could not fetch mentions: {e}")
+        r = []
     return render_template("mentions.html", mentions=r)
 
 
@@ -1688,13 +1735,18 @@ def subscribe_request():
     if request.method == "POST":
         social_name = request.form["handle"]
         user_name, social_domain = social_name.split("@")
-        response = requests.get(
-            "https://"
-            + social_domain
-            + "/.well-known/webfinger/?resource=acct:"
-            + social_name
-        )
-        links = response.json()["links"]
+        try:
+            response = requests.get(
+                "https://"
+                + social_domain
+                + "/.well-known/webfinger/?resource=acct:"
+                + social_name,
+                timeout=HTTP_TIMEOUT,
+            )
+            links = response.json()["links"]
+        except (requests.RequestException, ValueError, KeyError) as e:
+            app.logger.warning(f"Webfinger lookup for {social_name} failed: {e}")
+            return "", 502
         for link in links:
             if link["rel"] == "http://ostatus.org/schema/1.0/subscribe":
                 return redirect(
@@ -1716,13 +1768,17 @@ def follow_request():
         with open("followers.json", "w") as jsonf:
             jsonf.write(json.dumps(data))
 
-        requests.post(
-            "https://fed.brid.gy/webmention",
-            data={
-                "target": "https//fed.brigy.gy",
-                "source": "https://kongaloosh.com/following/" + social_name,
-            },
-        )
+        try:
+            requests.post(
+                "https://fed.brid.gy/webmention",
+                data={
+                    "target": "https//fed.brigy.gy",
+                    "source": "https://kongaloosh.com/following/" + social_name,
+                },
+                timeout=HTTP_TIMEOUT,
+            )
+        except requests.RequestException as e:
+            app.logger.warning(f"Follow webmention failed: {e}")
     return redirect("/following/" + social_name)
 
 
