@@ -101,11 +101,16 @@ def video_info(path: str) -> dict:
     show a still without downloading the video.
     """
     relative = str(path).lstrip("/")
-    poster_rel = os.path.splitext(relative)[0] + ".poster.jpg"
+    poster_rel = video_converter.poster_path_for(relative)
+    meta = video_converter.read_meta(relative) or {}
     return {
         "url": "/" + relative,
         "ready": video_converter.video_is_ready(relative),
         "poster": "/" + poster_rel if os.path.exists(poster_rel) else None,
+        # Intrinsic size lets the browser reserve the right box before the
+        # video loads, instead of reflowing the post around it.
+        "width": meta.get("width"),
+        "height": meta.get("height"),
     }
 
 

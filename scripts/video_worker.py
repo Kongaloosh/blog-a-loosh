@@ -25,9 +25,12 @@ from pysrc.video_converter import (  # noqa: E402
     JOB_QUEUE,
     VIDEO_STORAGE,
     ffmpeg_command,
+    meta_path_for,
     plan_for,
     poster_command,
+    poster_path_for,
     probe,
+    write_meta,
 )
 
 LOG_PATH = os.environ.get("VIDEO_WORKER_LOG", "video-worker.log")
@@ -135,30 +138,42 @@ def process(path):
         return
 
     os.replace(partial, real_path)
-    link_into_place(real_path, destination)
 
-    # Poster frame. This doubles as the readiness signal the templates use, so
-    # a video whose first frame will not decode is treated as a failed job
-    # rather than published as a player that cannot play.
-    poster_real = os.path.splitext(real_path)[0] + ".poster.jpg"
-    try:
-        pcode, pstderr = run(poster_command(real_path, poster_real), 120)
-        poster_ok = pcode == 0 and os.path.getsize(poster_real) > 0
-    except (subprocess.TimeoutExpired, OSError) as e:
-        poster_ok, pstderr = False, str(e)
-
-    if not poster_ok:
+    # Probe what we actually produced. This, not the thumbnail, is what marks
+    # the file publishable: ffmpeg can exit 0 having written something that
+    # will not play, which is how the previous pipeline left broken videos
+    # linked from live posts.
+    out_info = probe(real_path)
+    if not out_info.get("width") or not out_info.get("duration"):
+        os.unlink(real_path)
         retry = job["attempts"] < MAX_ATTEMPTS
         job.update(
             state="queued" if retry else "failed",
-            error=f"poster generation failed: {pstderr}",
+            error=f"output did not probe as playable: {out_info}",
             finished=time.time(),
         )
         write_job(path, job)
-        log.error("job %s: poster failed, output unplayable", job["id"])
+        log.error("job %s: output failed probe, discarded", job["id"])
         return
 
-    link_into_place(poster_real, os.path.splitext(destination)[0] + ".poster.jpg")
+    write_meta(real_path, out_info)
+    link_into_place(real_path, destination)
+    link_into_place(meta_path_for(real_path), meta_path_for(destination))
+
+    # Poster frame: nice to have, and deliberately not a gate. A missing
+    # thumbnail must never hide a video that converted correctly.
+    poster_real = poster_path_for(real_path)
+    try:
+        pcode, pstderr = run(
+            poster_command(real_path, poster_real, out_info.get("duration")), 120
+        )
+        if pcode == 0 and os.path.exists(poster_real) \
+                and os.path.getsize(poster_real) > 0:
+            link_into_place(poster_real, poster_path_for(destination))
+        else:
+            log.warning("job %s: no poster produced: %s", job["id"], pstderr[-200:])
+    except (subprocess.TimeoutExpired, OSError) as e:
+        log.warning("job %s: poster failed: %s", job["id"], e)
 
     job.update(
         state="done", finished=time.time(),

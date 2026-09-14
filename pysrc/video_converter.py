@@ -119,11 +119,22 @@ def ffmpeg_command(plan: str, src: str, dest: str) -> list:
     ]
 
 
-def poster_command(src: str, dest: str) -> list:
+def poster_timestamp(duration: Optional[float]) -> str:
+    """A seek offset that exists inside the clip.
+
+    A flat -ss 1 seeks past the end of anything shorter than a second, and
+    ffmpeg then exits 0 having written no file at all.
+    """
+    if not duration or duration <= 0:
+        return "0"
+    return f"{min(1.0, duration / 2):.3f}"
+
+
+def poster_command(src: str, dest: str, duration: Optional[float] = None) -> list:
     """Grab a single frame for use as the <video> poster."""
     return [
-        "ffmpeg", "-y", "-ss", "1", "-i", src,
-        "-frames:v", "1", "-vf", f"scale='min(1280,iw)':-2", dest,
+        "ffmpeg", "-y", "-ss", poster_timestamp(duration), "-i", src,
+        "-frames:v", "1", "-vf", "scale='min(1280,iw)':-2", dest,
     ]
 
 
@@ -166,17 +177,46 @@ def poster_path_for(video_path: str) -> str:
     return os.path.splitext(video_path)[0] + ".poster.jpg"
 
 
+def meta_path_for(video_path: str) -> str:
+    return os.path.splitext(video_path)[0] + ".meta.json"
+
+
+def write_meta(video_path: str, info: Dict[str, Any]) -> None:
+    """Record that this file was probed and found playable."""
+    path = meta_path_for(video_path)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(
+            {
+                "width": info.get("width"),
+                "height": info.get("height"),
+                "duration": info.get("duration"),
+            },
+            fh,
+        )
+    os.replace(tmp, path)
+
+
+def read_meta(video_path: str) -> Optional[Dict[str, Any]]:
+    try:
+        with open(meta_path_for(video_path), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 def video_is_ready(path: str) -> bool:
     """True when a playable converted video exists at path.
 
-    The poster is the gate rather than the file size. A truncated encode can
-    be any size - the old pipeline left behind files of 52 bytes and of 5MB,
-    both missing their moov atom and both unplayable - but a poster only
-    exists if ffmpeg could actually decode a frame.
+    Readiness is recorded by whatever produced the file, after probing it -
+    not inferred from a thumbnail, and not from size. A truncated encode can
+    be any size: the old pipeline left behind files from 52 bytes to 5.1MB,
+    all missing their moov atom. Deriving this from the poster would have let
+    a missing thumbnail hide a perfectly good video.
     """
     try:
         if os.path.getsize(path) <= 0:
             return False
-        return os.path.getsize(poster_path_for(path)) > 0
     except OSError:
         return False
+    return read_meta(path) is not None

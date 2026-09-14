@@ -182,6 +182,7 @@
                            open a connection per player before anyone presses play. #}
                         <video controls preload="none" playsinline
                                {% if v.poster %}poster="{{ v.poster }}"{% endif %}
+                               {% if v.width and v.height %}width="{{ v.width }}" height="{{ v.height }}"{% endif %}
                                src="{{ v.url }}" class="img-fluid rounded shadow"></video>
                         {% else %}
                         <p class="video-processing text-muted small m-0">
