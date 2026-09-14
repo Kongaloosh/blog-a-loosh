@@ -1,0 +1,31 @@
+[Unit]
+Description=kongaloosh.com (gunicorn)
+Documentation=https://github.com/kongaloosh/kongaloosh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/deploy/kongaloosh
+
+# Keep upload spooling off the root filesystem, which runs near full.
+Environment=TMPDIR=/mnt/volume-nyc1-01/tmp
+
+# No --daemon: systemd supervises the process itself.
+ExecStart=/home/deploy/.local/share/virtualenvs/kongaloosh-IfGDV1zi/bin/gunicorn \
+    --config config.py \
+    --access-logfile ./gunicorn-access.log \
+    --error-logfile ./gunicorn-error.log \
+    kongaloosh:app
+ExecReload=/bin/kill -s HUP $MAINPID
+
+Restart=always
+RestartSec=5
+
+# Workers can wedge on blocking I/O and ignore SIGTERM; gunicorn's own
+# graceful_timeout is 300s, which is far too long to wait during a restart.
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
