@@ -433,8 +433,10 @@ function updateMediaPaths() {
     // Get all media elements from preview grid
     const mediaElements = document.querySelectorAll('#media_preview_grid img, #media_preview_grid video');
     const mediaPaths = Array.from(mediaElements).map(media => {
-        // For new uploads (data URLs), use the fileName attribute
-        if (media.src.includes('data:')) {
+        // New uploads have not been sent anywhere yet: images carry a data:
+        // URL from FileReader, videos a blob: URL from createObjectURL. Both
+        // are identified by the file name recorded when the tile was built.
+        if (media.src.startsWith('data:') || media.src.startsWith('blob:')) {
             return media.dataset.fileName || '';
         }
         // For existing media, get the full path

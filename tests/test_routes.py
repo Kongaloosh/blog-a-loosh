@@ -142,3 +142,29 @@ def test_activitypub_content_type(client):
     """Test that ActivityPub request returns correct content type"""
     response = client.get("/", headers={"Accept": "application/as+json"})
     assert response.headers["Content-Type"] == "application/json"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="Adding <!DOCTYPE html> puts pages in standards mode, where Chrome "
+    "refuses stylesheets served as application/octet-stream - and nginx serves "
+    "every local .css that way (a `types {}` block in kongaloosh-app.conf "
+    "replaces the MIME map). The site lost its theme when this was tried on "
+    "2026-09-14. Fix nginx first; this test then flips to a failure as a reminder "
+    "to add the doctype back.",
+)
+def test_pages_declare_a_doctype(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.data.lstrip().lower().startswith(b"<!doctype html>")
+
+
+def test_editor_template_has_no_dead_media_delete_handlers():
+    """The server-rendered media tiles called confirmDeleteMedia(), which was
+    never defined, and deleteMedia() referenced an undefined response. Both
+    were unreachable - initializePreviews() rebuilds the grid from
+    window.entryData - and are gone; keep them gone."""
+    with open("templates/edit_entry.html", encoding="utf-8") as fh:
+        src = fh.read()
+    assert "confirmDeleteMedia" not in src
+    assert "async function deleteMedia" not in src

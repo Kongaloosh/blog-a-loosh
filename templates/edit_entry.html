@@ -71,32 +71,6 @@
     }
 </script>
 
-<script>
-    async function deleteMedia(mediaPath) {
-        try {
-
-            if (response.ok) {
-                // Remove from both existing media and preview sections
-                const mediaElements = document.querySelectorAll(`img[src="/${mediaPath}"]`);
-                mediaElements.forEach(el => {
-                    const previewContainer = el.closest('.media-preview');
-                    if (previewContainer) {
-                        previewContainer.remove();
-                    }
-                });
-
-                // Use the updateMediaPaths from wysiwyg.js
-                window.updateMediaPaths();
-            } else {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to delete media');
-            }
-        } catch (error) {
-            console.error('Error deleting media:', error);
-            alert('Failed to delete media');
-        }
-    }
-</script>
 
 <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 </script>
@@ -405,18 +379,9 @@
                 <div class="card-body">
                     <h2 class="post-title p-name" id="title_format"></h2>
                     <div class="media-preview-container mb-3">
-                        <div id="media_preview_grid" class="d-flex flex-wrap justify-content-center">
-                            {% if entry and entry.photo %}
-                            {% for photo in entry.photo %}
-                            <div class="media-preview">
-                                <img src="/{{ photo }}" class="img-fluid">
-                                <div class="delete-overlay" onclick="confirmDeleteMedia('{{ photo }}')">
-                                    <i class="fa fa-times-circle delete-icon"></i>
-                                </div>
-                            </div>
-                            {% endfor %}
-                            {% endif %}
-                        </div>
+                        {# Populated by initializePreviews() in wysiwyg.js from window.entryData,
+                           which also wires the delete handlers. #}
+                        <div id="media_preview_grid" class="d-flex flex-wrap justify-content-center"></div>
                     </div>
                     <div class="post-subtitle p-summary">
                         <p><i id="summary_format"></i></p>
