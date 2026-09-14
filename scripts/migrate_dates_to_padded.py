@@ -120,7 +120,13 @@ def rewrite_media_paths(apply=False):
             return [walk(x) for x in v]
         return v
 
-    for entry in sorted(glob.glob(f"{BLOG_STORAGE}/[0-9]*/**/*.json", recursive=True)):
+    # os.walk rather than glob(**): glob follows the alias symlinks and would
+    # visit every entry twice.
+    entries = []
+    for dirpath, dirnames, filenames in os.walk(BLOG_STORAGE):
+        dirnames[:] = [d for d in dirnames if not d.startswith("data-save")]
+        entries += [os.path.join(dirpath, n) for n in filenames if n.endswith(".json")]
+    for entry in sorted(entries):
         if entry.endswith(".meta.json"):
             continue
         try:
