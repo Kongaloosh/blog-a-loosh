@@ -34,6 +34,8 @@ def unpadded_dirs():
     """data/<yyyy>/<m>/<d>/ where month or day lacks its leading zero."""
     found = []
     for path in sorted(glob.glob(f"{BLOG_STORAGE}/*/*/*/")):
+        if os.path.islink(path.rstrip("/")):
+            continue  # a compatibility alias for an old URL, not a directory to move
         parts = path.rstrip("/").split(os.sep)
         if len(parts) != 4:
             continue
@@ -83,6 +85,64 @@ def rewrite_urls(directory, year, month, day):
         os.replace(tmp, entry)
 
 
+MEDIA_REF = re.compile(r"(?<![\w.-])(/?)data/(\d{4})/(\d{1,2})/(\d{1,2})/")
+
+
+def rewrite_media_paths(apply=False):
+    """Repoint stored media references at the padded directories.
+
+    The first pass of this migration rewrote each entry's url but not its
+    photo, video and map paths, nor the image paths embedded in content. Every
+    migrated entry with media therefore served 404s for its images and videos
+    until compatibility symlinks were added at the old paths. This rewrites any
+    data/YYYY/M/D/ reference whose padded directory exists, wherever it appears
+    in the entry.
+    """
+    changed_entries = changed_refs = left = 0
+
+    def sub(m):
+        nonlocal changed_refs, left
+        if len(m.group(3)) == 2 and len(m.group(4)) == 2:
+            return m.group(0)
+        padded = f"{m.group(1)}data/{m.group(2)}/{int(m.group(3)):02d}/{int(m.group(4)):02d}/"
+        if not os.path.isdir(padded.lstrip("/")):
+            left += 1
+            return m.group(0)
+        changed_refs += 1
+        return padded
+
+    def walk(v):
+        if isinstance(v, str):
+            return MEDIA_REF.sub(sub, v)
+        if isinstance(v, dict):
+            return {k: walk(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [walk(x) for x in v]
+        return v
+
+    for entry in sorted(glob.glob(f"{BLOG_STORAGE}/[0-9]*/**/*.json", recursive=True)):
+        if entry.endswith(".meta.json"):
+            continue
+        try:
+            with open(entry, encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+        before = changed_refs
+        rewritten = walk(data)
+        if changed_refs > before:
+            changed_entries += 1
+            if apply:
+                tmp = entry + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as fh:
+                    json.dump(rewritten, fh, indent=2, ensure_ascii=False, default=str)
+                os.replace(tmp, entry)
+
+    verb = "rewritten" if apply else "to rewrite"
+    print(f"\n  media references {verb}: {changed_refs} in {changed_entries} entries"
+          f"   (left alone, no padded directory: {left})")
+
+
 def main(apply=False):
     targets = unpadded_dirs()
     print(f"unpadded directories: {len(targets)}\n")
@@ -120,6 +180,8 @@ def main(apply=False):
         db.executemany("UPDATE entries SET location = ? WHERE id = ?", updates)
         db.commit()
     db.close()
+
+    rewrite_media_paths(apply)
 
     if not apply:
         print("\nre-run with --apply")
