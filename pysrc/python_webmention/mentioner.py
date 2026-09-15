@@ -15,6 +15,56 @@ __author__ = "kongaloosh"
 # (connect, read) timeout for outbound calls; requests waits forever without it.
 HTTP_TIMEOUT = (5, 15)
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Bridgy Fed bridges to the fediverse. Its webmention endpoint is /webmention
+# (advertised on https://fed.brid.gy/); the old /publish/webmention path
+# returns 404, so nothing had reached the fediverse this way.
+BRIDGY_FED_ENDPOINT = "https://fed.brid.gy/webmention"
+BRIDGY_FED_TARGET = "https://fed.brid.gy/"
+# Bridgy (classic) publishes to Bluesky; it answers 201 on a new post.
+BRIDGY_BLUESKY_ENDPOINT = "https://brid.gy/publish/webmention"
+BRIDGY_BLUESKY_TARGET = "https://brid.gy/publish/bluesky"
+
+
+def send_bridgy_webmention(source, endpoint, target):
+    """One best-effort webmention. Returns (status, body[:200]); never raises.
+
+    A None status means the request itself failed (timeout, DNS, refused).
+    """
+    try:
+        r = requests.post(
+            endpoint, data={"source": source, "target": target}, timeout=HTTP_TIMEOUT
+        )
+    except requests.RequestException as e:
+        logger.warning("webmention %s -> %s failed: %s", source, target, e)
+        return None, str(e)[:200]
+    if r.status_code >= 300:
+        logger.warning(
+            "webmention %s -> %s returned %s: %s", source, target, r.status_code, r.text[:200]
+        )
+    return r.status_code, r.text[:200]
+
+
+def announce_to_bridgy(source):
+    """Tell Bridgy Fed (fediverse) and Bridgy (Bluesky) about a published post.
+
+    Returns {"fediverse": (status, body), "bluesky": (status, body)}.
+
+    Re-sending for the same post is how Bridgy Fed is told about an edit.
+    Bridgy Publish never posts the same URL twice - its docs: "it can't post a
+    URL on your web site more than once, even if the original post is
+    deleted" - so a repeat toward Bluesky is a harmless no-op. It also means a
+    wrong Bluesky post can only be redone by deleting it, changing the post's
+    permalink, and publishing again.
+    """
+    return {
+        "fediverse": send_bridgy_webmention(source, BRIDGY_FED_ENDPOINT, BRIDGY_FED_TARGET),
+        "bluesky": send_bridgy_webmention(source, BRIDGY_BLUESKY_ENDPOINT, BRIDGY_BLUESKY_TARGET),
+    }
+
 
 def find_end_point(source_website):
     """Uses regular expressions to find a site's webmention endpoint

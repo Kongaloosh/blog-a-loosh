@@ -1,19 +1,3 @@
-.u-video {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    margin: 1rem 0;
-}
-
-.u-video video {
-    max-width: 100%;
-    max-height: 300px;
-    border-radius: 4px;
-    background: #2c2f30;
-    border: 1px solid #1c4b3c;
-}
-
 .video-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -29,23 +13,41 @@
     grid-column: 1 / -1;
 }
 
-/* Video hover effects */
-.u-video video:hover {
-    box-shadow: 0 4px 12px rgba(51, 163, 126, 0.2);
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
-    border-color: #33a37e;
+/* Shown while a freshly uploaded video is still being converted. The text is
+   generated here rather than written in the template so that microformats
+   parsers (Bridgy) never pick it up as post content. */
+.video-processing::after {
+    content: "Video is still being processed\2026";
+    display: block;
+    padding: .75rem 1rem;
+    color: #8a939b;
+    font-size: .875rem;
+    font-style: italic;
+    border: 1px dashed #4a5054;
+    border-radius: .25rem;
 }
 
-/* Video controls styling */
-.u-video video::-webkit-media-controls {
-    background-color: #2c2f30;
+/* Author-only notice on a post whose video is still converting. */
+.pending-notice {
+    padding: .75rem 1rem;
+    margin: 0 0 1rem;
+    color: #d7dde2;
+    background: #2c2f30;
+    border-left: 4px solid #33a37e;
+    border-radius: .25rem;
+    font-size: .9rem;
 }
 
-.u-video video::-webkit-media-controls-panel {
-    background-color: #2c2f30;
-}
-
-.u-video video::-webkit-media-controls-play-button {
-    color: #33a37e;
+/* Keep the player inside the viewport. The post page has no column around
+   its content, so the only limit on the player used to be img-fluid's
+   max-width: a 1080p clip rendered at ~97% of the screen height on a
+   1920px display, and a portrait phone clip taller than the screen. The
+   aspect ratio is preserved: whichever of width or height binds first wins. */
+video.u-video {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: min(70vh, 720px);
+    margin: 0 auto;
 }

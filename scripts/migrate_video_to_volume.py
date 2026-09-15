@@ -10,7 +10,6 @@ symlink. Safe to re-run; already-migrated files are skipped.
 """
 
 import filecmp
-import glob
 import os
 import sys
 
@@ -46,7 +45,13 @@ def migrate(path, root):
 
 def main(root="data", apply=False):
     moved = freed = 0
-    for path in sorted(glob.glob(f"{root}/**/*", recursive=True)):
+    # os.walk rather than glob(**): data/ carries alias symlinks for the old
+    # unpadded date paths, and glob would visit every file twice.
+    paths = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if not os.path.islink(os.path.join(dirpath, d))]
+        paths += [os.path.join(dirpath, n) for n in filenames]
+    for path in sorted(paths):
         if os.path.islink(path) or not os.path.isfile(path):
             continue
         if not path.endswith(SUFFIXES):

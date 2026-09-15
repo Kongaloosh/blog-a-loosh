@@ -5,7 +5,7 @@
     <link href="https://kongaloosh.com/atom.xml" rel="self" type="application/atom+xml" />
     <link rel="hub" href="http://hub.kongaloosh.com" />
     <!--<link rel="hub" href="https://kgl.superfeedr.com/" />-->
-    <id>http://demo.dotcms.com/</id>
+    <id>https://kongaloosh.com/</id>
     <updated>{{updated.isoformat('T')}}</updated>
     {% for entry in entries %}
         <entry>
@@ -14,7 +14,7 @@
             {% else %}
                 <title>{{entry.content | striptags}}</title>
 		    {% endif %}
-            <link href="http://kongaloosh.com/{{entry.url}}" />
+            <link href="{{ entry.url if entry.url.startswith('http') else 'https://kongaloosh.com' ~ entry.url }}" />
             <id>http://kongaloosh.com{{entry.url}}</id>
             <updated>{{entry.published.isoformat('T')}}</updated>
             <author><name>Alex Kearney</name></author>

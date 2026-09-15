@@ -75,3 +75,7 @@ kongaloosh.db
 config.ini
 *.jpeg
 *.json
+
+# Incoming ActivityPub/webmention payloads, created on demand by /inbox.
+# Other people's data - never commit it.
+inbox/

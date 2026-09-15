@@ -7,7 +7,6 @@ of them referenced by any post. They are moved rather than deleted, onto
 the data volume, so nothing is lost.
 """
 
-import glob
 import json
 import os
 import shutil
@@ -20,10 +19,23 @@ from pysrc.video_converter import VIDEO_STORAGE, meta_path_for  # noqa: E402
 QUARANTINE = os.path.join(VIDEO_STORAGE, "_unplayable")
 
 
+def _walk_files(root, suffix):
+    """Files under root, without descending into symlinked directories.
+
+    data/ carries alias symlinks for the old unpadded date paths; glob(**)
+    follows them and would report every file twice.
+    """
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if not os.path.islink(os.path.join(dirpath, d))]
+        for name in filenames:
+            if name.endswith(suffix):
+                yield os.path.join(dirpath, name)
+
+
 def referenced_videos(root="data"):
     """Every video path mentioned by a post."""
     referenced = set()
-    for entry in glob.glob(f"{root}/**/*.json", recursive=True):
+    for entry in _walk_files(root, ".json"):
         if entry.endswith(".meta.json"):
             continue
         try:
@@ -42,7 +54,7 @@ def main(root="data", apply=False):
     referenced = referenced_videos(root)
     moved = bytes_freed = 0
 
-    for video in sorted(glob.glob(f"{root}/**/*.mp4", recursive=True)):
+    for video in sorted(_walk_files(root, ".mp4")):
         if os.path.islink(video):
             continue  # already on the volume
         if os.path.lexists(meta_path_for(video)):

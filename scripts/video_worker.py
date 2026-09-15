@@ -25,6 +25,7 @@ from pysrc.video_converter import (  # noqa: E402
     JOB_QUEUE,
     VIDEO_STORAGE,
     ffmpeg_command,
+    finish_post,
     meta_path_for,
     plan_for,
     poster_command,
@@ -175,10 +176,21 @@ def process(path):
     except (subprocess.TimeoutExpired, OSError) as e:
         log.warning("job %s: poster failed: %s", job["id"], e)
 
+    # The post is complete once its last video lands: this is the moment it
+    # becomes public - indexed, then announced - not publish time.
+    try:
+        announced = finish_post(job)
+    except Exception as e:  # publication must never fail the conversion
+        log.exception("job %s: publication failed: %s", job["id"], e)
+        announced = {"error": str(e)[:200]}
+    if announced:
+        log.info("job %s: publication: %s", job["id"], announced)
+
     job.update(
         state="done", finished=time.time(),
         elapsed=round(time.time() - started, 1),
         output=real_path, output_bytes=os.path.getsize(real_path),
+        announced=announced,
     )
     write_job(path, job)
     log.info(

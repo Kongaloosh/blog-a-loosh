@@ -1,0 +1,25 @@
+# GoToSocial for kongaloosh.com. Only the settings that differ from the
+# defaults; see current/example/config.yaml for everything else.
+
+host: "social.kongaloosh.com"       # where the server is reached (nginx proxies to it)
+account-domain: "kongaloosh.com"    # what accounts are called: @you@kongaloosh.com
+protocol: "https"
+bind-address: "127.0.0.1"
+port: 8080
+trusted-proxies:
+  - "127.0.0.1/32"
+
+db-type: "sqlite"
+db-address: "/mnt/volume-nyc1-01/gotosocial/db/sqlite.db"
+storage-backend: "local"
+storage-local-base-path: "/mnt/volume-nyc1-01/gotosocial/storage"
+web-template-base-dir: "/mnt/volume-nyc1-01/gotosocial/current/web/template/"
+web-asset-base-dir: "/mnt/volume-nyc1-01/gotosocial/current/web/assets/"
+
+letsencrypt-enabled: false          # nginx + certbot terminate TLS
+accounts-registration-open: false
+media-local-max-size: 100MiB        # the blog's converted videos are 10-40MB
+media-remote-max-size: 40MiB
+log-level: "info"
+application-name: "kongaloosh"
+instance-languages: ["en"]
