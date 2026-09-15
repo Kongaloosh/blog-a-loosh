@@ -100,22 +100,27 @@ def test_travel_page_survives_map_failure(failure):
     assert len(result.trips) == 1  # trip data survives the failed fetch
 
 
-def test_announce_post_swallows_network_errors():
+def _entry_file(tmp_path):
+    import json
+    f = tmp_path / "x.json"; f.write_text(json.dumps({"content": "x", "video": []})); return str(f)
+
+
+def test_announce_post_swallows_network_errors(tmp_path):
     """Syndication runs after the entry is saved, so it must never raise."""
     with app.test_request_context():
         with patch("requests.post", side_effect=requests.exceptions.Timeout()):
-            result = announce_post("https://example.com/e/x")
-    assert set(result) == {"fediverse", "bluesky"}
-    assert all(status is None for status, _ in result.values())
+            result = announce_post("https://example.com/e/x", _entry_file(tmp_path))
+    assert set(result) == {"bridgy_fed", "bridgy_bluesky"}, "default targets are the two Bridgy webmentions"
+    assert all("error" in outcome for outcome in result.values())
 
 
-def test_announce_post_swallows_error_status():
+def test_announce_post_swallows_error_status(tmp_path):
     with app.test_request_context():
         with patch("requests.post") as mock_post:
             mock_post.return_value = Mock(status_code=503, text="unavailable")
-            result = announce_post("https://example.com/e/x")
+            result = announce_post("https://example.com/e/x", _entry_file(tmp_path))
         assert mock_post.call_args.kwargs.get("timeout") == HTTP_TIMEOUT
-    assert result["fediverse"][0] == 503
+    assert "503" in result["bridgy_fed"]["error"]
 
 
 def test_syndicate_continues_after_one_bad_target():

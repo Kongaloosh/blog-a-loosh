@@ -316,8 +316,8 @@ def finish_post(job: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if not changed:
         return {"skipped": "already public"}
 
-    from pysrc.python_webmention.mentioner import announce_to_bridgy
+    from pysrc.syndication import syndicate
 
     source = post_url if post_url.startswith("http") else f"https://{DOMAIN_NAME}{post_url}"
-    changed["announced"] = announce_to_bridgy(source)
+    changed["announced"] = syndicate(post_file, source)
     return changed

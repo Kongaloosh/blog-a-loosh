@@ -105,7 +105,7 @@ def _entry(tmp_path, videos):
 
 
 def test_finish_post_ignores_jobs_with_no_post():
-    with patch("pysrc.python_webmention.mentioner.announce_to_bridgy") as ann:
+    with patch("pysrc.syndication.syndicate") as ann:
         assert vc.finish_post({"id": "j", "post_url": None, "post_file": None}) is None
     ann.assert_not_called()
 
@@ -114,7 +114,7 @@ def test_finish_post_waits_while_another_video_is_still_converting(tmp_path):
     entry = _entry(tmp_path, ["data/x-0.mp4", "data/x-1.mp4"])
     ready = {"data/x-0.mp4": True, "data/x-1.mp4": False}
     with patch.object(vc, "video_is_ready", side_effect=lambda p: ready[p]), \
-         patch("pysrc.python_webmention.mentioner.announce_to_bridgy") as ann:
+         patch("pysrc.syndication.syndicate") as ann:
         out = vc.finish_post({"id": "j", "post_url": "/e/2026/09/14/x", "post_file": entry})
     assert "skipped" in out and "1 video" in out["skipped"]
     ann.assert_not_called()
@@ -147,7 +147,7 @@ def test_finish_post_publishes_indexes_then_announces_exactly_once(tmp_path, ind
     job = {"id": "j", "post_url": "/e/2026/09/14/clip", "post_file": str(entry)}
     calls = []
 
-    def announce(source):
+    def announce(post_file, source):
         # By the time Bridgy is told, the page must already be public.
         calls.append(source)
         assert json.load(open(entry))["pending_media"] is False
@@ -155,7 +155,7 @@ def test_finish_post_publishes_indexes_then_announces_exactly_once(tmp_path, ind
         return {"fediverse": (202, ""), "bluesky": (201, "")}
 
     with patch.object(vc, "video_is_ready", return_value=True), patch.object(vc, "DOMAIN_NAME", "kongaloosh.com"), \
-         patch("pysrc.python_webmention.mentioner.announce_to_bridgy", side_effect=announce):
+         patch("pysrc.syndication.syndicate", side_effect=announce):
         first = vc.finish_post(job)
         second = vc.finish_post(job)
 
@@ -179,7 +179,7 @@ def test_finish_post_leaves_an_already_public_post_alone(tmp_path, index_db, mon
     db = sqlite3.connect(index_db); db.execute("INSERT INTO entries (slug, published, location) VALUES (?,?,?)",
                                                 ("old", "2026-09-14 12:00:00", "data/2026/09/14/old")); db.commit(); db.close()
     with patch.object(vc, "video_is_ready", return_value=True), \
-         patch("pysrc.python_webmention.mentioner.announce_to_bridgy") as ann:
+         patch("pysrc.syndication.syndicate") as ann:
         out = vc.finish_post({"id": "j", "post_url": "/e/2026/09/14/old", "post_file": str(entry)})
     assert out == {"skipped": "already public"}
     ann.assert_not_called()
@@ -213,7 +213,8 @@ def test_publish_syndicates_immediately_without_pending_video(tmp_path, monkeypa
     monkeypatch.setattr(kongaloosh, "DOMAIN_NAME", "kongaloosh.com")
     with kongaloosh.app.app_context(), patch.object(kongaloosh, "announce_post") as ann:
         kongaloosh.announce_or_defer("/e/2026/09/14/text")
-    ann.assert_called_once_with("https://kongaloosh.com/e/2026/09/14/text")
+    ann.assert_called_once()
+    assert ann.call_args.args[0] == "https://kongaloosh.com/e/2026/09/14/text"
 
 
 def test_already_made_is_not_announced():

@@ -76,10 +76,10 @@ def main(old, new, apply=False, announce=False):
     print(f"  done: https://{DOMAIN}{new_url}")
 
     if announce:
-        from pysrc.python_webmention.mentioner import announce_to_bridgy
-        results = announce_to_bridgy(f"https://{DOMAIN}{new_url}")
-        for dest, (status, body) in results.items():
-            print(f"  bridgy {dest:10s}: {status} {body[:120]!r}")
+        from pysrc.syndication import syndicate
+        results = syndicate(new_json, f"https://{DOMAIN}{new_url}")
+        for dest, outcome in results.items():
+            print(f"  {dest:14s}: {outcome}")
 
 
 if __name__ == "__main__":

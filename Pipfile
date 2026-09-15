@@ -25,5 +25,6 @@ pytest = "*"
 pyyaml = "*"
 flask-wtf = "*"
 gunicorn = "*"
+atproto = "==0.0.72"
 
 [dev-packages]

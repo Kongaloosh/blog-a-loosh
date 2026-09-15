@@ -37,7 +37,7 @@ from jinja2 import Environment
 from pysrc.markdown_hashtags.markdown_hashtag_extension import HashtagExtension
 from pysrc.markdown_albums.markdown_album_extension import AlbumExtension
 from pysrc.post import BlogPost, Event, PlaceInfo, Travel, Trip, DraftPost, GeoLocation
-from pysrc import video_converter
+from pysrc import syndication, video_converter
 from pysrc.python_webmention.mentioner import announce_to_bridgy, get_mentions
 from slugify import slugify
 from pysrc.file_management.file_parser import (
@@ -125,7 +125,7 @@ def video_info(path: str) -> dict:
     }
 
 
-app.jinja_env.globals.update(video_info=video_info)
+app.jinja_env.globals.update(video_info=video_info, syndication_label=syndication.label_for)
 
 # Initialize CSRF protection - move this here, right after app creation
 csrf = CSRFProtect(app)
@@ -793,13 +793,14 @@ def add_entry(creation_request: Request, draft: bool = False) -> str:
     return location
 
 
-def announce_post(source: str) -> dict:
-    """Syndicate a published entry through Bridgy. Never raises: the entry is
-    already on disk, and a syndication failure must not read as a failed save."""
-    results = announce_to_bridgy(source)
-    for destination, (status, body) in results.items():
-        if status is None or status >= 300:
-            app.logger.warning(f"Bridgy {destination}: {status} {body}")
+def announce_post(source: str, entry_json: str) -> dict:
+    """Syndicate a published entry to the configured networks. Never raises:
+    the entry is already on disk, and a syndication failure must not read as
+    a failed save. See pysrc/syndication.py for the targets."""
+    results = syndication.syndicate(entry_json, source)
+    for destination, outcome in results.items():
+        if "error" in outcome:
+            app.logger.warning(f"syndication {destination}: {outcome['error']}")
     return results
 
 
@@ -824,7 +825,7 @@ def announce_or_defer(location: str) -> None:
     if pending:
         app.logger.info(f"{source} is waiting for its video; the worker will publish and announce it")
         return
-    announce_post(source)
+    announce_post(source, entry_json)
 
 
 def action_stream_parser(filename):

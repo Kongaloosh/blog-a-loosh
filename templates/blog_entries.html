@@ -185,40 +185,20 @@
 
 <div class="p-2 entry-footer row">
     <div class="actions col-md-9 pull-left">
-        {% if entry.twitter %}
-        <indie-action do="like" with="http://kongaloosh.com{{entry.url}}">
-            <a target="" href="https://twitter.com/intent/favorite?tweet_id={{entry.twitter.id}}">
-                <i class="fa fa-star"></i>
-                Like
-            </a>
-        </indie-action>
-        <indie-action do="repost" with="http://kongaloosh.com{{entry.url}}">
-            <a target="" href="https://twitter.com/intent/retweet?tweet_id={{entry.twitter.id}}">
-                <i class="fa fa-retweet"></i>
-                Repost
-            </a>
-        </indie-action>
-        <indie-action do="reply" with="http://kongaloosh.com{{entry.url}}">
-            <a target="" href="https://twitter.com/intent/tweet?in_reply_to={{entry.twitter.id}}">
-                <i class="fa fa-reply"></i>
-                Reply
-            </a>
-        </indie-action>
+        {# Every copy of this post elsewhere. entry.syndication is the list the
+           site writes when it posts; twitter/facebook are older fields kept
+           for entries that predate it. #}
+        {% set shown = [] %}
+        {% for url in entry.syndication or [] %}
+        {% if url not in shown %}{% set _ = shown.append(url) %}
+        <a rel="syndication" class="u-syndication" href="{{ url }}">{{ syndication_label(url) }} <i class="fa fa-external-link"></i></a>
         {% endif %}
-    </div> <!-- END ACTIONS -->
-
-    <div class="actions col-md-3 text-right">
-        {% if entry.twitter %}
-        <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">
-            On Twitter
-            <i class="fa fa-twitter"></i>
-        </a>
+        {% endfor %}
+        {% if entry.twitter and (entry.twitter.url|string) not in shown %}
+        <a rel="syndication" class="u-syndication" href="{{entry.twitter.url}}">On Twitter <i class="fa fa-twitter"></i></a>
         {% endif %}
-        {% if entry.facebook %}
-        <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">
-            On facebook
-            <i class="fa fa-facebook-square"></i>
-        </a>
+        {% if entry.facebook and (entry.facebook.url|string) not in shown %}
+        <a rel="syndication" class="u-syndication" href="{{entry.facebook.url}}">On Facebook <i class="fa fa-facebook-square"></i></a>
         {% endif %}
     </div> <!-- END TWITTER LINK -->
 </div><!-- END TWITTER SYNDICATION -->
