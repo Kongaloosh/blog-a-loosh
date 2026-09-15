@@ -72,3 +72,22 @@ accounts are named at the bare domain via `account-domain: kongaloosh.com`.
 - Upgrades: download the new `linux_amd64` tarball into `releases/`, extract to
   `vX.Y.Z/`, repoint the `current` symlink, restart. Read the release notes;
   minor versions sometimes need `admin migrations run`.
+
+## Step 9: switch the site to native posting
+
+Once the account is live and you have an Applications token (Settings → Applications in GoToSocial, scope `write:media write:statuses`), add to `config.ini` on the server:
+
+```ini
+[Syndication]
+targets = bluesky, fediverse
+
+[Bluesky]
+handle = kongaloosh.com
+app_password = <app password from bsky.app Settings → Privacy and security → App passwords>
+
+[Fediverse]
+instance = https://social.kongaloosh.com
+access_token = <token>
+```
+
+Then restart gunicorn. Leaving `[Syndication]` out keeps the two Bridgy webmentions. Each target can be tried alone first (`targets = bluesky`).
