@@ -1,6 +1,6 @@
 # A native fediverse account at kongaloosh.com (GoToSocial)
 
-Goal: `@<you>@kongaloosh.com` as a real ActivityPub account you can log into
+Goal: `@alex@kongaloosh.com` as a real ActivityPub account you can log into
 from any Mastodon client, with the 113 followers of the Bridgy Fed bridged
 site moved over rather than lost, and the blog posting to it.
 
@@ -19,12 +19,12 @@ accounts are named at the bare domain via `account-domain: kongaloosh.com`.
 3. **Run it** (deploy): user systemd if linger is enabled, else the cron line
    `* * * * * /home/deploy/kongaloosh/scripts/gotosocial_watchdog.sh`.
    Check `https://social.kongaloosh.com/api/v1/instance`.
-4. **Create the account** (deploy, once the username is chosen - it cannot be renamed):
+4. **Create the account** (done 2026-09-14: `alex`, email alex@kongaloosh.com, confirmed + admin; initial password in ~/.gotosocial-alex-initial-password, change it after first login):
    ```
    cd /mnt/volume-nyc1-01/gotosocial
    ./current/gotosocial --config-path config.yaml admin account create \
-       --username <you> --email <you@...> --password '<strong password>'
-   ./current/gotosocial --config-path config.yaml admin account promote --username <you>
+       --username alex --email alex@kongaloosh.com --password '<strong password>'
+   ./current/gotosocial --config-path config.yaml admin account promote --username alex
    ```
    Log in at `https://social.kongaloosh.com/settings` and fill in the profile.
 5. **Alias the old identity** (you, in the GoToSocial settings UI): Settings ->
@@ -32,10 +32,10 @@ accounts are named at the bare domain via `account-domain: kongaloosh.com`.
    Mastodon-style Move is only accepted if the new account lists the old one.
 6. **Hand over discovery** (root): apply `nginx-wellknown-handoff.snippet` to
    the kongaloosh.com server block; reload. Verify:
-   `curl 'https://kongaloosh.com/.well-known/webfinger?resource=acct:<you>@kongaloosh.com'`
+   `curl 'https://kongaloosh.com/.well-known/webfinger?resource=acct:alex@kongaloosh.com'`
    returns the GoToSocial account.
 7. **Move the followers** (you, on fed.brid.gy): the bridged site's settings
-   page -> migrate to `@<you>@kongaloosh.com`. Bridgy Fed sends a Move; the
+   page -> migrate to `@alex@kongaloosh.com`. Bridgy Fed sends a Move; the
    113 followers' servers re-follow the new account automatically. Bridgy Fed
    then disables the bridged site. This step is not reversible.
 8. **Blog posts to it**: in GoToSocial's settings panel, *Applications* ->
