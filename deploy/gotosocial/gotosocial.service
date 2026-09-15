@@ -1,0 +1,21 @@
+# User-level systemd unit. Install to ~/.config/systemd/user/ once
+# `loginctl enable-linger deploy` has been run; until then the cron
+# watchdog in the runbook keeps it up.
+[Unit]
+Description=GoToSocial (fediverse server for kongaloosh.com)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/mnt/volume-nyc1-01/gotosocial
+# Soft ceiling for the Go heap: the box has 1.9GB, no swap, and shares it with gunicorn.
+Environment=GOMEMLIMIT=384MiB
+ExecStart=/mnt/volume-nyc1-01/gotosocial/current/gotosocial --config-path /mnt/volume-nyc1-01/gotosocial/config.yaml server start
+Restart=always
+RestartSec=5
+# GoToSocial handles SIGTERM gracefully; give it time to flush.
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
