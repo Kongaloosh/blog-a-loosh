@@ -225,3 +225,22 @@ def test_entry_template_renders_the_syndication_list():
     src = open("templates/entry.html", encoding="utf-8").read()
     assert "entry.syndication" in src and "syndication_label(url)" in src
     assert 'class="u-syndication"' in src
+
+
+def test_syndication_links_are_inside_the_h_entry():
+    """Microformats parsers attach u-syndication to the h-entry only when the
+    link is inside it; Bridgy's backfeed relies on that to match responses."""
+    from bs4 import BeautifulSoup
+
+    import kongaloosh
+    from pysrc.post import BlogPost
+
+    entry = {"title": None, "content": "x", "url": "/e/2019/01/13/t", "published": "2019-01-13 10:00:00",
+             "slug": "t", "u_uid": "x", "category": ["a"], "syndication": ["https://www.instagram.com/p/abc/"]}
+    with kongaloosh.app.test_request_context():
+        html_src = kongaloosh.render_template("entry.html", entry=BlogPost(**entry), mentions=[], likes=0, reposts=0)
+    soup = BeautifulSoup(html_src, "html.parser")
+    h = soup.select_one(".h-entry")
+    links = soup.select("a.u-syndication")
+    assert len(links) == 1 and links[0]["href"] == "https://www.instagram.com/p/abc/"
+    assert any(p is h for p in links[0].parents), "u-syndication must sit inside the h-entry"
